@@ -1,0 +1,7 @@
+{
+  "chat.promptFiles": true,
+  "chat.includeApplyingInstructions": true,
+  "chat.includeReferencedInstructions": true,
+  "chat.useAgentsMdFile": true,
+  "workbench.browser.enableChatTools": true
+}

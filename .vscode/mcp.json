@@ -1,0 +1,19 @@
+{
+  "servers": {
+    "apify": {
+      "type": "http",
+      "url": "https://mcp.apify.com?tools=actors,apify/rag-web-browser",
+      "headers": {
+        "Authorization": "Bearer ${input:apifyToken}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "apifyToken",
+      "type": "promptString",
+      "description": "Apify API token — get yours free at https://console.apify.com/settings/integrations",
+      "password": true
+    }
+  ]
+}
