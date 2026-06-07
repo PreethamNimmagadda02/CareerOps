@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "AI-powered job search pipeline for Claude Code and GitHub Copilot",
   "scripts": {
+    "scan": "node career-ops-scan.mjs --compact",
+    "scan:fallback": "node career-ops-scan.mjs --compact --fallback",
     "verify": "node verify-pipeline.mjs",
     "verify:copilot": "node verify-copilot-migration.mjs",
     "verify:all": "node verify-copilot-migration.mjs && node verify-pipeline.mjs",
