@@ -5,6 +5,10 @@
   "scripts": {
     "scan": "node career-ops-scan.mjs --compact",
     "scan:fallback": "node career-ops-scan.mjs --compact --fallback",
+    "evaluate": "node evaluate-agent.mjs --limit 5",
+    "evaluate:all": "node evaluate-agent.mjs --limit 50",
+    "evaluate:pro": "node evaluate-agent.mjs --limit 5 --model pro",
+    "evaluate:dry": "node evaluate-agent.mjs --limit 5 --dry-run",
     "verify": "node verify-pipeline.mjs",
     "verify:copilot": "node verify-copilot-migration.mjs",
     "verify:all": "node verify-copilot-migration.mjs && node verify-pipeline.mjs",
@@ -17,7 +21,14 @@
     "update": "node update-system.mjs apply",
     "rollback": "node update-system.mjs rollback"
   },
-  "keywords": ["ai", "job-search", "claude-code", "github-copilot", "career", "automation"],
+  "keywords": [
+    "ai",
+    "job-search",
+    "claude-code",
+    "github-copilot",
+    "career",
+    "automation"
+  ],
   "author": "Shreyas Suvarna (https://github.com/ORION2809)",
   "homepage": "https://github.com/ORION2809/carrer-ops",
   "repository": {
@@ -26,6 +37,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "playwright": "^1.58.1"
+    "playwright": "^1.58.1",
+    "openai": "^4.0.0"
   }
 }
