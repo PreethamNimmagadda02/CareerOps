@@ -66,7 +66,7 @@ const BUILTIN_PROVIDERS = {
   },
   nvidia: {
     baseURL: "https://integrate.api.nvidia.com/v1",
-    defaultModel: "meta/llama-3.1-8b-instruct",
+    defaultModel: "openai/gpt-oss-120b",
     authEnvVar: "NVIDIA_API_KEY",
   }
 };
