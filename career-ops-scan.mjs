@@ -7,6 +7,15 @@ const pipelinePath = `${root}/data/pipeline.md`;
 const applicationsPath = `${root}/data/applications.md`;
 const scanHistoryPath = `${root}/data/scan-history.tsv`;
 
+// ── CLI args ──────────────────────────────────────────────────────────────────
+const args = process.argv.slice(2);
+const CONCURRENCY = args.includes("--concurrency")
+  ? Number(args[args.indexOf("--concurrency") + 1])
+  : 8;
+const BROWSER_CONCURRENCY = args.includes("--browser-concurrency")
+  ? Number(args[args.indexOf("--browser-concurrency") + 1])
+  : 3;
+
 const portals = fs.readFileSync(portalsPath, "utf8");
 
 function unquote(value) {
@@ -264,16 +273,17 @@ const structuredCompanies = enabledCompanies.filter(
   (company) => company.api || slugFromAshby(company.careers_url) || slugFromLever(company.careers_url),
 );
 const unsupportedCompanies = enabledCompanies.filter((company) => !structuredCompanies.includes(company));
-const results = await mapLimit(structuredCompanies, 8, scanCompany);
+const results = await mapLimit(structuredCompanies, CONCURRENCY, scanCompany);
 let browserResults = [];
 if (process.argv.includes("--fallback")) {
   const fallbackCompanies = [
     ...unsupportedCompanies,
     ...results.filter((result) => result.error).map((result) => result.company),
   ];
+  console.log(`\n🚀 scan   concurrency=${CONCURRENCY}  browser-concurrency=${BROWSER_CONCURRENCY}`);
   const browser = await chromium.launch({ headless: true });
   try {
-    browserResults = await mapLimit(fallbackCompanies, 3, (company) => scanCompanyBrowser(browser, company));
+    browserResults = await mapLimit(fallbackCompanies, BROWSER_CONCURRENCY, (company) => scanCompanyBrowser(browser, company));
   } finally {
     await browser.close();
   }

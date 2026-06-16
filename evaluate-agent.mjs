@@ -17,6 +17,7 @@
  *   node evaluate-agent.mjs --provider nvidia       # build.nvidia.com (default)
  *   node evaluate-agent.mjs --provider exo          # local MLX (Exo)
  *   node evaluate-agent.mjs --model gpt-5.5         # override model name
+ *   node evaluate-agent.mjs --concurrency 8         # parallel evaluations (default: 8)
  *
  * Provider config is read from ~/.config/opencode/opencode.jsonc
  * Auth key:  OPENCODE_API_KEY env var  (or set in .env at project root)
@@ -46,6 +47,7 @@ const LIMIT = Number(args[args.indexOf("--limit") + 1] || 5);
 const ONLY_ROW = args.includes("--job") ? Number(args[args.indexOf("--job") + 1]) : null;
 const PROVIDER_ARG = args.includes("--provider") ? args[args.indexOf("--provider") + 1] : "nvidia";
 const MODEL_ARG = args.includes("--model") ? args[args.indexOf("--model") + 1] : null;
+const CONCURRENCY = args.includes("--concurrency") ? Number(args[args.indexOf("--concurrency") + 1]) : 8;
 
 // ── Load .env if present ──────────────────────────────────────────────────────
 const envPath = path.join(root, ".env");
@@ -117,9 +119,10 @@ if (!API_KEY || API_KEY === "dummy") {
 }
 
 console.log(`🤖 evaluate-agent`);
-console.log(`   provider : ${PROVIDER_ARG}  (${provider.baseURL})`);
-console.log(`   model    : ${RESOLVED_MODEL}`);
-console.log(`   limit    : ${LIMIT}  dry-run=${DRY_RUN}\n`);
+console.log(`   provider    : ${PROVIDER_ARG}  (${provider.baseURL})`);
+console.log(`   model       : ${RESOLVED_MODEL}`);
+console.log(`   limit       : ${LIMIT}  dry-run=${DRY_RUN}`);
+console.log(`   concurrency : ${CONCURRENCY}\n`);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -263,7 +266,11 @@ APPLY NOW | APPLY WITH TWEAKS | MONITOR | SKIP — one sentence.`;
 }
 
 function parseScore(text) {
-  const m = text.match(/OVERALL_SCORE:\s*([\d.]+)\/5/);
+  // Handles variants produced by the LLM:
+  //   OVERALL_SCORE: 4.2/5
+  //   **OVERALL_SCORE:** **4.2 / 5**
+  //   **OVERALL_SCORE: 4.2/5**
+  const m = text.match(/OVERALL[_\s]SCORE[:\s*]+\**\s*([\d.]+)\s*\/\s*5/);
   return m ? parseFloat(m[1]).toFixed(1) : null;
 }
 
@@ -307,6 +314,24 @@ async function callLLM(prompt) {
   });
 
   return resp.choices[0]?.message?.content || "";
+}
+
+// ── Semaphore (limits parallel inflight evaluations) ─────────────────────────
+
+function createSemaphore(max) {
+  let running = 0;
+  const queue = [];
+  const release = () => {
+    running--;
+    if (queue.length) { running++; queue.shift()(); }
+  };
+  return async (fn) => {
+    await new Promise((resolve) => {
+      if (running < max) { running++; resolve(); }
+      else queue.push(resolve);
+    });
+    try { return await fn(); } finally { release(); }
+  };
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -354,9 +379,15 @@ async function main() {
   const date = today();
   const results = { evaluated: 0, skipped: 0, errors: 0 };
 
-  for (const job of targets) {
+  // Semaphore caps concurrent browser+LLM work
+  const sem = createSemaphore(CONCURRENCY);
+  // Serialise tracker writes to avoid race conditions
+  let trackerLock = Promise.resolve();
+
+  await Promise.all(targets.map((job) => sem(async () => {
+    const tag = `[#${job.num}]`;
     console.log(`\n${"─".repeat(60)}`);
-    console.log(`[#${job.num}] ${job.company} — ${job.role}`);
+    console.log(`${tag} ${job.company} — ${job.role}`);
 
     // Resolve URL from scan results
     let url = urlIndex.get(normalizeKey(job.company, job.role));
@@ -368,55 +399,60 @@ async function main() {
     }
 
     if (!url) {
-      console.warn(`   ⚠️  No URL in scan results — skipping. Re-run scan or use --job N with URL.`);
+      console.warn(`${tag} ⚠️  No URL in scan results — skipping. Re-run scan or use --job N with URL.`);
       results.skipped++;
-      continue;
+      return;
     }
-    console.log(`   🔗 ${url}`);
+    console.log(`${tag} 🔗 ${url}`);
 
     // Fetch JD text
-    process.stdout.write("   📄 Fetching JD... ");
+    console.log(`${tag} 📄 Fetching JD...`);
     const jdText = await fetchJD(browser, url);
     const fetchOk = !jdText.startsWith("(");
-    console.log(`${fetchOk ? "✓" : "⚠️  partial"} (${jdText.length} chars)`);
+    console.log(`${tag} 📄 ${fetchOk ? "✓" : "⚠️  partial"} (${jdText.length} chars)`);
 
     if (DRY_RUN) {
-      console.log("   🧪 Dry-run: skipping AI call.");
+      console.log(`${tag} 🧪 Dry-run: skipping AI call.`);
       results.skipped++;
-      continue;
+      return;
     }
 
     // LLM evaluation
-    process.stdout.write(`   🤖 Evaluating via ${PROVIDER_ARG}/${RESOLVED_MODEL}... `);
+    console.log(`${tag} 🤖 Evaluating via ${PROVIDER_ARG}/${RESOLVED_MODEL}...`);
     let evaluation = "";
     try {
       const prompt = buildPrompt(cv, profileYml, jdText, job.company, job.role);
       evaluation = await callLLM(prompt);
-      console.log("✓");
+      console.log(`${tag} 🤖 ✓`);
     } catch (err) {
-      console.log(`❌ ${err.message}`);
+      console.log(`${tag} ❌ ${err.message}`);
       results.errors++;
-      continue;
+      return;
     }
 
     // Parse score
     const score = parseScore(evaluation);
-    console.log(`   📊 Score: ${score ? score + "/5" : "could not parse — check report"}`);
+    console.log(`${tag} 📊 Score: ${score ? score + "/5" : "could not parse — check report"}`);
 
-    // Write report
-    const reportNum = nextReportNumber();
-    const filename = writeReport(reportNum, job.company, job.role, url, evaluation);
-    console.log(`   📝 reports/${filename}`);
+    // Serialise report numbering + tracker writes
+    trackerLock = trackerLock.then(async () => {
+      const reportNum = nextReportNumber();
+      const filename = writeReport(reportNum, job.company, job.role, url, evaluation);
+      console.log(`${tag} 📝 reports/${filename}`);
 
-    // Update tracker
-    const updated = updateTracker(mdLines, job.raw, score || "?", reportNum, job.company, date);
-    if (updated) {
-      fs.writeFileSync(applicationsPath, mdLines.join("\n"));
-      console.log(`   ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`);
-    }
+      const updated = updateTracker(mdLines, job.raw, score || "N/A", reportNum, job.company, date);
+      if (updated) {
+        fs.writeFileSync(applicationsPath, mdLines.join("\n"));
+        console.log(`${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`);
+      }
+    });
+    await trackerLock;
 
     results.evaluated++;
-  }
+  })));
+
+  // Ensure all deferred tracker writes finish before we close
+  await trackerLock;
 
   await browser.close();
 
