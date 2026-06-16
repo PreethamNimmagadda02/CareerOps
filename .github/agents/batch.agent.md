@@ -27,7 +27,7 @@ Read the full batch instructions from `modes/batch.md` for context, then:
    b. Calculate next report number (max existing in `reports/` + 1)
    c. Execute full A-F evaluation (read cv.md, search comp data, etc.)
    d. Save report to `reports/{###}-{company-slug}-{date}.md`
-   e. Generate PDF via `node generate-pdf.mjs`
+   e. Generate PDF via `npm run pdf -- <input.html> <output.pdf>`
    f. Write TSV line to `batch/tracker-additions/{num}-{slug}.tsv`
    g. Log progress
 3. **After all offers**: Run `node merge-tracker.mjs`

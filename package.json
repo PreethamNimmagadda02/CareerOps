@@ -2,13 +2,38 @@
   "name": "career-ops",
   "version": "1.0.0",
   "description": "AI-powered job search pipeline for Claude Code and GitHub Copilot",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "career-ops-scan": "dist/cli/scan.js",
+    "career-ops-evaluate": "dist/cli/evaluate.js",
+    "career-ops-pdf": "dist/cli/pdf.js"
+  },
+  "files": [
+    "dist",
+    "fonts",
+    "templates"
+  ],
   "scripts": {
-    "scan": "node career-ops-scan.mjs --compact --concurrency 12",
-    "scan:fallback": "node career-ops-scan.mjs --compact --fallback --concurrency 12 --browser-concurrency 4",
-    "evaluate": "node evaluate-agent.mjs --limit 5 --concurrency 8",
-    "evaluate:all": "node evaluate-agent.mjs --limit 50 --concurrency 8",
-    "evaluate:dry": "node evaluate-agent.mjs --limit 5 --dry-run --concurrency 8",
-    "pdf": "node generate-pdf.mjs"
+    "scan": "tsx src/cli/scan.ts --compact --concurrency 12",
+    "scan:fallback": "tsx src/cli/scan.ts --compact --fallback --concurrency 12 --browser-concurrency 4",
+    "evaluate": "tsx src/cli/evaluate.ts --limit 5 --concurrency 8",
+    "evaluate:all": "tsx src/cli/evaluate.ts --limit 50 --concurrency 8",
+    "evaluate:dry": "tsx src/cli/evaluate.ts --limit 5 --dry-run --concurrency 8",
+    "pdf": "tsx src/cli/pdf.ts",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.{json,js,ts}\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.{json,js,ts}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm run lint && npm run test"
   },
   "keywords": [
     "ai",
@@ -26,7 +51,20 @@
   },
   "license": "MIT",
   "dependencies": {
-    "playwright": "^1.58.1",
-    "openai": "^4.0.0"
+    "openai": "^6.42.0",
+    "playwright": "^1.58.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^17.6.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
   }
 }

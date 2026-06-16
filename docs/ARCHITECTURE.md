@@ -53,7 +53,7 @@ Career-Ops now has two agent surfaces:
    - F: Interview prep (STAR stories)
 5. **Score**: Weighted average across 10 dimensions (1-5)
 6. **Report**: Save as `reports/{num}-{company}-{date}.md`
-7. **PDF**: Generate ATS-optimized CV (`generate-pdf.mjs`)
+7. **PDF**: Generate ATS-optimized CV (`npm run pdf`, `src/cli/pdf.ts`)
 8. **Track**: Write TSV to `batch/tracker-additions/`, auto-merged
 
 ## Batch Processing

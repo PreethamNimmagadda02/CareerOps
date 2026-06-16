@@ -31,6 +31,9 @@ apply-sarvam.mjs
 # Generated
 .resolved-prompt-*
 node_modules/
+dist/
+coverage/
+*.tsbuildinfo
 
 # OS
 .DS_Store

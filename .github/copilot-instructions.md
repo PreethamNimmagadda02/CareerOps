@@ -5,8 +5,8 @@
 ## Architecture
 
 - **Data files**: Markdown tables (applications.md), YAML config, TSV batch files
-- **Scripts**: Node.js `.mjs` (ES Modules) — PDF generation, tracker merge, dedup, normalization
-- **PDF Engine**: Playwright (Chromium headless) via `node generate-pdf.mjs`
+- **Scripts**: TypeScript (ES Modules) in `src/` — scan, evaluate, PDF generation. Run via `npm run <script>` (tsx) or build to `dist/`
+- **PDF Engine**: Playwright (Chromium headless) via `npm run pdf`
 - **Dashboard TUI**: Go (Bubble Tea + Lipgloss) in `dashboard/`
 - **Templates**: HTML (cv-template.html), YAML (states.yml, portals)
 
@@ -17,20 +17,21 @@ Two layers — never mix them:
 | Layer | Files | Rule |
 |-------|-------|------|
 | **User** | cv.md, config/profile.yml, modes/_profile.md, article-digest.md, portals.yml, data/*, reports/*, output/*, interview-prep/* | NEVER auto-updated |
-| **System** | modes/_shared.md, all mode files, *.mjs scripts, dashboard/*, templates/*, batch/*, docs/* | Safe to auto-update |
+| **System** | modes/_shared.md, all mode files, src/* scripts, dashboard/*, templates/*, batch/*, docs/* | Safe to auto-update |
 
 **THE RULE**: User customizations go in `modes/_profile.md` or `config/profile.yml`. NEVER edit system files for user-specific content.
 
 ## Commands
 
 ```bash
-node verify-pipeline.mjs        # Health check (7 checks)
-node merge-tracker.mjs           # Merge batch TSVs → applications.md
-node dedup-tracker.mjs           # Remove duplicate entries
-node normalize-statuses.mjs      # Map status aliases to canonical
-node cv-sync-check.mjs           # Validate setup consistency
-node generate-pdf.mjs <in> <out> # HTML → PDF via Playwright
-node update-system.mjs check     # Check for updates
+npm run scan                     # Scan portals.yml job boards (structured APIs)
+npm run scan:fallback            # Scan + browser fallback for non-API boards
+npm run evaluate                 # Evaluate pending N/A jobs via LLM
+npm run evaluate:all             # Evaluate up to 50 pending jobs
+npm run evaluate:dry             # Fetch JDs only, skip AI + writes
+npm run pdf -- <in> <out>        # HTML → PDF via Playwright
+npm run check                    # typecheck + lint + test
+npm run build                    # Compile TypeScript to dist/
 ```
 
 ## Conventions

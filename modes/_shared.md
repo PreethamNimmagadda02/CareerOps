@@ -96,7 +96,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 | Read | cv.md, _profile.md, article-digest.md, cv-template.html |
 | Write | Temporary HTML for PDF, applications.md, reports .md |
 | Edit | Update tracker |
-| Bash | `node generate-pdf.mjs` |
+| Bash | `npm run pdf -- <input.html> <output.pdf> --format={a4|letter}` |
 
 ### Time-to-offer priority
 - Working demo + metrics > perfection

@@ -23,7 +23,7 @@ Read the full PDF generation instructions from `modes/pdf.md` and execute them.
 11. Inject keywords naturally into achievements (**NEVER invent**)
 12. Generate HTML from `templates/cv-template.html` using placeholders
 13. Write HTML to temp file
-14. Run: `node generate-pdf.mjs <input.html> output/cv-candidate-{company}-{date}.pdf --format={letter|a4}`
+14. Run: `npm run pdf -- <input.html> output/cv-candidate-{company}-{date}.pdf --format={letter|a4}`
 15. Report: PDF path, page count, keyword coverage %
 
 After generating, update tracker PDF column from ❌ to ✅ if offer already registered.

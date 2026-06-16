@@ -32,7 +32,7 @@ Read the full pipeline instructions from `modes/auto-pipeline.md` and execute th
 
 **Step 3 — Generate PDF**: Execute PDF generation (delegate to /generate-pdf prompt)
 - Read `modes/pdf.md` for the 13-step pipeline
-- Extract keywords, rewrite summary, generate HTML, run `node generate-pdf.mjs`
+- Extract keywords, rewrite summary, generate HTML, run `npm run pdf -- <input.html> <output.pdf>`
 
 **Step 4 — Draft Application Answers** (only if score >= 4.5):
 - Generate answers with "I'm choosing you" tone
