@@ -710,6 +710,27 @@ func (m PipelineModel) renderPreview() string {
 	labelStyle := lipgloss.NewStyle().Foreground(m.theme.Sky).Bold(true)
 	valueStyle := lipgloss.NewStyle().Foreground(m.theme.Text)
 	dimStyle := lipgloss.NewStyle().Foreground(m.theme.Subtext)
+	linkStyle := lipgloss.NewStyle().Foreground(m.theme.Mauve).Underline(true)
+
+	// Report link (path relative to career-ops root). Press Enter to open it.
+	if app.ReportPath != "" {
+		label := "Report: "
+		if app.ReportNumber != "" {
+			label = fmt.Sprintf("Report #%s: ", app.ReportNumber)
+		}
+		lines = append(lines, padStyle.Render(
+			labelStyle.Render(label)+linkStyle.Render(app.ReportPath)+
+				dimStyle.Render("  (Enter to open)")))
+	} else {
+		lines = append(lines, padStyle.Render(dimStyle.Render("No report generated yet")))
+	}
+
+	// Original job posting URL, if known.
+	if app.JobURL != "" {
+		lines = append(lines, padStyle.Render(
+			labelStyle.Render("Job URL: ")+linkStyle.Render(app.JobURL)+
+				dimStyle.Render("  (o to open)")))
+	}
 
 	// Check report cache
 	if summary, ok := m.reportCache[app.ReportPath]; ok {
