@@ -8,17 +8,7 @@
     "evaluate": "node evaluate-agent.mjs --limit 5 --concurrency 8",
     "evaluate:all": "node evaluate-agent.mjs --limit 50 --concurrency 8",
     "evaluate:dry": "node evaluate-agent.mjs --limit 5 --dry-run --concurrency 8",
-    "verify": "node verify-pipeline.mjs",
-    "verify:copilot": "node verify-copilot-migration.mjs",
-    "verify:all": "node verify-copilot-migration.mjs && node verify-pipeline.mjs",
-    "normalize": "node normalize-statuses.mjs",
-    "dedup": "node dedup-tracker.mjs",
-    "merge": "node merge-tracker.mjs",
-    "pdf": "node generate-pdf.mjs",
-    "sync-check": "node cv-sync-check.mjs",
-    "update:check": "node update-system.mjs check",
-    "update": "node update-system.mjs apply",
-    "rollback": "node update-system.mjs rollback"
+    "pdf": "node generate-pdf.mjs"
   },
   "keywords": [
     "ai",
