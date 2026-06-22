@@ -60,7 +60,11 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Install dependencies
+      - name: Install root dependencies (required for shared ../src/lib)
+        working-directory: .
+        run: npm ci
+
+      - name: Install web dependencies
         run: npm ci
 
       - name: Lint

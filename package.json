@@ -26,6 +26,7 @@
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist coverage",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "postinstall": "prisma generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.{json,js,ts}\"",
