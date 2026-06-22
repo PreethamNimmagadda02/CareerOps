@@ -4,7 +4,6 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 declare global {
-   
   var prisma: PrismaClient | undefined;
 }
 
