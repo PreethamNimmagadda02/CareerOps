@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Application {
+  id        Int      @id @default(autoincrement())
+  date      String
+  company   String
+  role      String
+  score     String
+  status    String
+  pdf       String
+  report    String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -11,9 +11,17 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY tsconfig.json ./
+COPY tsconfig.json prisma.config.ts ./
+COPY prisma ./prisma
 COPY src ./src
+RUN npx prisma generate
 RUN npm run build
+
+# Build Next.js web app
+COPY web/package.json web/package-lock.json ./web/
+RUN cd web && npm ci
+COPY web ./web
+RUN cd web && npm run build
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/playwright:v1.59.1-noble AS runtime
@@ -21,15 +29,28 @@ FROM mcr.microsoft.com/playwright:v1.59.1-noble AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 
+# Install root production dependencies
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
+# Generate Prisma client
+COPY prisma.config.ts ./
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copy CLI dist
 COPY --from=build /app/dist ./dist
 COPY fonts ./fonts
 COPY templates ./templates
 
-# Runtime data (portals.yml, cv.md, config/, data/, reports/) should be mounted
-# as a volume, e.g.:
-#   docker run --rm -v "$PWD:/work" -w /work career-ops node /app/dist/cli/scan.js --compact
-ENTRYPOINT ["node"]
-CMD ["dist/cli/scan.js", "--compact"]
+# Copy Web App
+COPY --from=build /app/web/.next ./web/.next
+COPY --from=build /app/web/package.json ./web/package.json
+COPY --from=build /app/web/node_modules ./web/node_modules
+
+# Expose Next.js port
+EXPOSE 3000
+
+# Start the Next.js web app by default
+ENTRYPOINT ["npm"]
+CMD ["start", "--prefix", "web"]

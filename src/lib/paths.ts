@@ -35,7 +35,7 @@ export const paths = {
   scanHistory: p("data", "scan-history.tsv"),
   reportsDir: p("reports"),
   fontsDir: p("fonts"),
-  /** Cross-platform temp file for scan results shared between scan + evaluate. */
-  scanResults: path.join(os.tmpdir(), "career-ops-scan-results.json"),
+  /** Persisted file for scan results shared between scan + evaluate. */
+  scanResults: p("data", "scan-results.json"),
   opencodeConfig: path.join(os.homedir(), ".config", "opencode", "opencode.jsonc"),
 } as const;

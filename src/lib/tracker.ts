@@ -4,30 +4,26 @@ import path from "node:path";
 import type { ApplicationRow } from "../types.js";
 import { paths } from "./paths.js";
 import { normalizeKey, slugify, today } from "./text.js";
+import { db } from "./db.js";
 
-/** Parse the markdown table rows of `data/applications.md`. */
-export function parseAppLines(md: string): ApplicationRow[] {
-  const jobs: ApplicationRow[] = [];
-  for (const line of md.split("\n")) {
-    if (!line.startsWith("|")) continue;
-    const parts = line.split("|").map((s) => s.trim());
-    if (parts.length < 9) continue;
-    const num = parseInt(parts[1] as string, 10);
-    if (Number.isNaN(num) || num === 0) continue;
-    jobs.push({
-      num,
-      date: parts[2] as string,
-      company: parts[3] as string,
-      role: parts[4] as string,
-      score: parts[5] as string,
-      status: parts[6] as string,
-      pdf: parts[7] as string,
-      report: parts[8] as string,
-      notes: parts[9] || "",
-      raw: line,
-    });
-  }
-  return jobs;
+/** Fetch all applications from the database. */
+export async function getApplications(): Promise<ApplicationRow[]> {
+  const apps = await db.application.findMany({
+    orderBy: { id: "asc" },
+  });
+
+  return apps.map((app) => ({
+    num: app.id,
+    date: app.date,
+    company: app.company,
+    role: app.role,
+    score: app.score,
+    status: app.status,
+    pdf: app.pdf,
+    report: app.report,
+    notes: app.notes || "",
+    raw: "", // Deprecated, kept for type compatibility
+  }));
 }
 
 /** Build a company||title -> url index from a scan-results JSON file. */
@@ -83,24 +79,29 @@ export function writeReport(opts: {
 }
 
 /**
- * Update a tracker row in-place (mutating `mdLines`) with a score + report
- * link. Returns true when the row was found and updated.
+ * Update an application's score and report link in the database.
  */
-export function updateTracker(
-  mdLines: string[],
-  rawLine: string,
+export async function updateTracker(
+  id: number,
   score: string,
   reportNum: number,
   company: string,
   date: string,
-): boolean {
+): Promise<boolean> {
   const filename = reportFilename(reportNum, company, date);
   const reportLink = `[${String(reportNum).padStart(3, "0")}](reports/${filename})`;
-  const idx = mdLines.indexOf(rawLine);
-  if (idx === -1) return false;
-  const parts = rawLine.split("|");
-  parts[5] = ` ${score}/5 `;
-  parts[8] = ` ${reportLink} `;
-  mdLines[idx] = parts.join("|");
-  return true;
+
+  try {
+    await db.application.update({
+      where: { id },
+      data: {
+        score: `${score}/5`,
+        report: reportLink,
+        updatedAt: new Date(),
+      },
+    });
+    return true;
+  } catch (err) {
+    return false;
+  }
 }

@@ -47,3 +47,5 @@ career-dashboard
 
 
 .env
+/src/generated/prisma
+data/scan-results.json

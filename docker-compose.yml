@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: careerops
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d careerops" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      target: runtime
+    container_name: app
+    ports:
+      - "3000:3000"
+    environment:
+      # Use the docker-compose service name `db` instead of localhost
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/careerops?schema=public
+      - NODE_ENV=production
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Map the necessary data directories so reports and config persist
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ./config:/app/config
+      - ./portals.yml:/app/portals.yml
+      - ./cv.md:/app/cv.md
+      # Mount the local `.env` if API keys are needed inside the container
+      - ./.env:/app/.env
+
+volumes:
+  pgdata:

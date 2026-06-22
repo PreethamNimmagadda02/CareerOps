@@ -5,12 +5,24 @@ import { repoPaths } from "./paths";
 
 export type PipelineCommand = "scan" | "scan:fallback" | "evaluate" | "evaluate:all" | "evaluate:dry";
 
-const ALLOWED: Record<PipelineCommand, string[]> = {
-  scan: ["run", "scan"],
-  "scan:fallback": ["run", "scan:fallback"],
-  evaluate: ["run", "evaluate"],
-  "evaluate:all": ["run", "evaluate:all"],
-  "evaluate:dry": ["run", "evaluate:dry"],
+const isProd = process.env.NODE_ENV === "production";
+
+const ALLOWED: Record<PipelineCommand, { cmd: string; args: string[] }> = {
+  scan: isProd
+    ? { cmd: "node", args: ["dist/cli/scan.js", "--compact", "--concurrency", "12"] }
+    : { cmd: "npm", args: ["run", "scan"] },
+  "scan:fallback": isProd
+    ? { cmd: "node", args: ["dist/cli/scan.js", "--compact", "--fallback", "--concurrency", "12", "--browser-concurrency", "4"] }
+    : { cmd: "npm", args: ["run", "scan:fallback"] },
+  evaluate: isProd
+    ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "5", "--concurrency", "8"] }
+    : { cmd: "npm", args: ["run", "evaluate"] },
+  "evaluate:all": isProd
+    ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "50", "--concurrency", "8"] }
+    : { cmd: "npm", args: ["run", "evaluate:all"] },
+  "evaluate:dry": isProd
+    ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "5", "--dry-run", "--concurrency", "8"] }
+    : { cmd: "npm", args: ["run", "evaluate:dry"] },
 };
 
 /**
@@ -27,8 +39,8 @@ const ALLOWED: Record<PipelineCommand, string[]> = {
  *    disconnects, avoiding unhandled promise rejections on aborted streams.
  */
 export function runPipeline(command: PipelineCommand): ReadableStream<Uint8Array> {
-  const args = ALLOWED[command];
-  if (!args) throw new Error(`Unknown pipeline command: ${command}`);
+  const pipelineConfig = ALLOWED[command];
+  if (!pipelineConfig) throw new Error(`Unknown pipeline command: ${command}`);
 
   const encoder = new TextEncoder();
 
@@ -55,9 +67,9 @@ export function runPipeline(command: PipelineCommand): ReadableStream<Uint8Array
         controller.close();
       };
 
-      send(`$ npm ${args.join(" ")}\n`);
+      send(`$ ${pipelineConfig.cmd} ${pipelineConfig.args.join(" ")}\n`);
 
-      child = spawn("npm", args, {
+      child = spawn(pipelineConfig.cmd, pipelineConfig.args, {
         cwd: repoPaths.root,
         env: {
           ...process.env,

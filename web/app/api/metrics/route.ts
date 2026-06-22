@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const apps = readApplications(false);
+    const apps = await readApplications(false);
     return NextResponse.json({ metrics: computeMetrics(apps) });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

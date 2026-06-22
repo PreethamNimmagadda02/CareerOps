@@ -18,6 +18,7 @@ import { paths } from "../lib/paths.js";
 import { parseConfig } from "../lib/portals.js";
 import { hasStructuredApi, scanCompany, scanCompanyBrowser } from "../lib/scanner.js";
 import { dedupKey, normalizeUrl } from "../lib/text.js";
+import { db } from "../lib/db.js";
 import type { Company, FailureInfo, Job, RelevantJob, ScanResult, ScanSummary } from "../types.js";
 
 async function main(): Promise<void> {
@@ -184,14 +185,54 @@ async function main(): Promise<void> {
   if (summary.shortlist.length > 0) {
     const date = new Date().toISOString().slice(0, 10);
     let mdTable = `# Applications Tracker\n\n| # | Date | Company | Role | Score | Status | PDF | Report |\n|---|---|---|---|---|---|---|---|\n`;
-    let id = 1;
-    for (const job of summary.shortlist) {
-      mdTable += `| ${id++} | ${date} | ${job.company} | ${job.title} | N/A | Evaluated | ❌ |  | Imported from recent scan (shortlist) |\n`;
+
+    // Determine the next ID for the MD file
+    let nextId = 1;
+    if (existsSync(paths.applications)) {
+      const existing = readFileSync(paths.applications, "utf8");
+      for (const line of existing.split("\n")) {
+        if (line.startsWith("|")) {
+          const parts = line.split("|").map((s) => s.trim());
+          const num = parseInt(parts[1] as string, 10);
+          if (!Number.isNaN(num) && num >= nextId) nextId = num + 1;
+        }
+      }
+      mdTable = existing.endsWith("\n") ? existing : existing + "\n";
     }
-    writeFileSync(paths.applications, mdTable);
-    log.info(
-      `\nCompletely overwrote applications.md with ${summary.shortlist.length} shortlisted jobs.`,
-    );
+
+    let addedCount = 0;
+    for (const job of summary.shortlist) {
+      // Check if it already exists in DB
+      const existing = await db.application.findFirst({
+        where: { company: job.company, role: job.title },
+      });
+
+      if (!existing) {
+        mdTable += `| ${nextId} | ${date} | ${job.company} | ${job.title} | N/A | Evaluated | ❌ |  | Imported from recent scan (shortlist) |\n`;
+        await db.application.create({
+          data: {
+            id: nextId,
+            date,
+            company: job.company,
+            role: job.title,
+            score: "N/A",
+            status: "Evaluated",
+            pdf: "❌",
+            report: "",
+            notes: "Imported from recent scan (shortlist)",
+          },
+        });
+        nextId++;
+        addedCount++;
+      }
+    }
+
+    if (addedCount > 0) {
+      writeFileSync(paths.applications, mdTable);
+      log.info(`\nAppended ${addedCount} new shortlisted jobs to applications.md and Postgres DB.`);
+    } else {
+      log.info(`\nNo new jobs to append to applications.md (all shortlisted jobs already exist).`);
+    }
   }
 
   if (compact) {

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const applications = readApplications();
+    const applications = await readApplications();
     return NextResponse.json({ applications });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -39,7 +39,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const ok = updateApplicationStatus({
+    const ok = await updateApplicationStatus({
       num: body.num,
       reportNumber: body.reportNumber,
       newStatus: body.newStatus,

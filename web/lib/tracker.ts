@@ -1,50 +1,41 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-
-import { repoPaths } from "./paths";
+import { db } from "../../src/lib/db";
 import { readReportSummary } from "./reports";
 import { normalizeStatus } from "./status";
 import type { Application } from "./types";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
+import { repoPaths } from "./paths";
 
 const reReportLink = /\[(\d+)\]\(([^)]+)\)/;
 const reScore = /(\d+\.?\d*)\/5/;
 
-/** Parse the markdown table rows of data/applications.md into Applications. */
-export function readApplications(enrich = true): Application[] {
-  if (!existsSync(repoPaths.applications)) return [];
-  const content = readFileSync(repoPaths.applications, "utf8");
+/** Fetch applications from the database and map to UI `Application` format. */
+export async function readApplications(enrich = true): Promise<Application[]> {
+  const dbApps = await db.application.findMany({
+    orderBy: { id: 'asc' }
+  });
+
   const apps: Application[] = [];
 
-  for (const line of content.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed.startsWith("|")) continue;
-    if (trimmed.startsWith("| #") || trimmed.startsWith("|---")) continue;
-
-    const parts = trimmed.replace(/^\|/, "").replace(/\|$/, "").split("|").map((s) => s.trim());
-    if (parts.length < 8) continue;
-
-    const num = parseInt(parts[0], 10);
-    if (Number.isNaN(num) || num === 0) continue;
-
-    const scoreRaw = parts[4] ?? "";
+  for (const app of dbApps) {
+    const scoreRaw = app.score ?? "";
     const scoreMatch = scoreRaw.match(reScore);
-    const status = parts[5] ?? "";
-
-    const reportCell = parts[7] ?? "";
+    const status = app.status ?? "";
+    const reportCell = app.report ?? "";
     const linkMatch = reportCell.match(reReportLink);
 
     apps.push({
-      num,
-      date: parts[1] ?? "",
-      company: parts[2] ?? "",
-      role: parts[3] ?? "",
+      num: app.id,
+      date: app.date ?? "",
+      company: app.company ?? "",
+      role: app.role ?? "",
       scoreRaw,
-      score: scoreMatch ? parseFloat(scoreMatch[1]) : null,
+      score: scoreMatch ? parseFloat(scoreMatch[1] as string) : null,
       status,
       normStatus: normalizeStatus(status),
-      hasPdf: (parts[6] ?? "").includes("✅"),
-      reportNumber: linkMatch ? linkMatch[1] : null,
-      reportPath: linkMatch ? linkMatch[2] : null,
-      notes: parts[8] ?? "",
+      hasPdf: (app.pdf ?? "").includes("✅"),
+      reportNumber: linkMatch ? linkMatch[1] as string : null,
+      reportPath: linkMatch ? linkMatch[2] as string : null,
+      notes: app.notes ?? "",
       jobUrl: null,
     });
   }
@@ -66,41 +57,60 @@ export function readApplications(enrich = true): Application[] {
 }
 
 /**
- * Update an application's status in applications.md, matching by report number
- * (preferred) or row number. Returns true when a row was updated.
+ * Update an application's status in Postgres (and applications.md for redundancy).
+ * Returns true when a row was updated.
  */
-export function updateApplicationStatus(opts: {
+export async function updateApplicationStatus(opts: {
   num?: number;
   reportNumber?: string;
   newStatus: string;
-}): boolean {
-  if (!existsSync(repoPaths.applications)) return false;
-  const lines = readFileSync(repoPaths.applications, "utf8").split("\n");
-  let updated = false;
-
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i];
-    if (!line.trim().startsWith("|")) continue;
-    if (line.trim().startsWith("| #") || line.trim().startsWith("|---")) continue;
-
-    const parts = line.split("|");
-    // parts: ["", " # ", " date ", " company ", " role ", " score ", " status ", " pdf ", " report ", " notes "]
-    if (parts.length < 9) continue;
-
-    const rowNum = parseInt((parts[1] ?? "").trim(), 10);
-    const reportCell = parts[8] ?? "";
-    const matchByReport =
-      opts.reportNumber && reportCell.includes(`[${opts.reportNumber}]`);
-    const matchByNum = opts.num !== undefined && rowNum === opts.num;
-
-    if (matchByReport || matchByNum) {
-      parts[6] = ` ${opts.newStatus} `;
-      lines[i] = parts.join("|");
-      updated = true;
-      break;
-    }
+}): Promise<boolean> {
+  let targetId = opts.num;
+  
+  if (targetId === undefined && opts.reportNumber) {
+    // Need to find the target ID by report number
+    const apps = await db.application.findMany();
+    const app = apps.find(a => a.report.includes(`[${opts.reportNumber}]`));
+    if (app) targetId = app.id;
   }
 
-  if (updated) writeFileSync(repoPaths.applications, lines.join("\n"));
+  if (targetId === undefined) return false;
+
+  let updated = false;
+  try {
+    await db.application.update({
+      where: { id: targetId },
+      data: { status: opts.newStatus, updatedAt: new Date() }
+    });
+    updated = true;
+  } catch (err) {
+    return false;
+  }
+
+  // Update applications.md redundancy if requested
+  if (updated && existsSync(repoPaths.applications)) {
+    const lines = readFileSync(repoPaths.applications, "utf8").split("\n");
+    let fileUpdated = false;
+
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i] as string;
+      if (!line.trim().startsWith("|")) continue;
+      if (line.trim().startsWith("| #") || line.trim().startsWith("|---")) continue;
+
+      const parts = line.split("|");
+      if (parts.length < 9) continue;
+
+      const rowNum = parseInt((parts[1] ?? "").trim(), 10);
+      if (rowNum === targetId) {
+        parts[6] = ` ${opts.newStatus} `;
+        lines[i] = parts.join("|");
+        fileUpdated = true;
+        break;
+      }
+    }
+
+    if (fileUpdated) writeFileSync(repoPaths.applications, lines.join("\n"));
+  }
+
   return updated;
 }

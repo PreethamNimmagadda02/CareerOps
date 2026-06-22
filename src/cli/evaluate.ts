@@ -11,7 +11,7 @@
  *                       [--provider zen|nvidia|<custom>] [--model NAME]
  *                       [--concurrency N]
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { chromium } from "playwright";
 
@@ -26,7 +26,7 @@ import { buildPrompt, parseScore } from "../lib/prompt.js";
 import {
   buildUrlIndex,
   nextReportNumber,
-  parseAppLines,
+  getApplications,
   updateTracker,
   writeReport,
 } from "../lib/tracker.js";
@@ -68,9 +68,7 @@ async function main(): Promise<void> {
   const profileYml = existsSync(paths.profile)
     ? readFileSync(paths.profile, "utf8")
     : "(profile.yml not found)";
-  const mdContent = readFileSync(paths.applications, "utf8");
-  const mdLines = mdContent.split("\n");
-  const allJobs = parseAppLines(mdContent);
+  const allJobs = await getApplications();
 
   let targets = allJobs.filter((j) => {
     const noScore = j.score.trim() === "N/A" || j.score.trim() === "";
@@ -174,16 +172,14 @@ async function main(): Promise<void> {
             });
             log.info(`${tag} 📝 reports/${filename}`);
 
-            const updated = updateTracker(
-              mdLines,
-              job.raw,
+            const updated = await updateTracker(
+              job.num,
               score || "N/A",
               reportNum,
               job.company,
               date,
             );
             if (updated) {
-              writeFileSync(paths.applications, mdLines.join("\n"));
               log.info(
                 `${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`,
               );
