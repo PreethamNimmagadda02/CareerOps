@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Catppuccin Mocha-inspired dark theme (default) */
+    --background: 240 21% 12%;
+    --foreground: 226 64% 88%;
+    --card: 240 21% 15%;
+    --card-foreground: 226 64% 88%;
+    --primary: 217 92% 76%;
+    --primary-foreground: 240 21% 12%;
+    --secondary: 237 16% 23%;
+    --secondary-foreground: 226 64% 88%;
+    --muted: 237 16% 23%;
+    --muted-foreground: 228 24% 72%;
+    --accent: 237 16% 28%;
+    --accent-foreground: 226 64% 88%;
+    --destructive: 343 81% 75%;
+    --destructive-foreground: 240 21% 12%;
+    --border: 237 16% 26%;
+    --input: 237 16% 26%;
+    --ring: 217 92% 76%;
+    --radius: 0.6rem;
+
+    --ctp-green: 115 54% 76%;
+    --ctp-yellow: 41 86% 83%;
+    --ctp-red: 343 81% 75%;
+    --ctp-blue: 217 92% 76%;
+    --ctp-sky: 189 71% 73%;
+    --ctp-mauve: 267 84% 81%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+}
+
+/* Markdown report rendering */
+.markdown-body h1 {
+  @apply mb-3 mt-6 text-2xl font-bold text-primary;
+}
+.markdown-body h2 {
+  @apply mb-2 mt-5 text-xl font-semibold text-ctp-mauve;
+}
+.markdown-body h3 {
+  @apply mb-2 mt-4 text-lg font-semibold text-ctp-sky;
+}
+.markdown-body p {
+  @apply my-2 leading-relaxed text-foreground/90;
+}
+.markdown-body ul {
+  @apply my-2 list-disc space-y-1 pl-6;
+}
+.markdown-body ol {
+  @apply my-2 list-decimal space-y-1 pl-6;
+}
+.markdown-body a {
+  @apply text-ctp-blue underline underline-offset-2 hover:text-ctp-sky;
+}
+.markdown-body strong {
+  @apply font-semibold text-foreground;
+}
+.markdown-body hr {
+  @apply my-5 border-border;
+}
+.markdown-body code {
+  @apply rounded bg-muted px-1.5 py-0.5 text-sm text-ctp-yellow;
+}
+.markdown-body table {
+  @apply my-4 w-full border-collapse overflow-hidden rounded-md text-sm;
+}
+.markdown-body th {
+  @apply border border-border bg-muted px-3 py-2 text-left font-semibold;
+}
+.markdown-body td {
+  @apply border border-border px-3 py-2 align-top;
+}
+.markdown-body blockquote {
+  @apply my-3 border-l-2 border-primary pl-4 italic text-muted-foreground;
+}

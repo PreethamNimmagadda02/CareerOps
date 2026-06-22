@@ -1,0 +1,36 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+/**
+ * Resolve the CarrerOps repository root. The web app lives in `web/`, so we
+ * walk up from the current working directory looking for the marker files that
+ * identify the project root. Can be overridden with CAREER_OPS_ROOT.
+ */
+function findRepoRoot(): string {
+  const override = process.env.CAREER_OPS_ROOT;
+  if (override && existsSync(override)) return override;
+
+  let dir = process.cwd();
+  for (let i = 0; i < 10; i += 1) {
+    const hasPortals = existsSync(path.join(dir, "portals.yml"));
+    const hasData = existsSync(path.join(dir, "data"));
+    const hasPkg = existsSync(path.join(dir, "package.json"));
+    if ((hasPortals || hasData) && hasPkg) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  // Fallback: parent of web/
+  return path.resolve(process.cwd(), "..");
+}
+
+export const REPO_ROOT = findRepoRoot();
+
+const p = (...segments: string[]): string => path.join(REPO_ROOT, ...segments);
+
+export const repoPaths = {
+  root: REPO_ROOT,
+  applications: p("data", "applications.md"),
+  reportsDir: p("reports"),
+  scanHistory: p("data", "scan-history.tsv"),
+} as const;

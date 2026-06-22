@@ -45,7 +45,28 @@ async function main(): Promise<void> {
   const structuredCompanies = enabledCompanies.filter(hasStructuredApi);
   const unsupportedCompanies = enabledCompanies.filter((c) => !structuredCompanies.includes(c));
 
-  const results = await mapLimit(structuredCompanies, concurrency, scanCompany);
+  log.step(`Loaded ${enabledCompanies.length} enabled companies from portals.yml`);
+  log.step(
+    `${structuredCompanies.length} structured boards, ${unsupportedCompanies.length} custom/non-API boards`,
+  );
+
+  const startedAt = Date.now();
+  const structuredTotal = structuredCompanies.length;
+  let structuredDone = 0;
+  log.step(`🔍 Scanning ${structuredTotal} job boards via structured APIs (concurrency=${concurrency})…`);
+
+  const results = await mapLimit(structuredCompanies, concurrency, async (company) => {
+    const result = await scanCompany(company);
+    structuredDone += 1;
+    logScanProgress(structuredDone, structuredTotal, result);
+    return result;
+  });
+
+  const structuredOk = results.filter((r) => !r.error).length;
+  const structuredJobs = results.reduce((n, r) => n + r.jobs.length, 0);
+  log.step(
+    `✅ Structured scan done in ${secondsSince(startedAt)}s — ${structuredOk}/${structuredTotal} ok, ${structuredJobs} jobs, ${structuredTotal - structuredOk} failed`,
+  );
 
   let browserResults: ScanResult[] = [];
   if (useFallback) {
@@ -54,15 +75,30 @@ async function main(): Promise<void> {
       ...results.filter((r) => r.error).map((r) => r.company),
     ];
     log.info(`\n🚀 scan   concurrency=${concurrency}  browser-concurrency=${browserConcurrency}`);
+    const browserTotal = fallbackCompanies.length;
+    let browserDone = 0;
+    const browserStartedAt = Date.now();
+    log.step(
+      `🌐 Browser fallback for ${browserTotal} boards (concurrency=${browserConcurrency})…`,
+    );
     const browser = await chromium.launch({ headless: true });
     try {
-      browserResults = await mapLimit(fallbackCompanies, browserConcurrency, (company) =>
-        scanCompanyBrowser(browser, company),
-      );
+      browserResults = await mapLimit(fallbackCompanies, browserConcurrency, async (company) => {
+        const result = await scanCompanyBrowser(browser, company);
+        browserDone += 1;
+        logScanProgress(browserDone, browserTotal, result);
+        return result;
+      });
     } finally {
       await browser.close();
     }
+    const browserOk = browserResults.filter((r) => !r.error).length;
+    log.step(
+      `✅ Browser fallback done in ${secondsSince(browserStartedAt)}s — ${browserOk}/${browserTotal} ok`,
+    );
   }
+
+  log.step("🧮 Filtering and de-duplicating results…");
 
   const allResults = [...results, ...browserResults];
   const jobs = allResults.flatMap((r) => r.jobs);
@@ -112,6 +148,12 @@ async function main(): Promise<void> {
     relevant.push({ ...job, match, engineeringMatch: eng, locationMatch: loc });
   }
 
+  const filteredOut =
+    skippedTitle.length + skippedNonEngineering.length + skippedLocation.length + duplicates.length;
+  log.step(
+    `📊 ${jobs.length} jobs fetched → ${relevant.length} relevant (${filteredOut} filtered out, ${duplicates.length} duplicates)`,
+  );
+
   const summary: ScanSummary = {
     scannedAt: new Date().toISOString(),
     enabledCompanies: enabledCompanies.length,
@@ -134,10 +176,14 @@ async function main(): Promise<void> {
   };
 
   writeFileSync(paths.scanResults, JSON.stringify(summary, null, 2));
+  log.step(
+    `💾 Wrote ${summary.relevant.length} relevant (${summary.shortlist.length} shortlisted) to ${paths.scanResults}`,
+  );
+  log.step(`🏁 Scan finished in ${secondsSince(startedAt)}s`);
 
   if (summary.shortlist.length > 0) {
     const date = new Date().toISOString().slice(0, 10);
-    let mdTable = `# Applications Tracker\n\n| # | Fecha | Empresa | Rol | Score | Estado | PDF | Report |\n|---|---|---|---|---|---|---|---|\n`;
+    let mdTable = `# Applications Tracker\n\n| # | Date | Company | Role | Score | Status | PDF | Report |\n|---|---|---|---|---|---|---|---|\n`;
     let id = 1;
     for (const job of summary.shortlist) {
       mdTable += `| ${id++} | ${date} | ${job.company} | ${job.title} | N/A | Evaluated | ❌ |  | Imported from recent scan (shortlist) |\n`;
@@ -153,6 +199,23 @@ async function main(): Promise<void> {
   } else {
     log.info(JSON.stringify(summary, null, 2));
   }
+}
+
+/** Log a per-company progress line during scanning (to stderr). */
+function logScanProgress(done: number, total: number, result: ScanResult): void {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const counter = `[${String(done).padStart(String(total).length, " ")}/${total} ${String(pct).padStart(3, " ")}%]`;
+  if (result.error) {
+    log.step(`${counter} ✗ ${result.company.name} (${result.method}) — ${result.error}`);
+  } else {
+    const n = result.jobs.length;
+    log.step(`${counter} ✓ ${result.company.name} (${result.method}) — ${n} job${n === 1 ? "" : "s"}`);
+  }
+}
+
+/** Whole seconds elapsed since a Date.now() timestamp, as a string. */
+function secondsSince(startMs: number): string {
+  return ((Date.now() - startMs) / 1000).toFixed(1);
 }
 
 function printCompact(summary: ScanSummary, browserCount: number, verbose: boolean): void {

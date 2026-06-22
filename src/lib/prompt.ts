@@ -76,9 +76,24 @@ APPLY NOW | APPLY WITH TWEAKS | MONITOR | SKIP — one sentence.`;
 
 /**
  * Parse the overall score from an evaluation. Handles common LLM formatting
- * variants such as `OVERALL_SCORE: 4.2/5`, `**OVERALL_SCORE:** **4.2 / 5**`.
+ * variants including:
+ *   - `OVERALL_SCORE: 4.2/5`
+ *   - `**OVERALL_SCORE:** **4.2 / 5**`
+ *   - `| **OVERALL_SCORE** | **3.6 / 5** |`  (table cell)
+ *   - `| **Overall Score** | **3.4/5** |`     (table cell, title-case)
+ *   - `| **Overall** | **3.5 / 5** |`          (table cell, short label)
  */
 export function parseScore(text: string): string | null {
-  const m = text.match(/OVERALL[_\s]SCORE[:\s*]+\**\s*([\d.]+)\s*\/\s*5/);
-  return m ? parseFloat(m[1] as string).toFixed(1) : null;
+  // Pattern 1 – inline / bold variants: OVERALL_SCORE: X/5 or OVERALL SCORE: X/5
+  const inline = text.match(/OVERALL[_\s]SCORE[\s:*]+\**\s*([\d.]+)\s*\/\s*5/i);
+  if (inline) return parseFloat(inline[1] as string).toFixed(1);
+
+  // Pattern 2 – markdown table cell: | **Overall...** | **X.X / 5** ... |
+  // Matches labels: "OVERALL_SCORE", "Overall Score", "Overall"
+  const table = text.match(
+    /\|\s*\**\s*Overall(?:[_\s]Score)?\s*\**\s*\|\s*\**\s*([\d.]+)\s*\/\s*5/i,
+  );
+  if (table) return parseFloat(table[1] as string).toFixed(1);
+
+  return null;
 }
