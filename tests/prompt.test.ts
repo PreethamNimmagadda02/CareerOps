@@ -42,6 +42,24 @@ describe("parseScore", () => {
     expect(parseScore("| **Overall** | **3.5 / 5** (Tech 35 % ...) |")).toBe("3.5");
   });
 
+  it("parses the weighted-calculation form", () => {
+    const text = [
+      "SCORE BREAKDOWN",
+      "Technical Fit\t3.5 / 5\treason",
+      "Level Match\t2 / 5\treason",
+      "Location / Remote\t5 / 5\treason",
+      "Growth Potential\t4.5 / 5\treason",
+      "Domain Fit\t3 / 5\treason",
+      "Overall Score (weighted)",
+      "[ (3.5×0.35) + (2×0.20) + (5×0.15) + (4.5×0.15) + (3×0.15) = 3.5 / 5 ]",
+    ].join("\n");
+    expect(parseScore(text)).toBe("3.5");
+  });
+
+  it("parses a weighted result on the same line", () => {
+    expect(parseScore("Overall Score = 4.0 / 5")).toBe("4.0");
+  });
+
   it("returns null when absent", () => {
     expect(parseScore("no score here")).toBeNull();
   });

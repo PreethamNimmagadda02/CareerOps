@@ -82,6 +82,7 @@ APPLY NOW | APPLY WITH TWEAKS | MONITOR | SKIP — one sentence.`;
  *   - `| **OVERALL_SCORE** | **3.6 / 5** |`  (table cell)
  *   - `| **Overall Score** | **3.4/5** |`     (table cell, title-case)
  *   - `| **Overall** | **3.5 / 5** |`          (table cell, short label)
+ *   - `Overall Score (weighted)\n[ (3.5×0.35) + ... = 3.5 / 5 ]`  (calculation)
  */
 export function parseScore(text: string): string | null {
   // Pattern 1 – inline / bold variants: OVERALL_SCORE: X/5 or OVERALL SCORE: X/5
@@ -94,6 +95,15 @@ export function parseScore(text: string): string | null {
     /\|\s*\**\s*Overall(?:[_\s]Score)?\s*\**\s*\|\s*\**\s*([\d.]+)\s*\/\s*5/i,
   );
   if (table) return parseFloat(table[1] as string).toFixed(1);
+
+  // Pattern 3 – weighted-calculation form. An "Overall Score" label followed
+  // (possibly on the next line) by a math expression ending in `= X / 5`:
+  //   Overall Score (weighted)
+  //   [ (3.5×0.35) + (2×0.20) + ... = 3.5 / 5 ]
+  // The lazy `[^=]*` stops at the first `=` after the label, which is the
+  // result of the weighted sum — not any of the per-dimension `X/5` ratings.
+  const weighted = text.match(/Overall(?:[_\s]Score)?\b[^=]*?=\s*([\d.]+)\s*\/\s*5/i);
+  if (weighted) return parseFloat(weighted[1] as string).toFixed(1);
 
   return null;
 }

@@ -1,4 +1,7 @@
 # Personal data (user fills these)
+# Legacy: applications now live in Postgres, not this file. Ignored so a stray
+# old build or git op can never resurrect/track it again.
+data/applications.md
 data/pipeline.md
 data/scan-history.tsv
 output/*
