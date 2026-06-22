@@ -41,4 +41,4 @@ Before any evaluation or generation task, read these files:
 - NEVER submit applications without user review
 - ALWAYS cite exact CV lines when matching
 - ALWAYS use web search for comp research
-- ALWAYS write tracker additions as TSV (never edit applications.md directly for new entries)
+- ALWAYS persist tracker entries via the CLI: `npm run tracker -- save` for new entries, `npm run tracker -- update` for status changes

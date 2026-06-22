@@ -17,6 +17,21 @@
 | profile.yml | `config/profile.yml` | ALWAYS (candidate identity and targets) |
 | _profile.md | `modes/_profile.md` | ALWAYS (user archetypes, narrative, negotiation) |
 
+## Persistence (Postgres + Nextcloud)
+
+**Applications live in Postgres. Reports live in Nextcloud.** NEVER write `data/applications.md` or files under `reports/`.
+
+Persist everything through the `tracker` CLI (it talks to Postgres + Nextcloud for you):
+
+| Action | Command |
+|--------|---------|
+| List/read applications | `npm run tracker -- list` (add `--json` for machine-readable) |
+| Save an evaluation (report → Nextcloud + row → Postgres) | `npm run tracker -- save --company "X" --role "Y" --url "U" --score 4.5 --file /tmp/eval.md` |
+| Add a row only | `npm run tracker -- add --company "X" --role "Y" [--score --status --pdf]` |
+| Update a row | `npm run tracker -- update --id N [--status Aplicado --score 4.5/5 --pdf ✅]` |
+
+`save` is the post-evaluation one-shot: write the A–F report body to a temp file (e.g. `/tmp/eval.md`) and pass it via `--file` (or pipe it via stdin). The CLI adds the canonical header, uploads to Nextcloud, inserts the Postgres row, and links them. Requires `DATABASE_URL`, `NEXTCLOUD_URL`, `NEXTCLOUD_USER`, `NEXTCLOUD_PASSWORD` in `.env`.
+
 **RULE: NEVER hardcode metrics from proof points.** Read them from cv.md + article-digest.md at evaluation time.
 **RULE: For article/project metrics, article-digest.md takes precedence over cv.md.**
 **RULE: Read _profile.md AFTER this file. User customizations in _profile.md override defaults here.**
@@ -69,12 +84,12 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 6. Generate a PDF without reading the JD first
 7. Use corporate-speak
 8. Ignore the tracker (every evaluated offer gets registered)
+9. Write `data/applications.md` or files in `reports/` — applications go to Postgres and reports go to Nextcloud, both via the `tracker` CLI
 
 ### ALWAYS
 
 0. **Cover letter:** If the form allows it, ALWAYS include one. Same visual design as CV. JD quotes mapped to proof points. 1 page max.
 1. Read cv.md, _profile.md, and article-digest.md (if exists) before evaluating
-1b. **First evaluation of each session:** Run `node cv-sync-check.mjs`. If warnings, notify user.
 2. Detect the role archetype and adapt framing per _profile.md
 3. Cite exact lines from CV when matching
 4. Use WebSearch for comp and company data
@@ -83,7 +98,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 7. Be direct and actionable -- no fluff
 8. Native tech English for generated text. Short sentences, action verbs, no passive voice.
 8b. Case study URLs in PDF Professional Summary (recruiter may only read this).
-9. **Tracker additions as TSV** -- NEVER edit applications.md directly. Write TSV in `batch/tracker-additions/`.
+9. **Persist via the `tracker` CLI** -- NEVER edit `applications.md` or write into `reports/`. Use `npm run tracker -- save|add|update` (Postgres + Nextcloud).
 10. **Include `**URL:**` in every report header.**
 
 ### Tools
@@ -94,9 +109,8 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 | WebFetch | Fallback for extracting JDs from static pages |
 | Playwright | Verify offers (browser_navigate + browser_snapshot). **NEVER 2+ agents with Playwright in parallel.** |
 | Read | cv.md, _profile.md, article-digest.md, cv-template.html |
-| Write | Temporary HTML for PDF, applications.md, reports .md |
-| Edit | Update tracker |
-| Bash | `npm run pdf -- <input.html> <output.pdf> --format={a4|letter}` |
+| Write | Temporary HTML for PDF, temp report body (e.g. `/tmp/eval.md`) — NEVER applications.md or reports/*.md |
+| Bash | `npm run tracker -- save\|add\|update\|list` (Postgres + Nextcloud); `npm run pdf -- <input.html> <output.pdf> --format={a4\|letter}` |
 
 ### Time-to-offer priority
 - Working demo + metrics > perfection

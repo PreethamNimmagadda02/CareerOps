@@ -4,10 +4,10 @@
 
 ## Architecture
 
-- **Data files**: Markdown tables (applications.md), YAML config, TSV batch files
-- **Scripts**: TypeScript (ES Modules) in `src/` — scan, evaluate, PDF generation. Run via `npm run <script>` (tsx) or build to `dist/`
+- **Persistence**: Applications in Postgres (Prisma `Application` table); evaluation reports in Nextcloud (WebDAV `CareerOps-Reports/`)
+- **Scripts**: TypeScript (ES Modules) in `src/` — scan, evaluate, PDF generation, tracker CLI. Run via `npm run <script>` (tsx) or build to `dist/`
 - **PDF Engine**: Playwright (Chromium headless) via `npm run pdf`
-- **Dashboard TUI**: Go (Bubble Tea + Lipgloss) in `dashboard/`
+- **Tracker CLI**: `npm run tracker -- save|add|update|list` (`src/cli/tracker.ts`) — persists to Postgres + Nextcloud
 - **Templates**: HTML (cv-template.html), YAML (states.yml, portals)
 
 ## Data Contract (CRITICAL)
@@ -16,8 +16,8 @@ Two layers — never mix them:
 
 | Layer | Files | Rule |
 |-------|-------|------|
-| **User** | cv.md, config/profile.yml, modes/_profile.md, article-digest.md, portals.yml, data/*, reports/*, output/*, interview-prep/* | NEVER auto-updated |
-| **System** | modes/_shared.md, all mode files, src/* scripts, dashboard/*, templates/*, batch/*, docs/* | Safe to auto-update |
+| **User** | cv.md, config/profile.yml, modes/_profile.md, article-digest.md, portals.yml, data/*, Postgres (Application table), Nextcloud (CareerOps-Reports/), output/*, interview-prep/* | NEVER auto-updated |
+| **System** | modes/_shared.md, all mode files, src/* scripts, templates/*, batch/*, docs/* | Safe to auto-update |
 
 **THE RULE**: User customizations go in `modes/_profile.md` or `config/profile.yml`. NEVER edit system files for user-specific content.
 
@@ -37,10 +37,10 @@ npm run build                    # Compile TypeScript to dist/
 ## Conventions
 
 - Report numbering: sequential 3-digit zero-padded (`001`, `002`, ...)
-- Report naming: `{###}-{company-slug}-{YYYY-MM-DD}.md`
+- Report naming: `{###}-{company-slug}-{YYYY-MM-DD}.md` (stored in Nextcloud `CareerOps-Reports/`)
 - Canonical states: see `templates/states.yml` (Evaluated, Applied, Responded, Interview, Offer, Rejected, Discarded, SKIP)
-- NEVER edit `data/applications.md` to ADD entries — write TSV to `batch/tracker-additions/` and use `merge-tracker.mjs`
-- YES you can edit `data/applications.md` to UPDATE existing entries
+- To ADD new entries, use `npm run tracker -- save` (uploads the report to Nextcloud and inserts the Postgres `Application` row)
+- To UPDATE existing entries (status changes), use `npm run tracker -- update`
 - All reports MUST include `**URL:**` in the header
 - NEVER hardcode metrics — read from cv.md + article-digest.md at evaluation time
 - NEVER invent experience or skills
@@ -65,13 +65,13 @@ npm run build                    # Compile TypeScript to dist/
 | Path | Purpose |
 |------|---------|
 | `modes/` | Agent instruction files (scoring, evaluation, scanning) |
-| `data/` | User's application tracker, pipeline inbox, scan history |
-| `reports/` | Evaluation reports (markdown) |
+| `data/` | User's pipeline inbox, scan history |
+| Postgres (`Application` table) | Application tracker (via `npm run tracker`) |
+| Nextcloud (`CareerOps-Reports/`) | Evaluation reports (markdown) |
 | `output/` | Generated PDFs |
-| `batch/` | Batch processing state, logs, tracker additions |
+| `batch/` | Batch processing state, logs |
 | `templates/` | HTML template, states, portal examples |
 | `config/` | User profile (YAML) |
-| `dashboard/` | Go TUI application |
 | `fonts/` | Space Grotesk + DM Sans |
 
 ## Scoring System

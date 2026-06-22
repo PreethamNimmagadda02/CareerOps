@@ -28,7 +28,7 @@ Read the full pipeline instructions from `modes/auto-pipeline.md` and execute th
 
 **Step 1 — Evaluate A-F**: Execute full 6-block evaluation (delegate to @evaluator agent)
 
-**Step 2 — Save Report**: Write to `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`
+**Step 2 — Save Report**: Upload to Nextcloud (`CareerOps-Reports/{###}-{company-slug}-{YYYY-MM-DD}.md`)
 
 **Step 3 — Generate PDF**: Execute PDF generation (delegate to /generate-pdf prompt)
 - Read `modes/pdf.md` for the 13-step pipeline
@@ -39,7 +39,7 @@ Read the full pipeline instructions from `modes/auto-pipeline.md` and execute th
 - Framework: Hook → Proof → Proposal
 - Save to report Section G
 
-**Step 5 — Update Tracker**: Write TSV to `batch/tracker-additions/`, run `node merge-tracker.mjs`
+**Step 5 — Update Tracker**: Run `npm run tracker -- save` to upload the report to Nextcloud and insert the Postgres `Application` row (use `npm run tracker -- update` for later status changes)
 
 ## Constraints
 

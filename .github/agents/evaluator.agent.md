@@ -16,8 +16,6 @@ Before evaluating, read these files in order:
 4. `article-digest.md` — proof points (if exists)
 5. `config/profile.yml` — candidate identity
 
-Run `node cv-sync-check.mjs` on first evaluation of session.
-
 ## Procedure
 
 Read the full evaluation instructions from `modes/oferta.md` and execute them exactly.
@@ -40,9 +38,8 @@ Read the full evaluation instructions from `modes/oferta.md` and execute them ex
 
 ## Post-Evaluation (ALWAYS)
 
-1. Save report to `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`
-2. Write tracker TSV to `batch/tracker-additions/{num}-{company-slug}.tsv`
-3. Run `node merge-tracker.mjs` to update applications.md
+1. Run `npm run tracker -- save` to upload the report to Nextcloud (`CareerOps-Reports/{###}-{company-slug}-{YYYY-MM-DD}.md`) and insert the Postgres `Application` row
+2. For later status changes, use `npm run tracker -- update`
 
 ## Constraints
 

@@ -1,20 +1,20 @@
 # CarrerOps
 
-> AI-powered job-search pipeline: scan job boards, evaluate roles against your CV with an LLM, generate ATS-friendly PDFs, and track everything in a markdown ledger with a Go TUI dashboard.
+> AI-powered job-search pipeline: scan job boards, evaluate roles against your CV with an LLM, generate ATS-friendly PDFs, and track everything in Postgres with reports stored in Nextcloud.
 
 CarrerOps automates the repetitive parts of a focused job search:
 
 1. **Scan** — discover relevant roles across the companies listed in `portals.yml` (Greenhouse / Ashby / Lever APIs, with a Playwright browser fallback).
-2. **Evaluate** — fetch each job description and run a structured A–F evaluation through an OpenAI-compatible LLM, writing a scored report per role.
+2. **Evaluate** — fetch each job description and run a structured A–F evaluation through an OpenAI-compatible LLM, storing a scored report per role in Nextcloud.
 3. **PDF** — render a personalized, ATS-parseable CV from an HTML template.
-4. **Track** — view and manage the pipeline in an interactive terminal dashboard (Go TUI) **or** a web dashboard (Next.js).
+4. **Track** — applications live in Postgres; manage the pipeline through the `tracker` CLI **or** the web dashboard (Next.js).
 
 ---
 
 ## Requirements
 
 - **Node.js >= 20** (developed on Node 22)
-- **Go >= 1.24** (only for the dashboard)
+- **PostgreSQL** (applications store) and **Nextcloud** (report storage) — both provided by `docker compose up`
 - Playwright's Chromium (installed automatically with the `playwright` dependency; run `npx playwright install chromium` if missing)
 
 ## Setup
@@ -39,21 +39,21 @@ All commands run via `npm run <script>` (powered by [`tsx`](https://github.com/p
 
 | Command | Description |
 |---|---|
-| `npm run scan` | Scan structured job-board APIs and refresh `data/applications.md`. |
+| `npm run scan` | Scan structured job-board APIs and add shortlisted roles to Postgres. |
 | `npm run scan:fallback` | Scan + Playwright browser fallback for non-API boards. |
 | `npm run evaluate` | Evaluate up to 5 pending `N/A` jobs via the LLM. |
 | `npm run evaluate:all` | Evaluate up to 50 pending jobs. |
 | `npm run evaluate:dry` | Fetch JDs only — skip the AI call and any writes. |
 | `npm run pdf -- <in.html> <out.pdf> [--format=a4\|letter]` | Render an HTML CV to PDF. |
+| `npm run tracker -- list\|add\|update\|save` | Read/write applications in Postgres and reports in Nextcloud. |
 
 ### Typical flow
 
 ```bash
-npm run scan:fallback     # discover roles → writes data/applications.md
-npm run evaluate:all      # score pending roles → writes reports/*.md
-cd dashboard && go run .  # browse the pipeline (terminal UI)
-# — or —
-cd web && npm run dev     # browse the pipeline (web UI at http://localhost:3000)
+docker compose up -d      # start Postgres + Nextcloud
+npm run scan:fallback     # discover roles → adds shortlist to Postgres
+npm run evaluate:all      # score pending roles → reports to Nextcloud, rows to Postgres
+cd web && npm run dev      # browse the pipeline (web UI at http://localhost:3000)
 ```
 
 ### LLM providers
@@ -82,24 +82,26 @@ src/
     scan.ts         Job-board scanner
     evaluate.ts     LLM evaluation agent
     pdf.ts          HTML → PDF renderer
+    tracker.ts      Persist applications (Postgres) + reports (Nextcloud)
   lib/              Pure, unit-tested building blocks
     args.ts         Argv parsing
     concurrency.ts  mapLimit + semaphore
+    db.ts           Prisma/Postgres client
     env.ts          .env loading + requireEnv
     jd.ts           Job-description extraction
     llm.ts          Provider resolution + chat completion
     logger.ts       Leveled console logging
     matching.ts     Title/engineering/location/high-signal filters
+    nextcloud.ts    Report upload via WebDAV
     paths.ts        Centralized project paths
     pdf.ts          Chromium PDF rendering
     portals.ts      portals.yml parser
     prompt.ts       Evaluation prompt + score parsing
     scanner.ts      Greenhouse/Ashby/Lever + browser scraping
     text.ts         String helpers (slugify, dedup keys, ...)
-    tracker.ts      applications.md parsing + report writing
+    tracker.ts      Postgres reads/writes + Nextcloud report writing
   types.ts          Shared domain types
 tests/              Vitest unit tests
-dashboard/          Go (Bubble Tea) terminal UI
 web/                Next.js web dashboard (App Router + Tailwind + shadcn-style UI)
   app/api/          REST route handlers (applications, metrics, reports, pipeline)
   app/              Pages + layout
@@ -109,9 +111,8 @@ web/                Next.js web dashboard (App Router + Tailwind + shadcn-style 
 
 ## Web dashboard
 
-A Next.js dashboard lives in `web/`. It reads the same `data/applications.md` and
-`reports/*.md` from disk through a small REST API, so it stays in sync with the
-CLI and the Go TUI.
+A Next.js dashboard lives in `web/`. It reads applications from Postgres and
+reports from Nextcloud through a small REST API, so it stays in sync with the CLI.
 
 ```bash
 cd web
@@ -123,7 +124,7 @@ Features:
 
 - **Metrics** — totals, average/top score, PDF coverage, counts by status.
 - **Applications table** — status tabs, sortable (score/date/company/status), grouped view.
-- **Status editing** — change an application's status inline (writes back to `applications.md`).
+- **Status editing** — change an application's status inline (writes back to Postgres).
 - **Report viewer** — rendered markdown of the full A–F evaluation, with a link to the job posting.
 - **Pipeline runner** — trigger `scan` / `evaluate` from the UI and stream live logs.
 
@@ -154,8 +155,8 @@ npm run build         # compile to dist/
 ```
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) runs format-check, lint,
-typecheck, tests with coverage, and the build on every push/PR, plus a Go
-build/vet for the dashboard.
+typecheck, tests with coverage, and the build for both the Node pipeline and the
+Next.js web dashboard on every push/PR.
 
 ## Docker
 
@@ -173,8 +174,9 @@ docker run --rm --env-file .env -v "$PWD:/work" -w /work \
 ## Data & privacy
 
 Personal data is **git-ignored** by design (`cv.md`, `config/profile.yml`,
-`portals.yml`, `data/*`, `reports/*`, `output/*`). Secrets live only in `.env`
-(also git-ignored); never commit real API keys — see `.env.example`.
+`portals.yml`, `data/*`, `output/*`). Applications live in Postgres and reports
+in Nextcloud — never in the repo. Secrets live only in `.env` (also git-ignored);
+never commit real API keys — see `.env.example`.
 
 ## License
 

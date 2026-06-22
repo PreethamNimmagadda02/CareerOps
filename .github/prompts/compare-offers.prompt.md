@@ -23,4 +23,4 @@ Read the full comparison instructions from `modes/ofertas.md` and execute them.
 | Time to offer | 5% |
 | Culture signals | 5% |
 
-Read existing evaluation reports from `reports/` for the offers being compared. Output a ranked comparison with recommendation.
+Read existing evaluation reports from Nextcloud (`CareerOps-Reports/`) for the offers being compared. Output a ranked comparison with recommendation.

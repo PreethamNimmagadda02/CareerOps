@@ -24,13 +24,12 @@ Read the full batch instructions from `modes/batch.md` for context, then:
 1. **Load input**: Read pending URLs from `data/pipeline.md` or `batch/batch-input.tsv`
 2. **For each offer**:
    a. Fetch JD from URL
-   b. Calculate next report number (max existing in `reports/` + 1)
+   b. Calculate next report number (max existing in Nextcloud `CareerOps-Reports/` + 1)
    c. Execute full A-F evaluation (read cv.md, search comp data, etc.)
-   d. Save report to `reports/{###}-{company-slug}-{date}.md`
+   d. Run `npm run tracker -- save` to upload the report to Nextcloud (`CareerOps-Reports/{###}-{company-slug}-{date}.md`) and insert the Postgres `Application` row
    e. Generate PDF via `npm run pdf -- <input.html> <output.pdf>`
-   f. Write TSV line to `batch/tracker-additions/{num}-{slug}.tsv`
-   g. Log progress
-3. **After all offers**: Run `node merge-tracker.mjs`
+   f. Log progress
+3. **After all offers**: Output the run summary (all persistence already done per-offer via the tracker CLI)
 4. **Output summary**: Total processed, scores, successes, failures
 
 ### State Management:
@@ -50,5 +49,5 @@ Then use this `@batch` agent to evaluate the collected JD artifacts. See `.githu
 ## Constraints
 
 - Process one at a time to maintain quality
-- NEVER skip merge step at the end
+- NEVER skip the `npm run tracker -- save` step for each offer
 - Track all progress in batch-state.tsv for resumability

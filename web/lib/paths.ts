@@ -30,7 +30,5 @@ const p = (...segments: string[]): string => path.join(REPO_ROOT, ...segments);
 
 export const repoPaths = {
   root: REPO_ROOT,
-  applications: p("data", "applications.md"),
-  reportsDir: p("reports"),
   scanHistory: p("data", "scan-history.tsv"),
 } as const;

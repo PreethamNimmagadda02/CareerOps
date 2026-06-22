@@ -75,23 +75,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  dashboard:
-    name: Go dashboard build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
-          cache-dependency-path: dashboard/go.sum
-
-      - name: Build dashboard
-        working-directory: dashboard
-        run: go build ./...
-
-      - name: Vet
-        working-directory: dashboard
-        run: go vet ./...

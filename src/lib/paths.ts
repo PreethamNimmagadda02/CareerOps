@@ -31,9 +31,7 @@ export const paths = {
   profile: p("config", "profile.yml"),
   dataDir: p("data"),
   pipeline: p("data", "pipeline.md"),
-  applications: p("data", "applications.md"),
   scanHistory: p("data", "scan-history.tsv"),
-  reportsDir: p("reports"),
   fontsDir: p("fonts"),
   /** Persisted file for scan results shared between scan + evaluate. */
   scanResults: p("data", "scan-results.json"),

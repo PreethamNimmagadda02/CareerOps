@@ -37,11 +37,15 @@ async function main(): Promise<void> {
   const config = parseConfig(readFileSync(paths.portals, "utf8"));
   const enabledCompanies = config.companies.filter((c) => c.enabled !== "false");
 
-  const dedupText = [paths.pipeline, paths.applications, paths.scanHistory]
+  const dedupText = [paths.pipeline, paths.scanHistory]
     .map((file) => (existsSync(file) ? readFileSync(file, "utf8") : ""))
     .join("\n")
     .toLowerCase();
   const seenUrls = new Set((dedupText.match(/https?:\/\/[^\s|)]+/g) || []).map(normalizeUrl));
+
+  // Dedup company+role keys against applications already tracked in Postgres.
+  const existingApps = await db.application.findMany({ select: { company: true, role: true } });
+  const seenDedupKeys = new Set(existingApps.map((a) => dedupKey(a.company, a.role)));
 
   const structuredCompanies = enabledCompanies.filter(hasStructuredApi);
   const unsupportedCompanies = enabledCompanies.filter((c) => !structuredCompanies.includes(c));
@@ -139,6 +143,7 @@ async function main(): Promise<void> {
     }
     if (
       seenUrls.has(urlKey) ||
+      seenDedupKeys.has(dedupKey(job.company, title)) ||
       dedupText.includes(dedupKey(job.company, title)) ||
       seenInRun.has(key)
     ) {
@@ -184,54 +189,34 @@ async function main(): Promise<void> {
 
   if (summary.shortlist.length > 0) {
     const date = new Date().toISOString().slice(0, 10);
-    let mdTable = `# Applications Tracker\n\n| # | Date | Company | Role | Score | Status | PDF | Report |\n|---|---|---|---|---|---|---|---|\n`;
-
-    // Determine the next ID for the MD file
-    let nextId = 1;
-    if (existsSync(paths.applications)) {
-      const existing = readFileSync(paths.applications, "utf8");
-      for (const line of existing.split("\n")) {
-        if (line.startsWith("|")) {
-          const parts = line.split("|").map((s) => s.trim());
-          const num = parseInt(parts[1] as string, 10);
-          if (!Number.isNaN(num) && num >= nextId) nextId = num + 1;
-        }
-      }
-      mdTable = existing.endsWith("\n") ? existing : existing + "\n";
-    }
-
     let addedCount = 0;
-    for (const job of summary.shortlist) {
-      // Check if it already exists in DB
-      const existing = await db.application.findFirst({
-        where: { company: job.company, role: job.title },
-      });
 
-      if (!existing) {
-        mdTable += `| ${nextId} | ${date} | ${job.company} | ${job.title} | N/A | Evaluated | ❌ |  | Imported from recent scan (shortlist) |\n`;
-        await db.application.create({
-          data: {
-            id: nextId,
-            date,
-            company: job.company,
-            role: job.title,
-            score: "N/A",
-            status: "Evaluated",
-            pdf: "❌",
-            report: "",
-            notes: "Imported from recent scan (shortlist)",
-          },
-        });
-        nextId++;
-        addedCount++;
-      }
+    for (const job of summary.shortlist) {
+      const key = dedupKey(job.company, job.title);
+      if (seenDedupKeys.has(key)) continue;
+
+      // Insert with an autoincrement id (no explicit id) so the Postgres
+      // sequence stays consistent for future inserts.
+      await db.application.create({
+        data: {
+          date,
+          company: job.company,
+          role: job.title,
+          score: "N/A",
+          status: "Evaluated",
+          pdf: "❌",
+          report: "",
+          notes: "Imported from recent scan (shortlist)",
+        },
+      });
+      seenDedupKeys.add(key);
+      addedCount += 1;
     }
 
     if (addedCount > 0) {
-      writeFileSync(paths.applications, mdTable);
-      log.info(`\nAppended ${addedCount} new shortlisted jobs to applications.md and Postgres DB.`);
+      log.info(`\nAdded ${addedCount} new shortlisted jobs to Postgres.`);
     } else {
-      log.info(`\nNo new jobs to append to applications.md (all shortlisted jobs already exist).`);
+      log.info(`\nNo new jobs to add (all shortlisted jobs already in Postgres).`);
     }
   }
 

@@ -25,11 +25,11 @@ Read the full pipeline processing instructions from `modes/pipeline.md` and exec
    b. Delegate to @auto-pipeline agent for full evaluation
    c. Mark the URL as processed (`- [x]`) in pipeline.md
    d. Move to "Procesadas" section
-3. After all URLs processed, run `node merge-tracker.mjs`
+3. After all URLs processed, confirm each was persisted via `npm run tracker -- save`
 4. Output summary of processed offers with scores
 
 ## Constraints
 
 - Process URLs one at a time to maintain context quality
 - If a URL fails to load, mark it with a note and continue to next
-- NEVER skip the merge step at the end
+- NEVER skip the `npm run tracker -- save` step for each processed offer

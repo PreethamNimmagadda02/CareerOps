@@ -17,8 +17,8 @@
 | PDF Engine | Playwright (Chromium headless) → HTML template → PDF |
 | Scanner | Playwright (browser automation) + WebSearch + API calls |
 | Batch | `claude -p` pipe mode (headless parallel workers) |
-| Dashboard | Go (Bubble Tea TUI + Lipgloss styling, Catppuccin theme) |
-| Data Layer | Markdown tables, YAML config, TSV batch files |
+| Persistence | Postgres (Prisma `Application` table) + Nextcloud (WebDAV `CareerOps-Reports/`) |
+| Data Layer | Postgres rows, YAML config, Nextcloud-hosted reports |
 | Config | YAML (profile, portals, states) |
 
 ### GitHub Copilot Compatibility Layer
@@ -45,7 +45,7 @@ Copilot uses the same `modes/*.md`, `cv.md`, `config/profile.yml`, and pipeline 
 ┌─────────────────────────────────────────────────────────────────┐
 │                        USER INTERFACE                           │
 │   Claude Code Chat → Slash Commands (/career-ops {mode})        │
-│   Dashboard TUI (Go/Bubble Tea) → Read-only pipeline browser    │
+│   Tracker CLI (npm run tracker -- list) → pipeline browser      │
 └────────────────────────────┬────────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────────┐
@@ -68,11 +68,11 @@ Copilot uses the same `modes/*.md`, `cv.md`, `config/profile.yml`, and pipeline 
 │                     DATA LAYER                                  │
 │   cv.md (canonical CV)          config/profile.yml (identity)   │
 │   article-digest.md (proofs)    portals.yml (scanner config)    │
-│   data/applications.md          data/pipeline.md (inbox)        │
-│   data/scan-history.tsv         reports/*.md (eval reports)     │
+│   Postgres (Application table)  data/pipeline.md (inbox)        │
+│   data/scan-history.tsv         Nextcloud (CareerOps-Reports/)  │
 │   output/*.pdf (generated CVs)  interview-prep/story-bank.md   │
 │   templates/states.yml          templates/cv-template.html      │
-│   batch/tracker-additions/      batch/batch-state.tsv           │
+│   batch/batch-state.tsv         (tracker CLI: npm run tracker)  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -80,8 +80,8 @@ Copilot uses the same `modes/*.md`, `cv.md`, `config/profile.yml`, and pipeline 
 
 | Layer | Files | Rule |
 |-------|-------|------|
-| **User Layer** | cv.md, config/profile.yml, modes/_profile.md, article-digest.md, portals.yml, data/*, reports/*, output/*, interview-prep/* | NEVER auto-updated; personalization goes here |
-| **System Layer** | modes/_shared.md, all mode files, CLAUDE.md, *.mjs scripts, dashboard/*, templates/*, batch/*, docs/* | Safe to auto-update; DON'T put user data here |
+| **User Layer** | cv.md, config/profile.yml, modes/_profile.md, article-digest.md, portals.yml, data/*, Postgres (Application table), Nextcloud (CareerOps-Reports/), output/*, interview-prep/* | NEVER auto-updated; personalization goes here |
+| **System Layer** | modes/_shared.md, all mode files, CLAUDE.md, *.mjs scripts, templates/*, batch/*, docs/* | Safe to auto-update; DON'T put user data here |
 
 ---
 
@@ -156,7 +156,7 @@ Every offer evaluation produces exactly 6 blocks:
 | **2 — API** | Greenhouse JSON API (`boards-api.greenhouse.io`) | High (structured data) | Fast |
 | **3 — WebSearch** | `site:` filtered queries (Ashby, Greenhouse, Lever) | Medium (possibly cached) | Fast |
 
-**Flow:** Execute all 3 levels → merge → dedup against scan-history.tsv + applications.md + pipeline.md → filter by title keywords → add new offers to pipeline.md.
+**Flow:** Execute all 3 levels → merge → dedup against scan-history.tsv + Postgres (`npm run tracker -- list --json`) + pipeline.md → filter by title keywords → add new offers to pipeline.md.
 
 **Configuration:** `portals.yml` (45+ pre-configured companies: Anthropic, OpenAI, Mistral, ElevenLabs, Retool, Vercel, etc.)
 
@@ -190,12 +190,12 @@ Claude Conductor (claude --chrome)
   ├─ Chrome: navigate portals, read DOM live
   │
   ├─ Offer 1 → claude -p worker (batch-prompt.md)
-  │              → report .md + PDF + tracker TSV
+  │              → Nextcloud report + PDF + Postgres row (tracker -- save)
   │
   ├─ Offer 2 → claude -p worker
-  │              → report .md + PDF + tracker TSV
+  │              → Nextcloud report + PDF + Postgres row (tracker -- save)
   │
-  └─ Finish: node merge-tracker.mjs → applications.md
+  └─ Finish: npm run tracker -- save per offer → Postgres + Nextcloud
 ```
 
 - **Conductor:** Uses `claude --chrome` to navigate portals and extract JDs in real-time
@@ -211,29 +211,28 @@ Claude Conductor (claude --chrome)
 | Script | Purpose | Key Logic |
 |--------|---------|-----------|
 | `generate-pdf.mjs` | HTML → PDF via Chromium | Playwright headless, font resolution, page counting |
-| `merge-tracker.mjs` | Batch TSV → applications.md | Fuzzy dedup (company+role), status validation, column swap |
+| `npm run tracker -- save` | Report → Nextcloud + Postgres row | Uploads to `CareerOps-Reports/`, inserts `Application` row, status validation |
+| `npm run tracker -- update` | Status change on existing row | Updates Postgres `Application` status/notes |
+| `npm run tracker -- list` | List tracked applications | Reads Postgres (`--json` for machine output) |
 | `dedup-tracker.mjs` | Remove duplicates | Group by normalized company+role, keep highest score |
-| `verify-pipeline.mjs` | Health check (7 checks) | Status validation, report links, score format, TSV pending |
+| `verify-pipeline.mjs` | Health check (7 checks) | Status validation, report links, score format |
 | `normalize-statuses.mjs` | Map aliases to canonical | DUPLICADO→Discarded, Cerrada→Discarded, etc. |
-| `cv-sync-check.mjs` | Setup validator | cv.md exists, profile.yml has fields, no hardcoded metrics |
 | `update-system.mjs` | Safe auto-updater | Git-based, backup branch, user files NEVER touched |
 
 ---
 
-## 9. Dashboard TUI (Go)
+## 9. Tracker CLI (Pipeline Browser)
 
-**Framework:** Bubble Tea + Lipgloss (Catppuccin Mocha theme)
+Applications live in Postgres (Prisma `Application` table) and reports live in Nextcloud (`CareerOps-Reports/`). The tracker CLI (`src/cli/tracker.ts`) is the single interface for persisting and browsing the pipeline.
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| Entry point | `dashboard/main.go` | Parse tracker, compute metrics, run TUI |
-| Data model | `dashboard/internal/model/career.go` | CareerApplication + PipelineMetrics structs |
-| Pipeline screen | `dashboard/internal/ui/screens/pipeline.go` | Filter/sort/group applications, status picker |
-| Report viewer | `dashboard/internal/ui/screens/viewer.go` | Markdown rendering of reports |
-| Theme | `dashboard/internal/theme/` | Catppuccin Mocha with pipeline-specific palettes |
-| Data parser | `dashboard/internal/data/career.go` | Parse applications.md + batch-load report summaries |
+| Command | Purpose |
+|---------|---------|
+| `npm run tracker -- save` | Upload the report to Nextcloud and insert the Postgres `Application` row |
+| `npm run tracker -- add` | Insert a new Postgres `Application` row (no report upload) |
+| `npm run tracker -- update` | Update status/notes on an existing Postgres row |
+| `npm run tracker -- list` | List tracked applications from Postgres (`--json` for machine output) |
 
-**Features:** Filter by status, sort by score/date/company, lazy-load report previews (archetype, TL;DR, remote, comp), inline status editing, URL opening.
+**Features:** Filter by status, sort by score/date/company, and query report links directly from Postgres; reports are fetched from Nextcloud on demand.
 
 ---
 
@@ -261,7 +260,7 @@ Source: `templates/states.yml`
 1. **CV** — Create `cv.md` (paste, LinkedIn URL, or tell experience)
 2. **Profile** — Fill `config/profile.yml` (name, email, location, target roles, salary)
 3. **Portals** — Copy `portals.yml` from template, customize keywords
-4. **Tracker** — Initialize `data/applications.md` with empty table
+4. **Tracker** — Provision Postgres (Prisma `Application` table) and Nextcloud (`CareerOps-Reports/`) credentials
 5. **Deep Learning** — Proactive questions about superpowers, deal-breakers, achievements
 6. **Ready** — Confirm setup, suggest automation (recurring scans)
 
@@ -322,11 +321,11 @@ Career-ops/
 │   └── de/                            # German modes (DACH market)
 │
 ├── data/
-│   ├── applications.md                # [USER] Application tracker
 │   ├── pipeline.md                    # [USER] Pending URLs inbox
 │   └── scan-history.tsv               # [USER] Scanner dedup
 │
-├── reports/                           # [USER] Evaluation reports
+│   # Applications → Postgres (Prisma Application table)
+│   # Reports      → Nextcloud (WebDAV CareerOps-Reports/)
 ├── output/                            # [USER] Generated PDFs
 ├── jds/                               # [USER] Saved JD texts
 ├── interview-prep/
@@ -340,21 +339,11 @@ Career-ops/
 ├── batch/
 │   ├── batch-prompt.md                # Self-contained worker prompt
 │   ├── batch-runner.sh                # Orchestrator script
-│   ├── logs/                          # Worker logs
-│   └── tracker-additions/             # TSV lines for merge
+│   └── logs/                          # Worker logs
 │
 ├── fonts/                             # Space Grotesk + DM Sans
 │
-├── *.mjs                              # Pipeline utilities (7 scripts)
-│
-├── dashboard/                         # Go TUI (Bubble Tea)
-│   ├── main.go
-│   ├── go.mod
-│   └── internal/
-│       ├── data/career.go
-│       ├── model/career.go
-│       ├── theme/
-│       └── ui/screens/
+├── *.mjs                              # Pipeline utilities
 │
 └── docs/
     ├── ARCHITECTURE.md

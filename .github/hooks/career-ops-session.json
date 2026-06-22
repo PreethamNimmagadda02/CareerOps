@@ -8,13 +8,6 @@
         "powershell": "node update-system.mjs check; exit 0",
         "cwd": ".",
         "timeoutSec": 10
-      },
-      {
-        "type": "command",
-        "bash": "node cv-sync-check.mjs || true",
-        "powershell": "node cv-sync-check.mjs; exit 0",
-        "cwd": ".",
-        "timeoutSec": 10
       }
     ]
   }

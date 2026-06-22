@@ -87,7 +87,7 @@ export interface FailureInfo {
   error: string;
 }
 
-/** A row parsed from `data/applications.md`. */
+/** An application row from the Postgres `Application` table. */
 export interface ApplicationRow {
   num: number;
   date: string;
@@ -98,7 +98,6 @@ export interface ApplicationRow {
   pdf: string;
   report: string;
   notes: string;
-  raw: string;
 }
 
 /** A resolved LLM provider configuration. */

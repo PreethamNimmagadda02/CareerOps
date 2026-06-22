@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 
 import type { ApplicationRow } from "../types.js";
 import { paths } from "./paths.js";
 import { normalizeKey, slugify, today } from "./text.js";
 import { db } from "./db.js";
+import { uploadReport } from "./nextcloud.js";
 
 /** Fetch all applications from the database. */
 export async function getApplications(): Promise<ApplicationRow[]> {
@@ -22,8 +22,76 @@ export async function getApplications(): Promise<ApplicationRow[]> {
     pdf: app.pdf,
     report: app.report,
     notes: app.notes || "",
-    raw: "", // Deprecated, kept for type compatibility
   }));
+}
+
+/**
+ * Insert a new application row into Postgres.
+ * Replaces the old habit of appending a markdown row to `data/applications.md`.
+ * The row's `id` (autoincrement) is returned as `num`.
+ */
+export async function addApplication(opts: {
+  company: string;
+  role: string;
+  score?: string;
+  status?: string;
+  pdf?: string;
+  report?: string;
+  notes?: string;
+  date?: string;
+}): Promise<ApplicationRow> {
+  const date = opts.date ?? today();
+  const app = await db.application.create({
+    data: {
+      date,
+      company: opts.company,
+      role: opts.role,
+      score: opts.score ?? "N/A",
+      status: opts.status ?? "Evaluada",
+      pdf: opts.pdf ?? "❌",
+      report: opts.report ?? "",
+      notes: opts.notes ?? null,
+    },
+  });
+
+  return {
+    num: app.id,
+    date: app.date,
+    company: app.company,
+    role: app.role,
+    score: app.score,
+    status: app.status,
+    pdf: app.pdf,
+    report: app.report,
+    notes: app.notes || "",
+  };
+}
+
+/**
+ * Update arbitrary fields on an existing application row in Postgres.
+ * Pass only the fields you want to change.
+ */
+export async function patchApplication(
+  id: number,
+  fields: Partial<{
+    company: string;
+    role: string;
+    score: string;
+    status: string;
+    pdf: string;
+    report: string;
+    notes: string;
+  }>,
+): Promise<boolean> {
+  try {
+    await db.application.update({
+      where: { id },
+      data: { ...fields, updatedAt: new Date() },
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Build a company||title -> url index from a scan-results JSON file. */
@@ -42,15 +110,22 @@ export function buildUrlIndex(scanResultsPath: string = paths.scanResults): Map<
   }
 }
 
-/** Compute the next sequential report number based on files in `reports/`. */
-export function nextReportNumber(reportsDir: string = paths.reportsDir): number {
-  if (!existsSync(reportsDir)) {
-    mkdirSync(reportsDir, { recursive: true });
-    return 1;
+/**
+ * Compute the next sequential report number by inspecting stored report links
+ * in the database. This replaces the old local-directory scan now that reports
+ * are stored in Nextcloud.
+ */
+export async function nextReportNumber(): Promise<number> {
+  const apps = await db.application.findMany({ select: { report: true } });
+  let max = 0;
+  for (const app of apps) {
+    const match = app.report?.match(/^\[(\d+)\]/);
+    if (match) {
+      const n = parseInt(match[1] as string, 10);
+      if (n > max) max = n;
+    }
   }
-  const files = readdirSync(reportsDir).filter((f) => /^\d{3}-/.test(f));
-  if (!files.length) return 1;
-  return Math.max(...files.map((f) => parseInt(f.split("-")[0] as string, 10))) + 1;
+  return max + 1;
 }
 
 /** Build the canonical report filename for a given number/company/date. */
@@ -58,23 +133,23 @@ export function reportFilename(num: number, company: string, date: string = toda
   return `${String(num).padStart(3, "0")}-${slugify(company)}-${date}.md`;
 }
 
-/** Write an evaluation report markdown file and return its filename. */
-export function writeReport(opts: {
+/**
+ * Upload an evaluation report directly to Nextcloud and return its filename.
+ * No local file is written.
+ */
+export async function writeReport(opts: {
   num: number;
   company: string;
   role: string;
   url: string;
   evaluation: string;
   providerLabel: string;
-  reportsDir?: string;
-}): string {
+}): Promise<string> {
   const { num, company, role, url, evaluation, providerLabel } = opts;
-  const reportsDir = opts.reportsDir ?? paths.reportsDir;
   const date = today();
   const filename = reportFilename(num, company, date);
   const content = `# Evaluation: ${company} — ${role}\n\n**Date:** ${date}\n**URL:** ${url}\n**Provider:** ${providerLabel}\n**Report #:** ${num}\n\n---\n\n${evaluation}\n`;
-  if (!existsSync(reportsDir)) mkdirSync(reportsDir, { recursive: true });
-  writeFileSync(path.join(reportsDir, filename), content);
+  await uploadReport(filename, content);
   return filename;
 }
 

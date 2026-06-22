@@ -10,7 +10,7 @@ Read the full tracker instructions from `modes/tracker.md` and execute them.
 
 ## Quick Reference:
 
-1. Read `data/applications.md`
+1. Read the tracker from Postgres via `npm run tracker -- list --json`
 2. Parse all entries and compute:
    - Total applications
    - Count by status (Evaluated, Applied, Interview, etc.)
@@ -19,7 +19,7 @@ Read the full tracker instructions from `modes/tracker.md` and execute them.
    - Actionable count (score >= 4.0)
 3. Display summary stats
 4. Support filtering by status, company, or score range
-5. Support status updates (edit applications.md for existing entries)
+5. Support status updates via `npm run tracker -- update` for existing entries
 
 ## Canonical States
 

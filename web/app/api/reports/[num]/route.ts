@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const { num } = await params;
-    const report = readReportByNumber(num);
+    const report = await readReportByNumber(num);
     if (!report) {
       return NextResponse.json({ error: `Report ${num} not found` }, { status: 404 });
     }

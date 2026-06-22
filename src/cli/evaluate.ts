@@ -2,9 +2,9 @@
 /**
  * career-ops evaluate — automatically evaluate shortlisted N/A jobs.
  *
- * Reads pending rows from data/applications.md, fetches each JD via Playwright,
+ * Reads pending rows from Postgres, fetches each JD via Playwright,
  * runs a structured A–F evaluation through an OpenAI-compatible provider,
- * writes a report .md, and updates the tracker with a real score.
+ * uploads the report to Nextcloud, and updates the Postgres row with a real score.
  *
  * Usage:
  *   career-ops-evaluate [--limit N] [--job N] [--dry-run]
@@ -58,11 +58,6 @@ async function main(): Promise<void> {
   log.info(`   model       : ${model}`);
   log.info(`   limit       : ${limit}  dry-run=${dryRun}`);
   log.info(`   concurrency : ${concurrency}\n`);
-
-  if (!existsSync(paths.applications)) {
-    log.error("❌ data/applications.md not found. Run: npm run scan:fallback");
-    process.exit(1);
-  }
 
   const cv = readFileSync(paths.cv, "utf8");
   const profileYml = existsSync(paths.profile)
@@ -161,8 +156,8 @@ async function main(): Promise<void> {
           log.info(`${tag} 📊 Score: ${score ? score + "/5" : "could not parse — check report"}`);
 
           trackerLock = trackerLock.then(async () => {
-            const reportNum = nextReportNumber();
-            const filename = writeReport({
+            const reportNum = await nextReportNumber();
+            const filename = await writeReport({
               num: reportNum,
               company: job.company,
               role: job.role,
@@ -170,7 +165,7 @@ async function main(): Promise<void> {
               evaluation,
               providerLabel,
             });
-            log.info(`${tag} 📝 reports/${filename}`);
+            log.info(`${tag} ☁️  Uploaded → ${filename}`);
 
             const updated = await updateTracker(
               job.num,
@@ -202,8 +197,8 @@ async function main(): Promise<void> {
     `📊 ${results.evaluated} evaluated  ${results.skipped} skipped  ${results.errors} errors`,
   );
   if (results.evaluated > 0) {
-    log.info(`📁 Reports  → ${paths.reportsDir}/`);
-    log.info(`📋 Tracker  → ${paths.applications}`);
+    log.info(`☁️  Reports  → Nextcloud / CareerOps-Reports/`);
+    log.info(`📋 Tracker  → Postgres (Application table)`);
   }
 }
 

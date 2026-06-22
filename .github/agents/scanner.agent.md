@@ -12,7 +12,7 @@ You are the career-ops portal scanner. You scan configured job portals to discov
 Read these files:
 1. `portals.yml` — portal configuration (companies, queries, title filters)
 2. `data/scan-history.tsv` — URLs already seen
-3. `data/applications.md` — already evaluated offers
+3. Postgres (`npm run tracker -- list --json`) — already evaluated offers
 4. `data/pipeline.md` — already pending offers
 
 ## Procedure
@@ -40,7 +40,7 @@ Read the full scanner instructions from `modes/scan.md` and execute them exactly
 ### Post-Scan Processing:
 
 1. **Filter by title** using `title_filter` from portals.yml (positive + negative keywords)
-2. **Dedup** against scan-history.tsv, applications.md, pipeline.md
+2. **Dedup** against scan-history.tsv, Postgres (`npm run tracker -- list --json`), pipeline.md
 3. **Add new offers** to `data/pipeline.md` "Pendientes" section
 4. **Update** `data/scan-history.tsv` with all URLs (added/skipped)
 5. **Output summary**: queries run, offers found, filtered, duplicates, new additions

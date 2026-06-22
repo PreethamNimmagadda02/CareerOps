@@ -9,7 +9,7 @@ FROM mcr.microsoft.com/playwright:v1.59.1-noble AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY tsconfig.json prisma.config.ts ./
 COPY prisma ./prisma
@@ -19,7 +19,7 @@ RUN npm run build
 
 # Build Next.js web app
 COPY web/package.json web/package-lock.json ./web/
-RUN cd web && npm ci
+RUN cd web && npm ci --ignore-scripts
 COPY web ./web
 RUN cd web && npm run build
 
@@ -31,11 +31,11 @@ WORKDIR /app
 
 # Install root production dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
-
-# Generate Prisma client
 COPY prisma.config.ts ./
 COPY prisma ./prisma
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+# Generate Prisma client (also run by postinstall, but explicit for clarity)
 RUN npx prisma generate
 
 # Copy CLI dist

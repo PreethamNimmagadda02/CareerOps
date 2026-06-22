@@ -12,7 +12,7 @@ const ALLOWED: Record<PipelineCommand, { cmd: string; args: string[] }> = {
     ? { cmd: "node", args: ["dist/cli/scan.js", "--compact", "--concurrency", "12"] }
     : { cmd: "npm", args: ["run", "scan"] },
   "scan:fallback": isProd
-    ? { cmd: "node", args: ["dist/cli/scan.js", "--compact", "--fallback", "--concurrency", "12", "--browser-concurrency", "4"] }
+    ? { cmd: "node", args: ["dist/cli/scan.js", "--compact", "--fallback", "--concurrency", "12", "--browser-concurrency", "8"] }
     : { cmd: "npm", args: ["run", "scan:fallback"] },
   evaluate: isProd
     ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "5", "--concurrency", "8"] }

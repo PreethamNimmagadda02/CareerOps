@@ -1,9 +1,6 @@
 # Personal data (user fills these)
-data/applications.md
 data/pipeline.md
 data/scan-history.tsv
-reports/*.md
-!reports/.gitkeep
 output/*
 !output/.gitkeep
 batch/logs/*
@@ -43,7 +40,6 @@ coverage/
 # Claude Code local
 .claude/settings.local.json
 .claude/memory/
-career-dashboard
 
 
 .env

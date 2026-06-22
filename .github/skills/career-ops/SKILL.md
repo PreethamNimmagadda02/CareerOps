@@ -59,6 +59,6 @@ Before executing any command, verify these files exist:
 2. `config/profile.yml` — if missing, copy from `config/profile.example.yml` and guide user
 3. `modes/_profile.md` — if missing, copy from `modes/_profile.template.md`
 4. `portals.yml` — if missing, copy from `templates/portals.example.yml`
-5. `data/applications.md` — if missing, create with empty tracker table
+5. Postgres (`Application` table) + Nextcloud (`CareerOps-Reports/`) — verify connectivity via `npm run tracker -- list`
 
 If any are missing, enter onboarding mode (see `CLAUDE.md` onboarding section).
