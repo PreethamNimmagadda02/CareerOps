@@ -53,7 +53,9 @@ async function main(): Promise<void> {
   const startedAt = Date.now();
   const structuredTotal = structuredCompanies.length;
   let structuredDone = 0;
-  log.step(`🔍 Scanning ${structuredTotal} job boards via structured APIs (concurrency=${concurrency})…`);
+  log.step(
+    `🔍 Scanning ${structuredTotal} job boards via structured APIs (concurrency=${concurrency})…`,
+  );
 
   const results = await mapLimit(structuredCompanies, concurrency, async (company) => {
     const result = await scanCompany(company);
@@ -78,9 +80,7 @@ async function main(): Promise<void> {
     const browserTotal = fallbackCompanies.length;
     let browserDone = 0;
     const browserStartedAt = Date.now();
-    log.step(
-      `🌐 Browser fallback for ${browserTotal} boards (concurrency=${browserConcurrency})…`,
-    );
+    log.step(`🌐 Browser fallback for ${browserTotal} boards (concurrency=${browserConcurrency})…`);
     const browser = await chromium.launch({ headless: true });
     try {
       browserResults = await mapLimit(fallbackCompanies, browserConcurrency, async (company) => {
@@ -209,7 +209,9 @@ function logScanProgress(done: number, total: number, result: ScanResult): void 
     log.step(`${counter} ✗ ${result.company.name} (${result.method}) — ${result.error}`);
   } else {
     const n = result.jobs.length;
-    log.step(`${counter} ✓ ${result.company.name} (${result.method}) — ${n} job${n === 1 ? "" : "s"}`);
+    log.step(
+      `${counter} ✓ ${result.company.name} (${result.method}) — ${n} job${n === 1 ? "" : "s"}`,
+    );
   }
 }
 
