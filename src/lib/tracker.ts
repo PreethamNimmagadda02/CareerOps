@@ -101,7 +101,7 @@ export async function updateTracker(
       },
     });
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

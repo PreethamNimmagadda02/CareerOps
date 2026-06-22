@@ -63,6 +63,7 @@ export async function scanCompany(company: Company): Promise<ScanResult> {
 
   try {
     // The shape varies per provider; we defensively access optional fields.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = (await fetchJson(source)) as any;
 
     if (company.api) {

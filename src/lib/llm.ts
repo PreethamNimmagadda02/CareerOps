@@ -20,6 +20,7 @@ export const BUILTIN_PROVIDERS: Record<string, ProviderConfig> = {
 };
 
 /** Read and parse `~/.config/opencode/opencode.jsonc`, stripping comments. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function loadOpencodeConfig(configPath: string = paths.opencodeConfig): Record<string, any> {
   if (!existsSync(configPath)) return {};
   try {
