@@ -24,9 +24,9 @@ describe("updateTracker", () => {
 
   it("updates score and report link in the database", async () => {
     vi.mocked(db.application.update).mockResolvedValue({} as any);
-    
+
     const ok = await updateTracker(1, "3.8", 5, "Acme", "2026-06-16");
-    
+
     expect(ok).toBe(true);
     expect(db.application.update).toHaveBeenCalledWith({
       where: { id: 1 },
@@ -40,7 +40,7 @@ describe("updateTracker", () => {
 
   it("returns false when the database update throws an error", async () => {
     vi.mocked(db.application.update).mockRejectedValue(new Error("Not found"));
-    
+
     const ok = await updateTracker(99, "1.0", 1, "X", "2026-06-16");
     expect(ok).toBe(false);
   });
