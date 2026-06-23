@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { readApplications, updateApplicationStatus } from "@/lib/tracker";
 import { STATUS_OPTIONS } from "@/lib/status";
+import { AppStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export async function PATCH(request: Request) {
     const ok = await updateApplicationStatus({
       num: body.num,
       reportNumber: body.reportNumber,
-      newStatus: body.newStatus,
+      newStatus: body.newStatus as AppStatus,
     });
 
     if (!ok) {

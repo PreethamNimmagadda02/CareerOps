@@ -29,8 +29,6 @@ export const paths = {
   env: p(".env"),
   profile: p("config", "profile.yml"),
   dataDir: p("data"),
-  pipeline: p("data", "pipeline.md"),
-  scanHistory: p("data", "scan-history.tsv"),
   fontsDir: p("fonts"),
   opencodeConfig: path.join(os.homedir(), ".config", "opencode", "opencode.jsonc"),
 } as const;

@@ -17,6 +17,7 @@
  * linking the two. If `--file` is omitted it reads the evaluation body from stdin.
  */
 import { readFileSync } from "node:fs";
+import { AppStatus } from "@prisma/client";
 
 import { Args } from "../lib/args.js";
 import { log } from "../lib/logger.js";
@@ -65,7 +66,7 @@ async function cmdAdd(args: Args): Promise<void> {
     company: required(args, "--company"),
     role: required(args, "--role"),
     score: args.get("--score"),
-    status: args.get("--status"),
+    status: args.get("--status") as AppStatus | undefined,
     pdf: args.get("--pdf"),
     report: args.get("--report"),
     date: args.get("--date"),
@@ -79,10 +80,10 @@ async function cmdUpdate(args: Args): Promise<void> {
     log.error("❌ --id is required and must be a number");
     process.exit(1);
   }
-  const fields: Record<string, string> = {};
+  const fields: Record<string, any> = {};
   for (const key of ["company", "role", "score", "status", "pdf", "report"]) {
     const v = args.get(`--${key}`);
-    if (v !== undefined) fields[key] = v;
+    if (v !== undefined) fields[key] = key === "status" ? (v as AppStatus) : v;
   }
   if (Object.keys(fields).length === 0) {
     log.error("❌ Nothing to update. Pass at least one field (e.g. --status Aplicado).");
@@ -135,7 +136,7 @@ async function cmdSave(args: Args): Promise<void> {
     company,
     role,
     score: scoreStr,
-    status,
+    status: status as AppStatus,
     pdf,
     report: reportLink,
     date,

@@ -1,17 +1,19 @@
+import { AppStatus } from "@prisma/client";
+
 /**
  * Status normalization + presentation. Kept in sync with the Go dashboard's
  * NormalizeStatus / StatusPriority (which mirror templates/states.yml).
  */
 
 export const STATUS_OPTIONS = [
-  "Evaluated",
-  "Applied",
-  "Responded",
-  "Interview",
-  "Offer",
-  "Rejected",
-  "Discarded",
-  "SKIP",
+  AppStatus.Evaluated,
+  AppStatus.Applied,
+  AppStatus.Responded,
+  AppStatus.Interview,
+  AppStatus.Offer,
+  AppStatus.Rejected,
+  AppStatus.Discarded,
+  AppStatus.SKIP,
 ] as const;
 
 export const STATUS_GROUP_ORDER = [

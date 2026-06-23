@@ -1,4 +1,5 @@
 import type { ApplicationRow } from "../types.js";
+import { AppStatus } from "@prisma/client";
 import { slugify, today } from "./text.js";
 import { db } from "./db.js";
 import { uploadReport } from "./nextcloud.js";
@@ -31,7 +32,7 @@ export async function addApplication(opts: {
   company: string;
   role: string;
   score?: string;
-  status?: string;
+  status?: AppStatus;
   pdf?: string;
   report?: string;
   date?: string;
@@ -43,7 +44,7 @@ export async function addApplication(opts: {
       company: opts.company,
       role: opts.role,
       score: opts.score ?? "N/A",
-      status: opts.status ?? "Evaluada",
+      status: opts.status ?? AppStatus.Evaluated,
       pdf: opts.pdf ?? "❌",
       report: opts.report ?? "",
     },
@@ -72,7 +73,7 @@ export async function patchApplication(
     company: string;
     role: string;
     score: string;
-    status: string;
+    status: AppStatus;
     pdf: string;
     report: string;
   }>,

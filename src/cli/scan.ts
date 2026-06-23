@@ -7,15 +7,13 @@
  *   career-ops-scan [--compact] [--verbose] [--fallback]
  *                   [--concurrency N] [--browser-concurrency N]
  */
-import { existsSync, readFileSync } from "node:fs";
-
+import { AppStatus } from "@prisma/client";
 import { chromium } from "playwright";
 
 import { Args } from "../lib/args.js";
 import { mapLimit } from "../lib/concurrency.js";
 import { log } from "../lib/logger.js";
 import { engineeringMatch, isHighSignal, locationMatch, titleMatches } from "../lib/matching.js";
-import { paths } from "../lib/paths.js";
 import { loadConfigFromDb } from "../lib/portals-db.js";
 import { hasStructuredApi, scanCompany, scanCompanyBrowser } from "../lib/scanner.js";
 import { dedupKey, normalizeUrl } from "../lib/text.js";
@@ -38,12 +36,6 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const enabledCompanies = config.companies.filter((c) => c.enabled !== "false");
-
-  const dedupText = [paths.pipeline, paths.scanHistory]
-    .map((file) => (existsSync(file) ? readFileSync(file, "utf8") : ""))
-    .join("\n")
-    .toLowerCase();
-  const seenUrls = new Set((dedupText.match(/https?:\/\/[^\s|)]+/g) || []).map(normalizeUrl));
 
   // Dedup company+role keys against applications already tracked in Postgres.
   const existingApps = await db.application.findMany({ select: { company: true, role: true } });
@@ -154,9 +146,7 @@ async function main(): Promise<void> {
       continue;
     }
     if (
-      seenUrls.has(urlKey) ||
       seenDedupKeys.has(dedupKey(job.company, title)) ||
-      dedupText.includes(dedupKey(job.company, title)) ||
       seenInRun.has(key)
     ) {
       duplicates.push(job);
@@ -211,7 +201,7 @@ async function main(): Promise<void> {
           role: job.title,
           url: job.url,
           score: "N/A",
-          status: "Evaluated",
+          status: AppStatus.Evaluated,
           pdf: "❌",
           report: "",
         },
@@ -238,7 +228,13 @@ async function main(): Promise<void> {
   //
   // The Nextcloud report file (if any) becomes orphaned but is left intact;
   // it can serve as a future reference for the company's requirements.
-  const ACTIVE_STATUSES = new Set(["Applied", "Responded", "Interview", "Offer", "Rejected"]);
+  const ACTIVE_STATUSES: AppStatus[] = [
+    AppStatus.Applied,
+    AppStatus.Responded,
+    AppStatus.Interview,
+    AppStatus.Offer,
+    AppStatus.Rejected,
+  ];
 
   if (summary.relevant.length > 0) {
     const currentKeys = new Set(
@@ -248,7 +244,7 @@ async function main(): Promise<void> {
     // Load all applications that are NOT in an active candidate status —
     // these are the only ones eligible for pruning.
     const pruneable = await db.application.findMany({
-      where: { status: { notIn: [...ACTIVE_STATUSES] } },
+      where: { status: { notIn: ACTIVE_STATUSES } },
       select: { id: true, company: true, role: true, status: true },
     });
 

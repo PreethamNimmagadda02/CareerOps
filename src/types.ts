@@ -1,3 +1,5 @@
+import { AppStatus } from "@prisma/client";
+
 /** Shared domain types for the CarrerOps pipeline. */
 
 /** A scan target stored in the Postgres `Portal` table. */
@@ -94,7 +96,7 @@ export interface ApplicationRow {
   company: string;
   role: string;
   score: string;
-  status: string;
+  status: AppStatus;
   pdf: string;
   report: string;
   url: string | null;

@@ -2,6 +2,7 @@ import { db } from "../../src/lib/db";
 import { readReportSummary } from "./reports";
 import { normalizeStatus } from "./status";
 import type { Application } from "./types";
+import { AppStatus } from "@prisma/client";
 
 const reReportLink = /\[(\d+)\]\(([^)]+)\)/;
 const reScore = /(\d+\.?\d*)\/5/;
@@ -62,7 +63,7 @@ export async function readApplications(enrich = true): Promise<Application[]> {
 export async function updateApplicationStatus(opts: {
   num?: number;
   reportNumber?: string;
-  newStatus: string;
+  newStatus: AppStatus;
 }): Promise<boolean> {
   let targetId = opts.num;
 

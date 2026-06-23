@@ -6,13 +6,24 @@ datasource db {
   provider = "postgresql"
 }
 
+enum AppStatus {
+  Evaluated
+  Applied
+  Responded
+  Interview
+  Offer
+  Rejected
+  Discarded
+  SKIP
+}
+
 model Application {
   id        Int      @id @default(autoincrement())
   date      String
   company   String
   role      String
   score     String
-  status    String
+  status    AppStatus
   pdf       String
   report    String
   url       String?
