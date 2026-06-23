@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * career-ops scan — discover relevant jobs across the companies in portals.yml.
+ * career-ops scan — discover relevant jobs across the companies stored in
+ * Postgres (the `Portal` table). Manage portals with `npm run portals`.
  *
  * Usage:
  *   career-ops-scan [--compact] [--verbose] [--fallback]
@@ -15,7 +16,7 @@ import { mapLimit } from "../lib/concurrency.js";
 import { log } from "../lib/logger.js";
 import { engineeringMatch, isHighSignal, locationMatch, titleMatches } from "../lib/matching.js";
 import { paths } from "../lib/paths.js";
-import { parseConfig } from "../lib/portals.js";
+import { loadConfigFromDb } from "../lib/portals-db.js";
 import { hasStructuredApi, scanCompany, scanCompanyBrowser } from "../lib/scanner.js";
 import { dedupKey, normalizeUrl } from "../lib/text.js";
 import { db } from "../lib/db.js";
@@ -29,12 +30,13 @@ async function main(): Promise<void> {
   const compact = args.has("--compact");
   const verbose = args.has("--verbose");
 
-  if (!existsSync(paths.portals)) {
-    log.error(`❌ portals.yml not found at ${paths.portals}`);
+  const config = await loadConfigFromDb();
+  if (config.companies.length === 0) {
+    log.error(
+      "❌ No portals in Postgres. Seed them first: npm run portals -- migrate",
+    );
     process.exit(1);
   }
-
-  const config = parseConfig(readFileSync(paths.portals, "utf8"));
   const enabledCompanies = config.companies.filter((c) => c.enabled !== "false");
 
   const dedupText = [paths.pipeline, paths.scanHistory]
@@ -48,11 +50,21 @@ async function main(): Promise<void> {
   const seenDedupKeys = new Set(existingApps.map((a) => dedupKey(a.company, a.role)));
 
   const structuredCompanies = enabledCompanies.filter(hasStructuredApi);
-  const unsupportedCompanies = enabledCompanies.filter((c) => !structuredCompanies.includes(c));
+  const nonStructured = enabledCompanies.filter((c) => !structuredCompanies.includes(c));
 
-  log.step(`Loaded ${enabledCompanies.length} enabled companies from portals.yml`);
+  // Query-only portals have neither an api nor a careers_url — they exist only
+  // for the agent's WebSearch mode (scan_query). The browser fallback cannot
+  // use them and scanCompanyBrowser would immediately error with
+  // "missing careers_url", inflating the failure count. Separate them out so
+  // they are cleanly skipped by the CLI scanner.
+  const unsupportedCompanies = nonStructured.filter((c) => !!c.careers_url);
+  const queryOnlyCompanies  = nonStructured.filter((c) => !c.careers_url);
+
+  log.step(`Loaded ${enabledCompanies.length} enabled companies from Postgres`);
   log.step(
-    `${structuredCompanies.length} structured boards, ${unsupportedCompanies.length} custom/non-API boards`,
+    `${structuredCompanies.length} structured boards, ` +
+    `${unsupportedCompanies.length} browser-only, ` +
+    `${queryOnlyCompanies.length} query-only (agent WebSearch, skipped by CLI)`,
   );
 
   const startedAt = Date.now();
@@ -164,7 +176,7 @@ async function main(): Promise<void> {
     scannedAt: new Date().toISOString(),
     enabledCompanies: enabledCompanies.length,
     structuredCompanies: structuredCompanies.length,
-    unsupportedCompanies: unsupportedCompanies.map((c) => c.name),
+    unsupportedCompanies: nonStructured.map((c) => c.name),
     browserFallbackCompanies: browserResults.length,
     successfulCompanies: allResults.filter((r) => !r.error).length,
     structuredFailures,
@@ -206,7 +218,6 @@ async function main(): Promise<void> {
           status: "Evaluated",
           pdf: "❌",
           report: "",
-          notes: "Imported from recent scan (shortlist)",
         },
       });
       seenDedupKeys.add(key);
@@ -259,7 +270,7 @@ function printCompact(summary: ScanSummary, browserCount: number, verbose: boole
   log.info(`Browser fallback boards attempted: ${browserCount}`);
   log.info(`Successful boards: ${summary.successfulCompanies}`);
   log.info(`Unrecovered failed boards: ${summary.failedCompanies.length}`);
-  log.info(`Custom/non-API boards: ${summary.unsupportedCompanies.length}`);
+  log.info(`Non-API boards (browser + query-only): ${summary.unsupportedCompanies.length}`);
   log.info(`Jobs fetched: ${summary.totalJobs}`);
   log.info(`India/remote engineering roles after filters: ${summary.engineeringRelevant}`);
   log.info(`Skipped non-engineering roles: ${summary.skippedNonEngineering}`);
@@ -284,8 +295,9 @@ function printCompact(summary: ScanSummary, browserCount: number, verbose: boole
   }
   if (!browserCount && summary.unsupportedCompanies.length) {
     log.info("");
-    log.info("Run again with --fallback for these custom/non-API boards:");
+    log.info("Run again with --fallback for these browser-scannable boards:");
     for (const company of summary.unsupportedCompanies) log.info(`- ${company}`);
+    log.info("(Query-only boards are discoverable via agent WebSearch only.)");
   }
   log.info("");
   log.info(`Full JSON: ${paths.scanResults}`);

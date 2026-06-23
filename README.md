@@ -4,7 +4,7 @@
 
 CarrerOps automates the repetitive parts of a focused job search:
 
-1. **Scan** — discover relevant roles across the companies listed in `portals.yml` (Greenhouse / Ashby / Lever APIs, with a Playwright browser fallback).
+1. **Scan** — discover relevant roles across the companies stored in Postgres (Greenhouse / Ashby / Lever APIs, with a Playwright browser fallback).
 2. **Evaluate** — fetch each job description and run a structured A–F evaluation through an OpenAI-compatible LLM, storing a scored report per role in Nextcloud.
 3. **PDF** — render a personalized, ATS-parseable CV from an HTML template.
 4. **Track** — applications live in Postgres; manage the pipeline through the `tracker` CLI **or** the web dashboard (Next.js).
@@ -27,10 +27,10 @@ npm install
 cp .env.example .env
 #   then fill in OPENCODE_API_KEY and/or NVIDIA_API_KEY
 
-# 3. Provide your data (these are git-ignored)
+# 3. Provide your data (git-ignored)
 #   - cv.md                  your canonical CV
 #   - config/profile.yml     target roles, comp, location
-#   - portals.yml            companies to scan
+#   Scan targets live in Postgres — manage with: npm run portals
 ```
 
 ## Usage
@@ -39,7 +39,8 @@ All commands run via `npm run <script>` (powered by [`tsx`](https://github.com/p
 
 | Command | Description |
 |---|---|
-| `npm run scan` | Scan structured job-board APIs and add shortlisted roles to Postgres. |
+| `npm run portals -- list\|add\|update\|delete` | Manage scan targets in Postgres (the single source of truth). |
+| `npm run scan` | Scan structured job-board APIs (companies read from Postgres) and add shortlisted roles to Postgres. |
 | `npm run scan:fallback` | Scan + Playwright browser fallback for non-API boards. |
 | `npm run evaluate` | Evaluate up to 5 pending `N/A` jobs via the LLM. |
 | `npm run evaluate:all` | Evaluate up to 50 pending jobs. |
@@ -51,6 +52,7 @@ All commands run via `npm run <script>` (powered by [`tsx`](https://github.com/p
 
 ```bash
 docker compose up -d      # start Postgres + Nextcloud
+npm run portals -- migrate # seed scan targets into Postgres (from portals.yml)
 npm run scan:fallback     # discover roles → adds shortlist to Postgres
 npm run evaluate:all      # score pending roles → reports to Nextcloud, rows to Postgres
 cd web && npm run dev      # browse the pipeline (web UI at http://localhost:3000)
@@ -79,10 +81,11 @@ You can also set defaults via `CAREER_OPS_PROVIDER` / `CAREER_OPS_MODEL` in `.en
 ```
 src/
   cli/              Executable entrypoints (thin orchestration)
-    scan.ts         Job-board scanner
+    scan.ts         Job-board scanner (reads targets from Postgres)
     evaluate.ts     LLM evaluation agent
     pdf.ts          HTML → PDF renderer
     tracker.ts      Persist applications (Postgres) + reports (Nextcloud)
+    portals.ts      Migrate/list scan targets in Postgres
   lib/              Pure, unit-tested building blocks
     args.ts         Argv parsing
     concurrency.ts  mapLimit + semaphore
@@ -95,7 +98,7 @@ src/
     nextcloud.ts    Report upload via WebDAV
     paths.ts        Centralized project paths
     pdf.ts          Chromium PDF rendering
-    portals.ts      portals.yml parser
+    portals-db.ts   Postgres-backed scan config (loadConfigFromDb)
     prompt.ts       Evaluation prompt + score parsing
     scanner.ts      Greenhouse/Ashby/Lever + browser scraping
     text.ts         String helpers (slugify, dedup keys, ...)
@@ -174,9 +177,9 @@ docker run --rm --env-file .env -v "$PWD:/work" -w /work \
 ## Data & privacy
 
 Personal data is **git-ignored** by design (`cv.md`, `config/profile.yml`,
-`portals.yml`, `data/*`, `output/*`). Applications live in Postgres and reports
-in Nextcloud — never in the repo. Secrets live only in `.env` (also git-ignored);
-never commit real API keys — see `.env.example`.
+`data/*`, `output/*`). Applications and scan targets live in Postgres; reports
+live in Nextcloud — none of this is in the repo. Secrets live only in `.env`
+(also git-ignored); never commit real API keys — see `.env.example`.
 
 ## License
 

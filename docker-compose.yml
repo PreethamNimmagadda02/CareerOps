@@ -77,7 +77,6 @@ services:
       # Map the necessary data directories so config persists
       - ./data:/app/data
       - ./config:/app/config
-      - ./portals.yml:/app/portals.yml
       - ./cv.md:/app/cv.md
       # Mount the local `.env` if API keys are needed inside the container
       - ./.env:/app/.env

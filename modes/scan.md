@@ -16,10 +16,20 @@ Agent(
 
 ## Configuration
 
-Read `portals.yml`, which contains:
-- `search_queries`: List of WebSearch queries with `site:` filters per portal (broad discovery)
-- `tracked_companies`: Specific companies with `careers_url` for direct navigation
-- `title_filter`: positive/negative/seniority_boost keywords for title filtering
+Postgres is the **single source of truth** — there is no `portals.yml`. Manage scan targets with:
+
+| Action | Command |
+|--------|---------|
+| List portals | `npm run portals -- list` |
+| Add a portal | `npm run portals -- add --name "Acme" --url "https://jobs.ashbyhq.com/acme"` |
+| Update a portal | `npm run portals -- update --name "Acme" --url "https://..."` |
+| Delete a portal | `npm run portals -- delete --name "Acme"` |
+| Enable / disable | `npm run portals -- enable|disable --name "Acme"` |
+| Title-filter keywords | `npm run portals -- keywords list|add|del` |
+
+The DB contains:
+- `Portal` table: name, `careersUrl` for direct navigation, optional `api` (Greenhouse), `scanMethod`, `scanQuery`, `notes`, `enabled`
+- `FilterKeyword` table: positive/negative title-filter keywords
 
 ## Discovery strategy (4 levels)
 
@@ -56,7 +66,7 @@ Use Apify actors to scrape job boards at scale. This level is the broadest — i
 - It detects new roles instantly
 - It doesn't depend on Google indexing
 
-**Every company MUST have a `careers_url` in portals.yml.** If it doesn't, find it once, save it, and use it in future scans.
+**Every company MUST have a `careers_url` in Postgres.** If it doesn't, find it once and add it: `npm run portals -- update --name "Acme" --url "https://..."`.
 
 ### Level 2 — Greenhouse API (COMPLEMENTARY)
 
@@ -75,7 +85,7 @@ The levels are additive — they all run, and the results are merged and dedupli
 
 ## Workflow
 
-1. **Read configuration**: `portals.yml`
+1. **Read configuration**: Postgres `Portal` + `FilterKeyword` tables (`npm run portals -- list --json`).
 2. **Read history**: `data/scan-history.tsv` → URLs already seen
 3. **Read dedup sources**: applications in Postgres (`npm run tracker -- list --json`) + `data/pipeline.md`
 
@@ -180,18 +190,17 @@ Every company in `tracked_companies` must have a `careers_url` — the direct UR
 1. Try its known platform pattern
 2. If that fails, do a quick WebSearch: `"{company}" careers jobs`
 3. Navigate with Playwright to confirm it works
-4. **Save the found URL in portals.yml** for future scans
+4. **Save the found URL to Postgres**: `npm run portals -- update --name "..." --url "https://..."`
 
 **If `careers_url` returns 404 or a redirect:**
 1. Note it in the output summary
 2. Try scan_query as a fallback
 3. Mark it for manual update
 
-## Maintaining portals.yml
+## Maintaining portals in Postgres
 
-- **ALWAYS save `careers_url`** when adding a new company
-- Add new queries as portals or interesting roles are discovered
-- Disable queries with `enabled: false` if they generate too much noise
-- Adjust filter keywords as the target roles evolve
-- Add companies to `tracked_companies` when you want to follow them closely
-- Verify `careers_url` periodically — companies change ATS platforms
+- **ALWAYS set `careers_url`** when adding a new company: `npm run portals -- add --name "X" --url "https://..."`
+- Disable noisy portals: `npm run portals -- disable --name "X"`
+- Fix a broken URL: `npm run portals -- update --name "X" --url "https://..."`
+- Adjust title-filter keywords: `npm run portals -- keywords add|del --kind positive|negative --value "keyword"`
+- Companies change ATS platforms — verify `careers_url` periodically and update in Postgres

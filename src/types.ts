@@ -1,6 +1,6 @@
 /** Shared domain types for the CarrerOps pipeline. */
 
-/** A company entry parsed from `portals.yml`. */
+/** A scan target stored in the Postgres `Portal` table. */
 export interface Company {
   name: string;
   careers_url?: string;
@@ -11,7 +11,7 @@ export interface Company {
   [key: string]: string | undefined;
 }
 
-/** Parsed `portals.yml` configuration. */
+/** Scan configuration loaded from Postgres (`Portal` + `FilterKeyword` tables). */
 export interface PortalsConfig {
   positive: string[];
   negative: string[];
@@ -97,7 +97,6 @@ export interface ApplicationRow {
   status: string;
   pdf: string;
   report: string;
-  notes: string;
 }
 
 /** A resolved LLM provider configuration. */

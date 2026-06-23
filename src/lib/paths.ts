@@ -25,7 +25,6 @@ const p = (...segments: string[]): string => path.join(PROJECT_ROOT, ...segments
 
 export const paths = {
   root: PROJECT_ROOT,
-  portals: p("portals.yml"),
   cv: p("cv.md"),
   env: p(".env"),
   profile: p("config", "profile.yml"),

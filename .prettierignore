@@ -5,5 +5,4 @@ output/
 data/
 *.pdf
 *.woff2
-portals.yml
 package-lock.json

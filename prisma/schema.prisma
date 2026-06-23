@@ -15,7 +15,28 @@ model Application {
   status    String
   pdf       String
   report    String
-  notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// A scan target (formerly a `tracked_companies` entry in portals.yml).
+model Portal {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  careersUrl String?
+  api        String?
+  scanQuery  String?
+  notes      String?
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+/// Title-filter keywords (formerly `title_filter.positive` / `.negative`).
+model FilterKeyword {
+  id    Int    @id @default(autoincrement())
+  kind  String // "positive" | "negative"
+  value String
+
+  @@unique([kind, value])
 }

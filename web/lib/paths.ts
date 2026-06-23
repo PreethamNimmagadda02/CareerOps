@@ -12,10 +12,9 @@ function findRepoRoot(): string {
 
   let dir = process.cwd();
   for (let i = 0; i < 10; i += 1) {
-    const hasPortals = existsSync(path.join(dir, "portals.yml"));
-    const hasData = existsSync(path.join(dir, "data"));
+    const hasPrisma = existsSync(path.join(dir, "prisma", "schema.prisma"));
     const hasPkg = existsSync(path.join(dir, "package.json"));
-    if ((hasPortals || hasData) && hasPkg) return dir;
+    if (hasPrisma && hasPkg) return dir;
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;

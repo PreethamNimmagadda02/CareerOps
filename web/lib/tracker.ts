@@ -33,7 +33,6 @@ export async function readApplications(enrich = true): Promise<Application[]> {
       hasPdf: (app.pdf ?? "").includes("✅"),
       reportNumber: linkMatch ? linkMatch[1] as string : null,
       reportPath: linkMatch ? linkMatch[2] as string : null,
-      notes: app.notes ?? "",
       jobUrl: null,
     });
   }

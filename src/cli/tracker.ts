@@ -8,8 +8,8 @@
  *
  * Usage:
  *   career-ops-tracker list [--json]
- *   career-ops-tracker add    --company "Acme" --role "AI PM" [--score 4.5 --status Evaluada --pdf ❌ --report "" --notes "..." --date YYYY-MM-DD]
- *   career-ops-tracker update --id 12 [--score 4.5/5 --status Aplicado --report "[012](reports/...)" --pdf ✅ --role "..." --company "..." --notes "..."]
+ *   career-ops-tracker add    --company "Acme" --role "AI PM" [--score 4.5 --status Evaluada --pdf ❌ --report "" --date YYYY-MM-DD]
+ *   career-ops-tracker update --id 12 [--score 4.5/5 --status Aplicado --report "[012](reports/...)" --pdf ✅ --role "..." --company "..."]
  *   career-ops-tracker save   --company "Acme" --role "AI PM" --url "https://..." [--score 4.5 --status Evaluada --pdf ❌ --provider "manual"] [--file /tmp/eval.md]
  *
  * `save` is the one-shot post-evaluation command: it uploads the report to
@@ -68,7 +68,6 @@ async function cmdAdd(args: Args): Promise<void> {
     status: args.get("--status"),
     pdf: args.get("--pdf"),
     report: args.get("--report"),
-    notes: args.get("--notes"),
     date: args.get("--date"),
   });
   log.info(`✅ Added application #${row.num} — ${row.company} — ${row.role} (${row.status})`);
@@ -81,7 +80,7 @@ async function cmdUpdate(args: Args): Promise<void> {
     process.exit(1);
   }
   const fields: Record<string, string> = {};
-  for (const key of ["company", "role", "score", "status", "pdf", "report", "notes"]) {
+  for (const key of ["company", "role", "score", "status", "pdf", "report"]) {
     const v = args.get(`--${key}`);
     if (v !== undefined) fields[key] = v;
   }
@@ -168,8 +167,8 @@ async function main(): Promise<void> {
       log.error(
         "Usage: career-ops-tracker <list|add|update|save> [options]\n" +
           "  list   [--json]\n" +
-          "  add    --company X --role Y [--score --status --pdf --report --notes --date]\n" +
-          "  update --id N [--score --status --pdf --report --role --company --notes]\n" +
+          "  add    --company X --role Y [--score --status --pdf --report --date]\n" +
+          "  update --id N [--score --status --pdf --report --role --company]\n" +
           "  save   --company X --role Y --url U [--score --status --pdf --provider --file] (body via --file or stdin)",
       );
       process.exit(sub ? 1 : 0);

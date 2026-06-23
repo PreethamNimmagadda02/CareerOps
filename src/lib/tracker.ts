@@ -21,7 +21,6 @@ export async function getApplications(): Promise<ApplicationRow[]> {
     status: app.status,
     pdf: app.pdf,
     report: app.report,
-    notes: app.notes || "",
   }));
 }
 
@@ -37,7 +36,6 @@ export async function addApplication(opts: {
   status?: string;
   pdf?: string;
   report?: string;
-  notes?: string;
   date?: string;
 }): Promise<ApplicationRow> {
   const date = opts.date ?? today();
@@ -50,7 +48,6 @@ export async function addApplication(opts: {
       status: opts.status ?? "Evaluada",
       pdf: opts.pdf ?? "❌",
       report: opts.report ?? "",
-      notes: opts.notes ?? null,
     },
   });
 
@@ -63,7 +60,6 @@ export async function addApplication(opts: {
     status: app.status,
     pdf: app.pdf,
     report: app.report,
-    notes: app.notes || "",
   };
 }
 
@@ -80,7 +76,6 @@ export async function patchApplication(
     status: string;
     pdf: string;
     report: string;
-    notes: string;
   }>,
 ): Promise<boolean> {
   try {

@@ -15,7 +15,6 @@ export interface Application {
   hasPdf: boolean;
   reportNumber: string | null;
   reportPath: string | null;
-  notes: string;
   jobUrl: string | null;
   /** Lightweight enrichment pulled from the report header/summary. */
   archetype?: string;
