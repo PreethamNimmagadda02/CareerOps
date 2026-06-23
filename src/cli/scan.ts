@@ -199,6 +199,7 @@ async function main(): Promise<void> {
   );
   log.step(`🏁 Scan finished in ${secondsSince(startedAt)}s`);
 
+  // ── 1. Insert new shortlisted jobs ───────────────────────────────────────
   if (summary.shortlist.length > 0) {
     const date = new Date().toISOString().slice(0, 10);
     let addedCount = 0;
@@ -207,8 +208,6 @@ async function main(): Promise<void> {
       const key = dedupKey(job.company, job.title);
       if (seenDedupKeys.has(key)) continue;
 
-      // Insert with an autoincrement id (no explicit id) so the Postgres
-      // sequence stays consistent for future inserts.
       await db.application.create({
         data: {
           date,
@@ -225,9 +224,50 @@ async function main(): Promise<void> {
     }
 
     if (addedCount > 0) {
-      log.info(`\nAdded ${addedCount} new shortlisted jobs to Postgres.`);
+      log.step(`➕ Added ${addedCount} new shortlisted jobs to Postgres.`);
     } else {
-      log.info(`\nNo new jobs to add (all shortlisted jobs already in Postgres).`);
+      log.step(`No new jobs to add (all shortlisted jobs already in Postgres).`);
+    }
+  }
+
+  // ── 2. Prune closed job postings ─────────────────────────────────────────
+  // If a job no longer appears in the current scan's relevant results, the
+  // posting has been filled or removed. Any record whose status shows the
+  // candidate has NOT yet actively engaged (Evaluated / Discarded / SKIP /
+  // blank) is deleted — a score and report for a closed job have no value.
+  //
+  // Records where the candidate HAS taken action are always kept:
+  //   Applied | Responded | Interview | Offer | Rejected
+  //
+  // The Nextcloud report file (if any) becomes orphaned but is left intact;
+  // it can serve as a future reference for the company's requirements.
+  const ACTIVE_STATUSES = new Set(["Applied", "Responded", "Interview", "Offer", "Rejected"]);
+
+  if (summary.relevant.length > 0) {
+    const currentKeys = new Set(
+      summary.relevant.map((j) => dedupKey(j.company, j.title)),
+    );
+
+    // Load all applications that are NOT in an active candidate status —
+    // these are the only ones eligible for pruning.
+    const pruneable = await db.application.findMany({
+      where: { status: { notIn: [...ACTIVE_STATUSES] } },
+      select: { id: true, company: true, role: true, status: true },
+    });
+
+    const stale = pruneable.filter(
+      (a) => !currentKeys.has(dedupKey(a.company, a.role)),
+    );
+
+    if (stale.length > 0) {
+      await db.application.deleteMany({
+        where: { id: { in: stale.map((a) => a.id) } },
+      });
+      log.step(
+        `🗑️  Pruned ${stale.length} application(s) whose job postings are no longer active.`,
+      );
+    } else {
+      log.step(`All tracked jobs are still active in scan results.`);
     }
   }
 

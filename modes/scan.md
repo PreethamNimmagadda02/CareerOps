@@ -130,6 +130,7 @@ The levels are additive — they all run, and the results are merged and dedupli
 
 9. **Roles filtered out by title**: record in `scan-history.tsv` with status `skipped_title`
 10. **Duplicate roles**: record with status `skipped_dup`
+11. **Prune closed postings**: after inserting new jobs, the CLI automatically deletes any Postgres `Application` row whose job no longer appears in the scan's relevant results — **unless** the candidate has already engaged (`Applied`, `Responded`, `Interview`, `Offer`, `Rejected`). `Evaluated` / `Discarded` / `SKIP` applications for closed postings are deleted because a score and report for a closed job have no actionable value.
 
 ## Title and company extraction from WebSearch results
 
