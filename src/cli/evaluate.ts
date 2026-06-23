@@ -24,13 +24,12 @@ import { log } from "../lib/logger.js";
 import { paths } from "../lib/paths.js";
 import { buildPrompt, parseScore } from "../lib/prompt.js";
 import {
-  buildUrlIndex,
   nextReportNumber,
   getApplications,
   updateTracker,
   writeReport,
 } from "../lib/tracker.js";
-import { normalizeKey, today } from "../lib/text.js";
+import {  today } from "../lib/text.js";
 
 async function main(): Promise<void> {
   const args = new Args();
@@ -90,7 +89,7 @@ async function main(): Promise<void> {
   for (const j of targets) log.info(`   #${j.num}  ${j.company} — ${j.role}`);
   log.info("");
 
-  const urlIndex = buildUrlIndex();
+
   const browser = await chromium.launch({ headless: true });
   const date = today();
   const results = { evaluated: 0, skipped: 0, errors: 0 };
@@ -106,16 +105,7 @@ async function main(): Promise<void> {
           log.rule();
           log.info(`${tag} ${job.company} — ${job.role}`);
 
-          let url = urlIndex.get(normalizeKey(job.company, job.role));
-          if (!url) {
-            const prefix = job.company.toLowerCase().replace(/\s+/g, " ");
-            for (const [k, v] of urlIndex) {
-              if (k.startsWith(prefix)) {
-                url = v;
-                break;
-              }
-            }
-          }
+          let url = job.url;
 
           if (!url) {
             log.warn(`${tag} ⚠️  No URL in scan results — skipping. Re-run scan or use --job N.`);

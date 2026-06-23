@@ -32,7 +32,5 @@ export const paths = {
   pipeline: p("data", "pipeline.md"),
   scanHistory: p("data", "scan-history.tsv"),
   fontsDir: p("fonts"),
-  /** Persisted file for scan results shared between scan + evaluate. */
-  scanResults: p("data", "scan-results.json"),
   opencodeConfig: path.join(os.homedir(), ".config", "opencode", "opencode.jsonc"),
 } as const;

@@ -97,6 +97,7 @@ export interface ApplicationRow {
   status: string;
   pdf: string;
   report: string;
+  url: string | null;
 }
 
 /** A resolved LLM provider configuration. */

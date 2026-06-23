@@ -7,7 +7,7 @@
  *   career-ops-scan [--compact] [--verbose] [--fallback]
  *                   [--concurrency N] [--browser-concurrency N]
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { chromium } from "playwright";
 
@@ -193,10 +193,6 @@ async function main(): Promise<void> {
     shortlist: relevant.filter(isHighSignal).slice(0, 80),
   };
 
-  writeFileSync(paths.scanResults, JSON.stringify(summary, null, 2));
-  log.step(
-    `💾 Wrote ${summary.relevant.length} relevant (${summary.shortlist.length} shortlisted) to ${paths.scanResults}`,
-  );
   log.step(`🏁 Scan finished in ${secondsSince(startedAt)}s`);
 
   // ── 1. Insert new shortlisted jobs ───────────────────────────────────────
@@ -213,6 +209,7 @@ async function main(): Promise<void> {
           date,
           company: job.company,
           role: job.title,
+          url: job.url,
           score: "N/A",
           status: "Evaluated",
           pdf: "❌",
@@ -340,7 +337,6 @@ function printCompact(summary: ScanSummary, browserCount: number, verbose: boole
     log.info("(Query-only boards are discoverable via agent WebSearch only.)");
   }
   log.info("");
-  log.info(`Full JSON: ${paths.scanResults}`);
 }
 
 main().catch((err: unknown) => {

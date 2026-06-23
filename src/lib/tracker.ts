@@ -1,8 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
-
 import type { ApplicationRow } from "../types.js";
-import { paths } from "./paths.js";
-import { normalizeKey, slugify, today } from "./text.js";
+import { slugify, today } from "./text.js";
 import { db } from "./db.js";
 import { uploadReport } from "./nextcloud.js";
 
@@ -21,6 +18,7 @@ export async function getApplications(): Promise<ApplicationRow[]> {
     status: app.status,
     pdf: app.pdf,
     report: app.report,
+    url: app.url,
   }));
 }
 
@@ -60,6 +58,7 @@ export async function addApplication(opts: {
     status: app.status,
     pdf: app.pdf,
     report: app.report,
+    url: app.url,
   };
 }
 
@@ -89,21 +88,7 @@ export async function patchApplication(
   }
 }
 
-/** Build a company||title -> url index from a scan-results JSON file. */
-export function buildUrlIndex(scanResultsPath: string = paths.scanResults): Map<string, string> {
-  if (!existsSync(scanResultsPath)) return new Map();
-  try {
-    const data = JSON.parse(readFileSync(scanResultsPath, "utf8"));
-    const idx = new Map<string, string>();
-    for (const job of [...(data.shortlist || []), ...(data.relevant || [])]) {
-      const key = normalizeKey(job.company, job.title);
-      if (!idx.has(key)) idx.set(key, job.url);
-    }
-    return idx;
-  } catch {
-    return new Map();
-  }
-}
+
 
 /**
  * Compute the next sequential report number by inspecting stored report links
