@@ -4,7 +4,7 @@
  *
  * Reads pending rows from Postgres, fetches each JD via Playwright,
  * runs a structured A–F evaluation through an OpenAI-compatible provider,
- * uploads the report to Nextcloud, and updates the Postgres row with a real score.
+ * uploads the report to MinIO, and updates the Postgres row with a real score.
  *
  * Usage:
  *   career-ops-evaluate [--limit N] [--job N] [--dry-run]
@@ -187,7 +187,7 @@ async function main(): Promise<void> {
     `📊 ${results.evaluated} evaluated  ${results.skipped} skipped  ${results.errors} errors`,
   );
   if (results.evaluated > 0) {
-    log.info(`☁️  Reports  → Nextcloud / CareerOps-Reports/`);
+    log.info(`☁️  Reports  → MinIO / ${process.env.MINIO_BUCKET ?? "careerops"}/`);
     log.info(`📋 Tracker  → Postgres (Application table)`);
   }
 }

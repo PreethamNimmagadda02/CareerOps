@@ -1,3 +1,4 @@
+import { S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import type { ReportPayload } from "./types";
 
 const reUrl = /^\*\*URL:\*\*\s*(https?:\/\/\S+)/m;
@@ -24,13 +25,20 @@ export interface ReportSummary {
   comp?: string;
 }
 
-function resolveNextcloud() {
-  const url = (process.env.NEXTCLOUD_URL || "http://localhost:8090").replace(/\/$/, "");
-  const user = process.env.NEXTCLOUD_USER || "admin";
-  const pass = process.env.NEXTCLOUD_PASSWORD || "careerops123";
-  const auth = "Basic " + Buffer.from(`${user}:${pass}`).toString("base64");
-  return { url, user, auth };
+function resolveMinioClient(): S3Client {
+  const endpoint = (process.env.MINIO_ENDPOINT || "http://localhost:9000").replace(/\/$/, "");
+  const accessKeyId = process.env.MINIO_ACCESS_KEY || "admin";
+  const secretAccessKey = process.env.MINIO_SECRET_KEY || "careerops123";
+
+  return new S3Client({
+    endpoint,
+    region: "us-east-1", // required by SDK, MinIO ignores it
+    credentials: { accessKeyId, secretAccessKey },
+    forcePathStyle: true, // required for MinIO
+  });
 }
+
+const BUCKET = process.env.MINIO_BUCKET ?? "careerops";
 
 /** Extract summary from raw markdown text */
 export function parseReportSummary(text: string): ReportSummary {
@@ -52,59 +60,47 @@ export function parseReportSummary(text: string): ReportSummary {
   };
 }
 
-/** Read a report's lightweight summary by fetching from Nextcloud. */
+/** Read a report's lightweight summary by fetching from MinIO. */
 export async function readReportSummary(reportRelPath: string): Promise<ReportSummary | null> {
-  const { url, user, auth } = resolveNextcloud();
   const filename = reportRelPath.split("/").pop();
   if (!filename) return null;
 
   try {
-    const fileUrl = `${url}/remote.php/dav/files/${encodeURIComponent(user)}/CareerOps-Reports/${encodeURIComponent(filename)}`;
-    const res = await fetch(fileUrl, { headers: { Authorization: auth } });
-    if (!res.ok) return null;
-    const text = await res.text();
+    const client = resolveMinioClient();
+    const res = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: filename }));
+    const text = await res.Body?.transformToString("utf-8");
+    if (!text) return null;
     return parseReportSummary(text);
   } catch {
     return null;
   }
 }
 
-/** Read a full report by its number (e.g. "030") from Nextcloud. */
+/** Read a full report by its number (e.g. "030") from MinIO. */
 export async function readReportByNumber(num: string): Promise<ReportPayload | null> {
-  const { url, user, auth } = resolveNextcloud();
+  const client = resolveMinioClient();
   const padded = num.padStart(3, "0");
-  const folderUrl = `${url}/remote.php/dav/files/${encodeURIComponent(user)}/CareerOps-Reports/`;
 
   try {
-    // 1. List directory to find the filename
-    const listRes = await fetch(folderUrl, {
-      method: "PROPFIND",
-      headers: { "Depth": "1", Authorization: auth }
-    });
-    if (!listRes.ok) return null;
-    const xml = await listRes.text();
-    
-    // Find filename matching the number (e.g. 030-company-date.md)
-    const match = xml.match(new RegExp(`>([^<]*${padded}-[^<]*\\.md)<`));
-    if (!match) return null;
-    
-    // match[1] is the absolute path, e.g. /remote.php/dav/files/admin/CareerOps-Reports/030-unstructured-2026-06-22.md
-    const filePath = match[1];
-    const fileUrl = `${url}${filePath}`;
-    
+    // 1. List all objects in the bucket to find the matching filename
+    const listRes = await client.send(new ListObjectsV2Command({ Bucket: BUCKET }));
+    const keys = (listRes.Contents ?? []).map((obj) => obj.Key ?? "").filter(Boolean);
+
+    // Find the key matching the report number prefix (e.g. "030-company-date.md")
+    const filename = keys.find((k) => k.startsWith(`${padded}-`) && k.endsWith(".md"));
+    if (!filename) return null;
+
     // 2. Fetch the file content
-    const fileRes = await fetch(fileUrl, { headers: { Authorization: auth } });
-    if (!fileRes.ok) return null;
-    const markdown = await fileRes.text();
-    
+    const getRes = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: filename }));
+    const markdown = await getRes.Body?.transformToString("utf-8");
+    if (!markdown) return null;
+
     const summary = parseReportSummary(markdown);
-    
-    const filename = filePath.split("/").pop() || "";
 
     return {
       number: padded,
       path: `reports/${filename}`,
-      absolutePath: `Nextcloud/${filename}`,
+      absolutePath: `MinIO/${filename}`,
       company: summary.company ?? "",
       role: summary.role ?? "",
       markdown,

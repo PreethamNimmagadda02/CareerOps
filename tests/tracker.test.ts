@@ -12,8 +12,8 @@ vi.mock("../src/lib/db.js", () => ({
   },
 }));
 
-vi.mock("../src/lib/nextcloud.js", () => ({
-  uploadReport: vi.fn().mockResolvedValue("http://nextcloud/remote.php/dav/files/admin/CareerOps-Reports/001-acme-2026-06-16.md"),
+vi.mock("../src/lib/minio.js", () => ({
+  uploadReport: vi.fn().mockResolvedValue("001-acme-2026-06-16.md"),
 }));
 
 describe("reportFilename", () => {
@@ -71,8 +71,8 @@ describe("updateTracker", () => {
 describe("writeReport", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("uploads to Nextcloud and returns the filename", async () => {
-    const { uploadReport } = await import("../src/lib/nextcloud.js");
+  it("uploads to MinIO and returns the filename", async () => {
+    const { uploadReport } = await import("../src/lib/minio.js");
     const filename = await writeReport({
       num: 1,
       company: "Acme",

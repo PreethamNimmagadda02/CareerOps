@@ -2,7 +2,7 @@ import type { ApplicationRow } from "../types.js";
 import { AppStatus } from "@prisma/client";
 import { slugify, today } from "./text.js";
 import { db } from "./db.js";
-import { uploadReport } from "./nextcloud.js";
+import { uploadReport } from "./minio.js";
 
 /** Fetch all applications from the database. */
 export async function getApplications(): Promise<ApplicationRow[]> {
@@ -94,7 +94,7 @@ export async function patchApplication(
 /**
  * Compute the next sequential report number by inspecting stored report links
  * in the database. This replaces the old local-directory scan now that reports
- * are stored in Nextcloud.
+ * are stored in MinIO.
  */
 export async function nextReportNumber(): Promise<number> {
   const apps = await db.application.findMany({ select: { report: true } });
@@ -115,7 +115,7 @@ export function reportFilename(num: number, company: string, date: string = toda
 }
 
 /**
- * Upload an evaluation report directly to Nextcloud and return its filename.
+ * Upload an evaluation report directly to MinIO and return its filename.
  * No local file is written.
  */
 export async function writeReport(opts: {

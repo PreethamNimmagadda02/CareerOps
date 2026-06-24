@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * career-ops tracker — persist applications to Postgres and reports to Nextcloud.
+ * career-ops tracker — persist applications to Postgres and reports to MinIO.
  *
  * This is the interactive counterpart to the automated `evaluate` CLI. The agent
  * (or a human) calls it instead of editing `data/applications.md` or writing files
- * into `reports/`. Applications live in Postgres; report markdown lives in Nextcloud.
+ * into `reports/`. Applications live in Postgres; report markdown lives in MinIO.
  *
  * Usage:
  *   career-ops-tracker list [--json]
@@ -13,7 +13,7 @@
  *   career-ops-tracker save   --company "Acme" --role "AI PM" --url "https://..." [--score 4.5 --status Evaluada --pdf ❌ --provider "manual"] [--file /tmp/eval.md]
  *
  * `save` is the one-shot post-evaluation command: it uploads the report to
- * Nextcloud (with the canonical header) AND inserts the application row in Postgres,
+ * MinIO (with the canonical header) AND inserts the application row in Postgres,
  * linking the two. If `--file` is omitted it reads the evaluation body from stdin.
  */
 import { readFileSync } from "node:fs";
@@ -30,6 +30,8 @@ import {
   writeReport,
 } from "../lib/tracker.js";
 import { today } from "../lib/text.js";
+
+const MINIO_BUCKET = process.env.MINIO_BUCKET
 
 function required(args: Args, name: string): string {
   const value = args.get(name);
@@ -126,7 +128,7 @@ async function cmdSave(args: Args): Promise<void> {
     evaluation,
     providerLabel: provider,
   });
-  log.info(`☁️  Report uploaded → Nextcloud / CareerOps-Reports/${filename}`);
+  log.info(`☁️  Report uploaded → MinIO / ${MINIO_BUCKET ?? "careerops"}/${filename}`);
 
   const padded = String(reportNum).padStart(3, "0");
   const reportLink = `[${padded}](reports/${reportFilename(reportNum, company, date)})`;
@@ -167,10 +169,10 @@ async function main(): Promise<void> {
     default:
       log.error(
         "Usage: career-ops-tracker <list|add|update|save> [options]\n" +
-          "  list   [--json]\n" +
-          "  add    --company X --role Y [--score --status --pdf --report --date]\n" +
-          "  update --id N [--score --status --pdf --report --role --company]\n" +
-          "  save   --company X --role Y --url U [--score --status --pdf --provider --file] (body via --file or stdin)",
+        "  list   [--json]\n" +
+        "  add    --company X --role Y [--score --status --pdf --report --date]\n" +
+        "  update --id N [--score --status --pdf --report --role --company]\n" +
+        "  save   --company X --role Y --url U [--score --status --pdf --provider --file] (body via --file or stdin)",
       );
       process.exit(sub ? 1 : 0);
   }

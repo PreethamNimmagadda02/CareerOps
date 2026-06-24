@@ -8,8 +8,8 @@
  * Usage:
  *   career-ops-portals list     [--json] [--disabled]
  *   career-ops-portals count
- *   career-ops-portals add      --name "Acme" --url "https://jobs.ashbyhq.com/acme" [--api URL] [--query "..."] [--notes "..."]
- *   career-ops-portals update   --name "Acme" [--url URL] [--api URL] [--query "..."] [--notes "..."]
+ *   career-ops-portals add      --name "Acme" --url "https://jobs.ashbyhq.com/acme" [--api URL]
+ *   career-ops-portals update   --name "Acme" [--url URL] [--api URL]
  *   career-ops-portals delete   --name "Acme"
  *   career-ops-portals enable   --name "Acme"
  *   career-ops-portals disable  --name "Acme"
@@ -75,8 +75,6 @@ async function cmdAdd(args: Args): Promise<void> {
       name,
       careersUrl: args.get("--url") ?? null,
       api:        args.get("--api") ?? null,
-      scanQuery:  args.get("--query") ?? null,
-      notes:      args.get("--notes") ?? null,
       enabled:    true,
     },
   });
@@ -88,10 +86,8 @@ async function cmdUpdate(args: Args): Promise<void> {
   const portal = await db.portal.findFirst({ where: { name } });
   if (!portal) { log.error(`❌ Portal "${name}" not found.`); process.exit(1); }
   const fields: Record<string, string | null> = {};
-  if (args.get("--url") !== undefined)   fields.careersUrl = args.get("--url") ?? null;
-  if (args.get("--api") !== undefined)   fields.api        = args.get("--api") ?? null;
-  if (args.get("--query") !== undefined) fields.scanQuery  = args.get("--query") ?? null;
-  if (args.get("--notes") !== undefined) fields.notes      = args.get("--notes") ?? null;
+  if (args.get("--url") !== undefined) fields.careersUrl = args.get("--url") ?? null;
+  if (args.get("--api") !== undefined) fields.api        = args.get("--api") ?? null;
   if (Object.keys(fields).length === 0) { log.error("❌ Nothing to update. Pass at least one field."); process.exit(1); }
   await db.portal.update({ where: { id: portal.id }, data: fields });
   log.info(`✅ Updated portal "${name}": ${Object.keys(fields).join(", ")}`);
@@ -177,8 +173,8 @@ async function main(): Promise<void> {
         "Usage: career-ops-portals <command> [options]\n\n" +
         "  list     [--json] [--disabled]          list portals\n" +
         "  count                                   total / enabled count\n" +
-        "  add      --name X --url U [--api --query --notes]\n" +
-        "  update   --name X [--url --api --query --notes]\n" +
+        "  add      --name X --url U [--api]\n" +
+        "  update   --name X [--url --api]\n" +
         "  delete   --name X\n" +
         "  enable   --name X\n" +
         "  disable  --name X\n" +

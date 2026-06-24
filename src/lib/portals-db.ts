@@ -13,15 +13,11 @@ function rowToCompany(p: {
   name: string;
   careersUrl: string | null;
   api: string | null;
-  scanQuery: string | null;
-  notes: string | null;
   enabled: boolean;
 }): Company {
   const c: Company = { name: p.name, enabled: p.enabled ? "true" : "false" };
   if (p.careersUrl) c.careers_url = p.careersUrl;
   if (p.api) c.api = p.api;
-  if (p.scanQuery) c.scan_query = p.scanQuery;
-  if (p.notes) c.notes = p.notes;
   return c;
 }
 

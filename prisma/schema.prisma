@@ -37,8 +37,6 @@ model Portal {
   name       String   @unique
   careersUrl String?
   api        String?
-  scanQuery  String?
-  notes      String?
   enabled    Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

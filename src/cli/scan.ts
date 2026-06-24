@@ -44,11 +44,10 @@ async function main(): Promise<void> {
   const structuredCompanies = enabledCompanies.filter(hasStructuredApi);
   const nonStructured = enabledCompanies.filter((c) => !structuredCompanies.includes(c));
 
-  // Query-only portals have neither an api nor a careers_url — they exist only
-  // for the agent's WebSearch mode (scan_query). The browser fallback cannot
-  // use them and scanCompanyBrowser would immediately error with
-  // "missing careers_url", inflating the failure count. Separate them out so
-  // they are cleanly skipped by the CLI scanner.
+  // A portal with neither an api nor a careers_url cannot be scanned by the
+  // CLI (scanCompanyBrowser needs a careers_url). Such rows should not exist,
+  // but we guard against them so they are cleanly skipped rather than counted
+  // as browser failures.
   const unsupportedCompanies = nonStructured.filter((c) => !!c.careers_url);
   const queryOnlyCompanies  = nonStructured.filter((c) => !c.careers_url);
 

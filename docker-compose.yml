@@ -5,53 +5,54 @@ services:
     image: postgres:16-alpine
     container_name: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: careerops
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d careerops" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  nextcloud-db:
-    image: mariadb:11
-    container_name: nextcloud-db
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Web UI (http://localhost:9001)
     environment:
-      MYSQL_ROOT_PASSWORD: nextcloud_root
-      MYSQL_DATABASE: nextcloud
-      MYSQL_USER: nextcloud
-      MYSQL_PASSWORD: nextcloud
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    command: server /data --console-address ":9001"
     volumes:
-      - nextcloud_db:/var/lib/mysql
+      - minio_data:/data
     healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
-      interval: 10s
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  nextcloud:
-    image: nextcloud:apache
-    container_name: nextcloud
-    ports:
-      - "8090:80"
-    environment:
-      MYSQL_HOST: nextcloud-db
-      MYSQL_DATABASE: nextcloud
-      MYSQL_USER: nextcloud
-      MYSQL_PASSWORD: nextcloud
-      NEXTCLOUD_ADMIN_USER: admin
-      NEXTCLOUD_ADMIN_PASSWORD: careerops123
-      NEXTCLOUD_TRUSTED_DOMAINS: localhost nextcloud
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio-init
     depends_on:
-      nextcloud-db:
+      minio:
         condition: service_healthy
-    volumes:
-      - nextcloud_data:/var/www/html
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY &&
+        mc mb --ignore-existing local/$$MINIO_BUCKET &&
+        echo '✅ MinIO bucket ready'
+      "
+    restart: "no"
 
   app:
     build:
@@ -62,17 +63,18 @@ services:
       - "3000:3000"
     environment:
       # Use the docker-compose service name `db` instead of localhost
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/careerops?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       - NODE_ENV=production
-      # Nextcloud WebDAV — internal Docker network URL
-      - NEXTCLOUD_URL=http://nextcloud:80
-      - NEXTCLOUD_USER=admin
-      - NEXTCLOUD_PASSWORD=careerops123
+      # MinIO S3 — internal Docker network URL
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET}
     depends_on:
       db:
         condition: service_healthy
-      nextcloud:
-        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
     volumes:
       # Map the necessary data directories so config persists
       - ./data:/app/data
@@ -83,5 +85,4 @@ services:
 
 volumes:
   pgdata:
-  nextcloud_db:
-  nextcloud_data:
+  minio_data:
