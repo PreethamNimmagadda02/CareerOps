@@ -25,7 +25,7 @@ Read the full batch instructions from `modes/batch.md` for context, then:
 2. **For each offer**:
    a. Fetch JD from URL
    b. Calculate next report number (max existing in Nextcloud `CareerOps-Reports/` + 1)
-   c. Execute full A-F evaluation (read cv.md, search comp data, etc.)
+   c. Execute full A-F evaluation (run `npm run dynamo:cv` + `npm run dynamo:profile` for candidate data, search comp data, etc.)
    d. Run `npm run tracker -- save` to upload the report to Nextcloud (`CareerOps-Reports/{###}-{company-slug}-{date}.md`) and insert the Postgres `Application` row
    e. Generate PDF via `npm run pdf -- <input.html> <output.pdf>`
    f. Log progress

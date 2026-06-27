@@ -203,6 +203,8 @@ async function main(): Promise<void> {
       reportName: "",
     }));
 
+    const backfillSnapshot = backfill.map((j) => ({ company: j.company, role: j.role, url: j.url }));
+
     const { count: addedCount } = await db.application.createMany({
       data: backfill,
       skipDuplicates: true,
@@ -212,7 +214,11 @@ async function main(): Promise<void> {
     backfill.length = 0;
 
     if (addedCount > 0) {
-      log.step(`➕ Added ${addedCount} new shortlisted job(s) to Postgres (URL-deduped).`);
+      log.step(`➕ Added ${addedCount} new shortlisted job(s) to Postgres:`);
+      for (const j of backfillSnapshot) {
+        log.info(`   ${j.company} — ${j.role}`);
+        log.info(`   🔗 ${j.url}`);
+      }
     } else {
       log.step(`No new jobs to add (all shortlisted URLs already in Postgres).`);
     }

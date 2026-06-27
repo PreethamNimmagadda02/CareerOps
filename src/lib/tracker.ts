@@ -161,7 +161,7 @@ export async function updateTracker(
     await db.application.update({
       where: { id },
       data: {
-        score: `${score}/5`,
+        score: score === "N/A" ? "N/A" : `${score}/5`,
         reportName: filename,
         reportUrl,
         updatedAt: new Date(),

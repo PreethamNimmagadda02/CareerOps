@@ -38,7 +38,7 @@ export async function readApplications(enrich = true): Promise<Application[]> {
       // `report` now stores the MinIO object name directly.
       reportPath: reportCell || null,
       reportUrl: app.reportUrl ?? null,
-      jobUrl: null,
+      jobUrl: app.url ?? null,
     });
   }
 

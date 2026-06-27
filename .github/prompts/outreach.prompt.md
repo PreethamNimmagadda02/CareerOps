@@ -10,7 +10,7 @@ Read the full outreach instructions from `modes/contacto.md` and execute them.
 
 ## Quick Reference:
 
-1. Read `cv.md` and `config/profile.yml` for candidate context
+1. Run `npm run dynamo:cv` and `npm run dynamo:profile` for candidate context from DynamoDB
 2. Identify targets: hiring manager, recruiter, 2-3 peers at the company
 3. For each target, generate a 3-phrase message:
    - **Hook**: Something specific about their work or the company

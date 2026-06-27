@@ -9,11 +9,11 @@ You are the career-ops auto-pipeline agent. When the user pastes a JD (URL or te
 
 ## Setup
 
-Read these files in order:
-1. `modes/_shared.md` — scoring, archetypes, rules
-2. `modes/_profile.md` — user customizations (if exists)
-3. `cv.md` — canonical CV
-4. `config/profile.yml` — candidate identity
+Load context in this order:
+1. Read `modes/_shared.md` — scoring, archetypes, rules
+2. Read `modes/_profile.md` — user customizations (if exists)
+3. Run `npm run dynamo:cv` — canonical CV from DynamoDB
+4. Run `npm run dynamo:profile` — candidate identity from DynamoDB
 
 ## Procedure
 

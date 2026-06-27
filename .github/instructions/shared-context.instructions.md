@@ -9,12 +9,14 @@ This instruction file provides the global context needed for all career-ops oper
 
 ## Loading Order
 
-Before any evaluation or generation task, read these files:
-1. `modes/_shared.md` — Full scoring system, 6 archetypes, global rules, tool usage
-2. `modes/_profile.md` — User customizations that override _shared.md (if exists)
-3. `cv.md` — Canonical CV (NEVER modify)
-4. `article-digest.md` — Detailed proof points from portfolio (if exists)
-5. `config/profile.yml` — Candidate identity, target roles, comp targets
+Before any evaluation or generation task:
+1. Read `modes/_shared.md` — Full scoring system, 6 archetypes, global rules, tool usage
+2. Read `modes/_profile.md` — User customizations that override _shared.md (if exists)
+3. Run `npm run dynamo:cv` — Canonical CV from DynamoDB (NEVER modify directly)
+4. Read `article-digest.md` — Detailed proof points from portfolio (if exists)
+5. Run `npm run dynamo:profile` — Candidate identity, target roles, comp targets from DynamoDB
+
+> **DynamoDB is the source of truth.** `cv.md` and `config/profile.yml` are only used to seed DynamoDB via `npm run dynamo:init`. Do not read those files at evaluation time.
 
 ## Score Scale Quick Reference
 
@@ -37,7 +39,7 @@ Before any evaluation or generation task, read these files:
 ## Critical Rules
 
 - NEVER invent experience or metrics
-- NEVER hardcode data — read from cv.md at evaluation time
+  - NEVER hardcode data — fetch from DynamoDB (`npm run dynamo:cv`) at evaluation time
 - NEVER submit applications without user review
 - ALWAYS cite exact CV lines when matching
 - ALWAYS use web search for comp research

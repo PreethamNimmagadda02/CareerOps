@@ -11,17 +11,15 @@
  *                       [--provider zen|nvidia|<custom>] [--model NAME]
  *                       [--concurrency N]
  */
-import { existsSync, readFileSync } from "node:fs";
-
 import { chromium } from "playwright";
 
 import { Args } from "../lib/args.js";
+import { loadCandidateContext } from "../lib/candidate-loader.js";
 import { createSemaphore } from "../lib/concurrency.js";
 import { loadEnv } from "../lib/env.js";
 import { fetchJD, isJdOk } from "../lib/jd.js";
 import { callLLM, resolveProvider } from "../lib/llm.js";
 import { log } from "../lib/logger.js";
-import { paths } from "../lib/paths.js";
 import { buildPrompt, parseScore } from "../lib/prompt.js";
 import {
   nextReportNumber,
@@ -58,10 +56,7 @@ async function main(): Promise<void> {
   log.info(`   limit       : ${limit}  dry-run=${dryRun}`);
   log.info(`   concurrency : ${concurrency}\n`);
 
-  const cv = readFileSync(paths.cv, "utf8");
-  const profileYml = existsSync(paths.profile)
-    ? readFileSync(paths.profile, "utf8")
-    : "(profile.yml not found)";
+  const { cv, profileYml } = await loadCandidateContext();
   const allJobs = await getApplications();
 
   // Subsequent evaluations are idempotent: skip an application only when it
@@ -69,8 +64,9 @@ async function main(): Promise<void> {
   // complete evaluation. Anything missing either is (re)queued.
   const isComplete = (j: (typeof allJobs)[number]): boolean => {
     const hasReport = j.reportName.trim() !== "";
-    const score = j.score.trim();
-    const hasScore = score !== "" && score !== "N/A";
+    // A real score is a number like "4.2/5". Anything else ("N/A", "N/A/5",
+    // "", etc.) means the evaluation never produced a parseable result.
+    const hasScore = /^\d+(\.\d+)?\/5$/.test(j.score.trim());
     return hasReport && hasScore;
   };
   let targets = allJobs.filter((j) => !isComplete(j));

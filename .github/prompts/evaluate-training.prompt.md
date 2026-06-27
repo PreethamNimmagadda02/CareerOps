@@ -23,4 +23,4 @@ Read the full training evaluation instructions from `modes/training.md` and exec
 - **NO HACER** — Not worth it, here's a better alternative
 - **TIMEBOX** — Only worth X weeks max, then stop
 
-Read `cv.md` and `config/profile.yml` for candidate context.
+Run `npm run dynamo:cv` and `npm run dynamo:profile` for candidate context from DynamoDB.

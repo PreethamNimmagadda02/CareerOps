@@ -10,12 +10,17 @@
 
 ## Sources of Truth
 
-| File | Path | When |
-|------|------|------|
-| cv.md | `cv.md` (project root) | ALWAYS |
-| article-digest.md | `article-digest.md` (if exists) | ALWAYS (detailed proof points) |
-| profile.yml | `config/profile.yml` | ALWAYS (candidate identity and targets) |
-| _profile.md | `modes/_profile.md` | ALWAYS (user archetypes, narrative, negotiation) |
+**DynamoDB is the single source of truth for CV and profile data.**
+Use the CLI commands below to fetch the live data before every evaluation.
+
+| Source | How to read | When |
+|--------|-------------|------|
+| CV | `npm run dynamo:cv` → prints Markdown to stdout | ALWAYS |
+| Profile | `npm run dynamo:profile` → prints YAML to stdout | ALWAYS |
+| article-digest.md | `article-digest.md` (file, if exists) | ALWAYS (detailed proof points) |
+| _profile.md | `modes/_profile.md` (file) | ALWAYS (user archetypes, narrative, negotiation) |
+
+> To update CV or profile data: use `patchCV()` / `patchProfile()` in `src/lib/cv-store.ts` and `src/lib/profile-store.ts`, or re-seed with `npm run dynamo:init`.
 
 ## Persistence (Postgres + Nextcloud)
 
@@ -32,8 +37,8 @@ Persist everything through the `tracker` CLI (it talks to Postgres + Nextcloud f
 
 `save` is the post-evaluation one-shot: write the A–F report body to a temp file (e.g. `/tmp/eval.md`) and pass it via `--file` (or pipe it via stdin). The CLI adds the canonical header, uploads to Nextcloud, inserts the Postgres row, and links them. Requires `DATABASE_URL`, `NEXTCLOUD_URL`, `NEXTCLOUD_USER`, `NEXTCLOUD_PASSWORD` in `.env`.
 
-**RULE: NEVER hardcode metrics from proof points.** Read them from cv.md + article-digest.md at evaluation time.
-**RULE: For article/project metrics, article-digest.md takes precedence over cv.md.**
+**RULE: NEVER hardcode metrics from proof points.** Fetch them from DynamoDB (`npm run dynamo:cv`) + article-digest.md at evaluation time.
+**RULE: For article/project metrics, article-digest.md takes precedence over DynamoDB CV.**
 **RULE: Read _profile.md AFTER this file. User customizations in _profile.md override defaults here.**
 
 ---
@@ -77,7 +82,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 ### NEVER
 
 1. Invent experience or metrics
-2. Modify cv.md or portfolio files
+2. Modify cv.md, config/profile.yml, or portfolio files — edit DynamoDB instead via `patchCV()` / `patchProfile()`
 3. Submit applications on behalf of the candidate
 4. Share phone number in generated messages
 5. Recommend comp below market rate
@@ -89,7 +94,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 ### ALWAYS
 
 0. **Cover letter:** If the form allows it, ALWAYS include one. Same visual design as CV. JD quotes mapped to proof points. 1 page max.
-1. Read cv.md, _profile.md, and article-digest.md (if exists) before evaluating
+1. Run `npm run dynamo:cv` and `npm run dynamo:profile` to load candidate data; read _profile.md and article-digest.md (if exists) before evaluating
 2. Detect the role archetype and adapt framing per _profile.md
 3. Cite exact lines from CV when matching
 4. Use WebSearch for comp and company data
@@ -108,7 +113,8 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 | WebSearch | Comp research, trends, company culture, LinkedIn contacts, fallback for JDs |
 | WebFetch | Fallback for extracting JDs from static pages |
 | Playwright | Verify offers (browser_navigate + browser_snapshot). **NEVER 2+ agents with Playwright in parallel.** |
-| Read | cv.md, _profile.md, article-digest.md, cv-template.html |
+| Bash | `npm run dynamo:cv` → CV markdown; `npm run dynamo:profile` → profile YAML |
+| Read | _profile.md, article-digest.md, cv-template.html |
 | Write | Temporary HTML for PDF, temp report body (e.g. `/tmp/eval.md`) — NEVER applications.md or reports/*.md |
 | Bash | `npm run tracker -- save\|add\|update\|list` (Postgres + Nextcloud); `npm run pdf -- <input.html> <output.pdf> --format={a4\|letter}` |
 

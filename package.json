@@ -38,6 +38,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "dynamo:init": "tsx scripts/init-dynamo.ts",
+    "dynamo:init:dry": "tsx scripts/init-dynamo.ts --dry",
+    "dynamo:cv": "tsx scripts/get-cv.ts",
+    "dynamo:profile": "tsx scripts/get-profile.ts",
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "keywords": [
@@ -56,7 +60,9 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1075.0",
     "@aws-sdk/client-s3": "^3.1075.0",
+    "@aws-sdk/lib-dynamodb": "^3.1075.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "openai": "^6.42.0",

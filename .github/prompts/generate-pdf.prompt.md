@@ -10,7 +10,7 @@ Read the full PDF generation instructions from `modes/pdf.md` and execute them.
 
 ## Quick Reference — 13-Step Pipeline:
 
-1. Read `cv.md` (source of truth)
+1. Run `npm run dynamo:cv` to get the current CV from DynamoDB (source of truth)
 2. Get JD from user (or from existing report if evaluating)
 3. Extract 15-20 keywords from JD
 4. Detect JD language → CV language (EN default)

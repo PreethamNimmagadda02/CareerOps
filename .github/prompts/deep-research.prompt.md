@@ -19,4 +19,4 @@ Read the full research instructions from `modes/deep.md` and execute them.
 
 Use web search for all research. Cite sources. If data unavailable, say so — never invent.
 
-Read `cv.md` and `config/profile.yml` for candidate context when analyzing the candidate angle.
+Run `npm run dynamo:cv` and `npm run dynamo:profile` for candidate context when analyzing the candidate angle.

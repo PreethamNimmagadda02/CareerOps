@@ -25,4 +25,4 @@ Read the full project evaluation instructions from `modes/project.md` and execut
 - **SKIP** — Not worth it, here's why + better alternative
 - **PIVOT** — Good idea but better as this variant
 
-Read `cv.md` and `config/profile.yml` for candidate context and target roles.
+Run `npm run dynamo:cv` and `npm run dynamo:profile` for candidate context and target roles from DynamoDB.

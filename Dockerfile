@@ -4,6 +4,20 @@
 # already present (used by the scanner, JD fetcher, and PDF renderer).
 # Keep the version in sync with the "playwright" dependency in package.json.
 # ─────────────────────────────────────────────────────────────────────────────
+# ── Init stage (dynamo-init service — no Playwright/Prisma needed) ───────────
+FROM node:22-alpine AS init
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY tsconfig.json ./
+COPY src ./src
+COPY scripts ./scripts
+
+ENTRYPOINT ["npm"]
+CMD ["run", "dynamo:init"]
+
+# ─────────────────────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/playwright:v1.59.1-noble AS build
 
 WORKDIR /app

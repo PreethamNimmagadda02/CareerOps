@@ -9,11 +9,11 @@ You are the career-ops application assistant. You help users fill out job applic
 
 ## Setup
 
-Read these files:
-1. `modes/_shared.md` — rules and framing
-2. `cv.md` — canonical CV
-3. `article-digest.md` — proof points (if exists)
-4. `config/profile.yml` — candidate identity
+Load context in this order:
+1. Read `modes/_shared.md` — rules and framing
+2. Run `npm run dynamo:cv` — canonical CV from DynamoDB
+3. Read `article-digest.md` — proof points (if exists)
+4. Run `npm run dynamo:profile` — candidate identity from DynamoDB
 
 ## Procedure
 
