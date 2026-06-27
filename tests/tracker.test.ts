@@ -14,6 +14,7 @@ vi.mock("../src/lib/db.js", () => ({
 
 vi.mock("../src/lib/minio.js", () => ({
   uploadReport: vi.fn().mockResolvedValue("001-acme-2026-06-16.md"),
+  reportObjectUrl: vi.fn((filename: string) => `https://minio.local/careerops/${filename}`),
 }));
 
 describe("reportFilename", () => {
@@ -30,10 +31,10 @@ describe("nextReportNumber", () => {
     expect(await nextReportNumber()).toBe(1);
   });
 
-  it("returns max report number + 1", async () => {
+  it("returns max report number + 1 for both filename and legacy link forms", async () => {
     vi.mocked(db.application.findMany).mockResolvedValue([
-      { report: "[003](reports/003-acme.md)" } as any,
-      { report: "[007](reports/007-globex.md)" } as any,
+      { reportName: "003-acme-2026-06-16.md" } as any,
+      { reportName: "[007](reports/007-globex.md)" } as any,
     ]);
     expect(await nextReportNumber()).toBe(8);
   });
@@ -44,7 +45,7 @@ describe("updateTracker", () => {
     vi.clearAllMocks();
   });
 
-  it("updates score and report link in the database", async () => {
+  it("updates score, report filename, and MinIO report URL in the database", async () => {
     vi.mocked(db.application.update).mockResolvedValue({} as any);
 
     const ok = await updateTracker(1, "3.8", 5, "Acme", "2026-06-16");
@@ -54,7 +55,8 @@ describe("updateTracker", () => {
       where: { id: 1 },
       data: {
         score: "3.8/5",
-        report: "[005](reports/005-acme-2026-06-16.md)",
+        reportName: "005-acme-2026-06-16.md",
+        reportUrl: "https://minio.local/careerops/005-acme-2026-06-16.md",
         updatedAt: expect.any(Date),
       },
     });

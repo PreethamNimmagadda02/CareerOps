@@ -41,7 +41,7 @@ export function Dashboard() {
   const [sort, setSort] = React.useState<SortMode>("score");
   const [grouped, setGrouped] = React.useState(true);
   const [openReport, setOpenReport] = React.useState<{ num: string; title: string } | null>(null);
-  const [savingNum, setSavingNum] = React.useState<number | null>(null);
+  const [savingNum, setSavingNum] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -242,7 +242,7 @@ function renderRows(
   apps: Application[],
   grouped: boolean,
   handlers: {
-    savingNum: number | null;
+    savingNum: string | null;
     onChangeStatus: (app: Application, status: string) => void;
     onOpenReport: (r: { num: string; title: string }) => void;
   },

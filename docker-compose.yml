@@ -50,7 +50,8 @@ services:
       /bin/sh -c "
         mc alias set local http://minio:9000 $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY &&
         mc mb --ignore-existing local/$$MINIO_BUCKET &&
-        echo '✅ MinIO bucket ready'
+        mc anonymous set download local/$$MINIO_BUCKET &&
+        echo '✅ MinIO bucket ready (anonymous download enabled)'
       "
     restart: "no"
 
@@ -65,8 +66,11 @@ services:
       # Use the docker-compose service name `db` instead of localhost
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       - NODE_ENV=production
-      # MinIO S3 — internal Docker network URL
+      # MinIO S3 — internal Docker network URL (used for SDK calls)
       - MINIO_ENDPOINT=http://minio:9000
+      # Browser-reachable URL baked into stored reportUrl values. The host port
+      # 9000 is published, so localhost works from the user's browser.
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
       - MINIO_BUCKET=${MINIO_BUCKET}

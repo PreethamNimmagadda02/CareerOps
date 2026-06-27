@@ -60,6 +60,23 @@ describe("parseScore", () => {
     expect(parseScore("Overall Score = 4.0 / 5")).toBe("4.0");
   });
 
+  it("parses the expanded multi-line weighted form with bold result", () => {
+    const text = [
+      "## SCORE BREAKDOWN",
+      "| **Technical Fit** | 3 / 5 | reason |",
+      "| **Level Match** | 2 / 5 | reason |",
+      "| **Location/Remote** | 5 / 5 | reason |",
+      "| **Growth Potential** | 4 / 5 | reason |",
+      "| **Domain Fit** | 3 / 5 | reason |",
+      "",
+      "**Weighted Overall Score**  ",
+      "(Technical 0.35 + Level 0.20 + Location 0.15 + Growth 0.15 + Domain 0.15)  ",
+      "= (3×0.35) + (2×0.20) + (5×0.15) + (4×0.15) + (3×0.15)  ",
+      "= **3.25 / 5**",
+    ].join("\n");
+    expect(parseScore(text)).toBe("3.3");
+  });
+
   it("returns null when absent", () => {
     expect(parseScore("no score here")).toBeNull();
   });

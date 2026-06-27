@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   const args = new Args();
   const dryRun = args.has("--dry-run");
   const limit = args.number("--limit", 5);
-  const onlyRow = args.has("--job") ? args.number("--job", 0) : null;
+  const onlyRow = args.get("--job") ?? null;
   const providerArg = args.string("--provider", process.env.CAREER_OPS_PROVIDER || "nvidia");
   const modelArg = args.get("--model") ?? process.env.CAREER_OPS_MODEL ?? null;
   const concurrency = args.number("--concurrency", 8);
@@ -64,11 +64,20 @@ async function main(): Promise<void> {
     : "(profile.yml not found)";
   const allJobs = await getApplications();
 
-  let targets = allJobs.filter((j) => {
-    const noScore = j.score.trim() === "N/A" || j.score.trim() === "";
-    const noReport = !j.report.trim();
-    return noScore && noReport;
-  });
+  // Subsequent evaluations are idempotent: skip an application only when it
+  // already has BOTH a report (Postgres `reportName`) AND a score — i.e. a
+  // complete evaluation. Anything missing either is (re)queued.
+  const isComplete = (j: (typeof allJobs)[number]): boolean => {
+    const hasReport = j.reportName.trim() !== "";
+    const score = j.score.trim();
+    const hasScore = score !== "" && score !== "N/A";
+    return hasReport && hasScore;
+  };
+  let targets = allJobs.filter((j) => !isComplete(j));
+  const alreadyComplete = allJobs.length - targets.length;
+  if (alreadyComplete > 0) {
+    log.info(`⏭️  Skipping ${alreadyComplete} application(s) that already have a report and score.`);
+  }
 
   if (onlyRow !== null) {
     targets = targets.filter((j) => j.num === onlyRow);
@@ -105,7 +114,7 @@ async function main(): Promise<void> {
           log.rule();
           log.info(`${tag} ${job.company} — ${job.role}`);
 
-          let url = job.url;
+          const url = job.url;
 
           if (!url) {
             log.warn(`${tag} ⚠️  No URL in scan results — skipping. Re-run scan or use --job N.`);

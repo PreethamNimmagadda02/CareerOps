@@ -44,7 +44,7 @@ async function cmdList(args: Args): Promise<void> {
   const showDisabled = args.has("--disabled");
   const portals = await db.portal.findMany({
     where: showDisabled ? undefined : { enabled: true },
-    orderBy: { id: "asc" },
+    orderBy: { name: "asc" },
   });
   if (args.has("--json")) {
     process.stdout.write(JSON.stringify(portals, null, 2) + "\n");

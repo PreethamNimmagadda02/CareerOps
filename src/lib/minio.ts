@@ -18,6 +18,23 @@ import {
 
 const BUCKET = process.env.MINIO_BUCKET ?? "careerops";
 
+/**
+ * Build the public URL of a report object stored in MinIO.
+ *
+ * Uses MINIO_PUBLIC_ENDPOINT when set (e.g. a browser-reachable host), falling
+ * back to MINIO_ENDPOINT. Path-style URL because MinIO runs with
+ * `forcePathStyle`: `<endpoint>/<bucket>/<filename>`.
+ *
+ * @param filename — the report object key, e.g. "001-acme-2026-06-22.md"
+ */
+export function reportObjectUrl(filename: string): string {
+  const endpoint = (process.env.MINIO_PUBLIC_ENDPOINT ?? process.env.MINIO_ENDPOINT ?? "").replace(
+    /\/$/,
+    "",
+  );
+  return `${endpoint}/${BUCKET}/${filename}`;
+}
+
 function resolveConfig(): S3Client {
   const endpoint = (process.env.MINIO_ENDPOINT ?? "").replace(/\/$/, "");
   const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";

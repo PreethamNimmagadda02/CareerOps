@@ -4,13 +4,15 @@ import { normalizeStatus } from "./status";
 import type { Application } from "./types";
 import { AppStatus } from "@prisma/client";
 
-const reReportLink = /\[(\d+)\]\(([^)]+)\)/;
+// Leading report number from either the current filename form
+// ("001-acme-….md") or the legacy markdown-link form ("[001](reports/…)").
+const reReportNum = /^\[?(\d+)/;
 const reScore = /(\d+\.?\d*)\/5/;
 
 /** Fetch applications from the database and map to UI `Application` format. */
 export async function readApplications(enrich = true): Promise<Application[]> {
   const dbApps = await db.application.findMany({
-    orderBy: { id: 'asc' }
+    orderBy: { createdAt: 'asc' }
   });
 
   const apps: Application[] = [];
@@ -19,8 +21,8 @@ export async function readApplications(enrich = true): Promise<Application[]> {
     const scoreRaw = app.score ?? "";
     const scoreMatch = scoreRaw.match(reScore);
     const status = app.status ?? "";
-    const reportCell = app.report ?? "";
-    const linkMatch = reportCell.match(reReportLink);
+    const reportCell = app.reportName ?? "";
+    const numMatch = reportCell.match(reReportNum);
 
     apps.push({
       num: app.id,
@@ -32,8 +34,10 @@ export async function readApplications(enrich = true): Promise<Application[]> {
       status,
       normStatus: normalizeStatus(status),
       hasPdf: (app.pdf ?? "").includes("✅"),
-      reportNumber: linkMatch ? linkMatch[1] as string : null,
-      reportPath: linkMatch ? linkMatch[2] as string : null,
+      reportNumber: numMatch ? (numMatch[1] as string) : null,
+      // `report` now stores the MinIO object name directly.
+      reportPath: reportCell || null,
+      reportUrl: app.reportUrl ?? null,
       jobUrl: null,
     });
   }
@@ -61,16 +65,21 @@ export async function readApplications(enrich = true): Promise<Application[]> {
  * Returns true when a row was updated.
  */
 export async function updateApplicationStatus(opts: {
-  num?: number;
+  num?: string;
   reportNumber?: string;
   newStatus: AppStatus;
 }): Promise<boolean> {
   let targetId = opts.num;
 
   if (targetId === undefined && opts.reportNumber) {
-    // Resolve the target id by report number.
+    // Resolve the target id by report number, matching either the filename
+    // form ("005-acme-….md") or the legacy markdown-link form ("[005](…)").
+    const wanted = parseInt(opts.reportNumber, 10);
     const apps = await db.application.findMany();
-    const app = apps.find((a) => a.report.includes(`[${opts.reportNumber}]`));
+    const app = apps.find((a) => {
+      const m = a.reportName.match(/^\[?(\d+)/);
+      return m ? parseInt(m[1] as string, 10) === wanted : false;
+    });
     if (app) targetId = app.id;
   }
 

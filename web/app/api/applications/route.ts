@@ -19,7 +19,7 @@ export async function GET() {
 export async function PATCH(request: Request) {
   try {
     const body = (await request.json()) as {
-      num?: number;
+      num?: string;
       reportNumber?: string;
       newStatus?: string;
     };

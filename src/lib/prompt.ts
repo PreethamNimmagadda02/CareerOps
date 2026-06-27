@@ -97,12 +97,18 @@ export function parseScore(text: string): string | null {
   if (table) return parseFloat(table[1] as string).toFixed(1);
 
   // Pattern 3 – weighted-calculation form. An "Overall Score" label followed
-  // (possibly on the next line) by a math expression ending in `= X / 5`:
+  // (possibly across several lines) by a math expression whose result is
+  // `= X / 5`. Two shapes occur in the wild:
   //   Overall Score (weighted)
-  //   [ (3.5×0.35) + (2×0.20) + ... = 3.5 / 5 ]
-  // The lazy `[^=]*` stops at the first `=` after the label, which is the
-  // result of the weighted sum — not any of the per-dimension `X/5` ratings.
-  const weighted = text.match(/Overall(?:[_\s]Score)?\b[^=]*?=\s*([\d.]+)\s*\/\s*5/i);
+  //   [ (3.5×0.35) + (2×0.20) + ... = 3.5 / 5 ]                 (one `=`)
+  // and the expanded multi-line form where the result is on its own line:
+  //   **Weighted Overall Score**
+  //   = (3×0.35) + (2×0.20) + ... + (3×0.15)
+  //   = **3.25 / 5**                                            (second `=`)
+  // The lazy `[\s\S]*?` walks past intermediate `=` signs (calc expansions,
+  // which are followed by `(` not a digit) until it reaches `= <number> / 5`.
+  // `\**` tolerates bold markers around the final number.
+  const weighted = text.match(/Overall(?:[_\s]Score)?\b[\s\S]*?=\s*\**\s*([\d.]+)\s*\/\s*5/i);
   if (weighted) return parseFloat(weighted[1] as string).toFixed(1);
 
   return null;

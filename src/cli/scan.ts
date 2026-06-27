@@ -37,9 +37,9 @@ async function main(): Promise<void> {
   }
   const enabledCompanies = config.companies.filter((c) => c.enabled !== "false");
 
-  // Dedup company+role keys against applications already tracked in Postgres.
-  const existingApps = await db.application.findMany({ select: { company: true, role: true } });
-  const seenDedupKeys = new Set(existingApps.map((a) => dedupKey(a.company, a.role)));
+  // Inserts are de-duplicated by URL at write time via the unique index on
+  // Application.url (see the backfill in section 1). No need to pre-load
+  // existing rows into memory — that keeps this O(1) in extra space.
 
   const structuredCompanies = enabledCompanies.filter(hasStructuredApi);
   const nonStructured = enabledCompanies.filter((c) => !structuredCompanies.includes(c));
@@ -128,8 +128,6 @@ async function main(): Promise<void> {
   for (const job of jobs) {
     const title = job.title || "";
     const match = titleMatches(title, config.positive, config.negative);
-    const urlKey = normalizeUrl(job.url);
-    const key = `${urlKey} ${dedupKey(job.company, title)}`;
     if (!match.relevant) {
       skippedTitle.push(job);
       continue;
@@ -144,14 +142,14 @@ async function main(): Promise<void> {
       skippedLocation.push(job);
       continue;
     }
-    if (
-      seenDedupKeys.has(dedupKey(job.company, title)) ||
-      seenInRun.has(key)
-    ) {
+    // URL is the unique identity of a posting; collapse repeats within this run
+    // so the backfill never carries the same URL twice.
+    const urlKey = normalizeUrl(job.url);
+    if (seenInRun.has(urlKey)) {
       duplicates.push(job);
       continue;
     }
-    seenInRun.add(key);
+    seenInRun.add(urlKey);
     relevant.push({ ...job, match, engineeringMatch: eng, locationMatch: loc });
   }
 
@@ -184,35 +182,39 @@ async function main(): Promise<void> {
 
   log.step(`🏁 Scan finished in ${secondsSince(startedAt)}s`);
 
-  // ── 1. Insert new shortlisted jobs ───────────────────────────────────────
+  // ── 1. Backfill new shortlisted jobs (URL-deduped) ───────────────────────
+  // Stage every shortlisted posting into an in-memory `backfill` buffer, then
+  // flush it in a single statement. The unique index on Application.url turns
+  // createMany({ skipDuplicates }) into an `INSERT … ON CONFLICT (url) DO
+  // NOTHING`: a posting whose URL is already tracked is ignored, a brand-new
+  // URL is appended. This is one set-based round-trip — O(N) time and no
+  // pre-load of existing rows — and the buffer is released right after.
   if (summary.shortlist.length > 0) {
     const date = new Date().toISOString().slice(0, 10);
-    let addedCount = 0;
 
-    for (const job of summary.shortlist) {
-      const key = dedupKey(job.company, job.title);
-      if (seenDedupKeys.has(key)) continue;
+    const backfill = summary.shortlist.map((job) => ({
+      date,
+      company: job.company,
+      role: job.title,
+      url: job.url,
+      score: "N/A",
+      status: AppStatus.Evaluated,
+      pdf: "❌",
+      reportName: "",
+    }));
 
-      await db.application.create({
-        data: {
-          date,
-          company: job.company,
-          role: job.title,
-          url: job.url,
-          score: "N/A",
-          status: AppStatus.Evaluated,
-          pdf: "❌",
-          report: "",
-        },
-      });
-      seenDedupKeys.add(key);
-      addedCount += 1;
-    }
+    const { count: addedCount } = await db.application.createMany({
+      data: backfill,
+      skipDuplicates: true,
+    });
+
+    // Delete the backfill once it has been flushed to Postgres.
+    backfill.length = 0;
 
     if (addedCount > 0) {
-      log.step(`➕ Added ${addedCount} new shortlisted jobs to Postgres.`);
+      log.step(`➕ Added ${addedCount} new shortlisted job(s) to Postgres (URL-deduped).`);
     } else {
-      log.step(`No new jobs to add (all shortlisted jobs already in Postgres).`);
+      log.step(`No new jobs to add (all shortlisted URLs already in Postgres).`);
     }
   }
 

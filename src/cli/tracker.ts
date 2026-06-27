@@ -9,7 +9,7 @@
  * Usage:
  *   career-ops-tracker list [--json]
  *   career-ops-tracker add    --company "Acme" --role "AI PM" [--score 4.5 --status Evaluada --pdf ❌ --report "" --date YYYY-MM-DD]
- *   career-ops-tracker update --id 12 [--score 4.5/5 --status Aplicado --report "[012](reports/...)" --pdf ✅ --role "..." --company "..."]
+ *   career-ops-tracker update --id <uuid> [--score 4.5/5 --status Aplicado --report "012-acme-….md" --pdf ✅ --role "..." --company "..."]
  *   career-ops-tracker save   --company "Acme" --role "AI PM" --url "https://..." [--score 4.5 --status Evaluada --pdf ❌ --provider "manual"] [--file /tmp/eval.md]
  *
  * `save` is the one-shot post-evaluation command: it uploads the report to
@@ -26,9 +26,9 @@ import {
   getApplications,
   nextReportNumber,
   patchApplication,
-  reportFilename,
   writeReport,
 } from "../lib/tracker.js";
+import { reportObjectUrl } from "../lib/minio.js";
 import { today } from "../lib/text.js";
 
 const MINIO_BUCKET = process.env.MINIO_BUCKET
@@ -57,7 +57,7 @@ async function cmdList(args: Args): Promise<void> {
   log.info("# | Date | Company | Role | Score | Status | PDF | Report");
   for (const a of apps) {
     log.info(
-      [a.num, a.date, a.company, a.role, a.score, a.status, a.pdf, a.report].join(" | "),
+      [a.num, a.date, a.company, a.role, a.score, a.status, a.pdf, a.reportName].join(" | "),
     );
   }
   log.info(`\n${apps.length} application(s) in Postgres.`);
@@ -70,23 +70,26 @@ async function cmdAdd(args: Args): Promise<void> {
     score: args.get("--score"),
     status: args.get("--status") as AppStatus | undefined,
     pdf: args.get("--pdf"),
-    report: args.get("--report"),
+    reportName: args.get("--report"),
     date: args.get("--date"),
   });
   log.info(`✅ Added application #${row.num} — ${row.company} — ${row.role} (${row.status})`);
 }
 
 async function cmdUpdate(args: Args): Promise<void> {
-  const id = args.number("--id", NaN);
-  if (Number.isNaN(id)) {
-    log.error("❌ --id is required and must be a number");
+  const id = args.get("--id");
+  if (!id) {
+    log.error("❌ --id is required (the application's UUID)");
     process.exit(1);
   }
   const fields: Record<string, any> = {};
-  for (const key of ["company", "role", "score", "status", "pdf", "report"]) {
+  for (const key of ["company", "role", "score", "status", "pdf"]) {
     const v = args.get(`--${key}`);
     if (v !== undefined) fields[key] = key === "status" ? (v as AppStatus) : v;
   }
+  // The `--report` flag writes to the `reportName` column (MinIO object name).
+  const reportVal = args.get("--report");
+  if (reportVal !== undefined) fields.reportName = reportVal;
   if (Object.keys(fields).length === 0) {
     log.error("❌ Nothing to update. Pass at least one field (e.g. --status Aplicado).");
     process.exit(1);
@@ -131,7 +134,8 @@ async function cmdSave(args: Args): Promise<void> {
   log.info(`☁️  Report uploaded → MinIO / ${MINIO_BUCKET ?? "careerops"}/${filename}`);
 
   const padded = String(reportNum).padStart(3, "0");
-  const reportLink = `[${padded}](reports/${reportFilename(reportNum, company, date)})`;
+  // `report` mirrors the MinIO object name; `reportUrl` is its resolvable URL.
+  const reportUrl = reportObjectUrl(filename);
   const scoreStr = score === "N/A" ? "N/A" : score.includes("/") ? score : `${score}/5`;
 
   const row = await addApplication({
@@ -140,7 +144,8 @@ async function cmdSave(args: Args): Promise<void> {
     score: scoreStr,
     status: status as AppStatus,
     pdf,
-    report: reportLink,
+    reportName: filename,
+    reportUrl,
     date,
   });
   log.info(
@@ -171,7 +176,7 @@ async function main(): Promise<void> {
         "Usage: career-ops-tracker <list|add|update|save> [options]\n" +
         "  list   [--json]\n" +
         "  add    --company X --role Y [--score --status --pdf --report --date]\n" +
-        "  update --id N [--score --status --pdf --report --role --company]\n" +
+        "  update --id <uuid> [--score --status --pdf --report --role --company]\n" +
         "  save   --company X --role Y --url U [--score --status --pdf --provider --file] (body via --file or stdin)",
       );
       process.exit(sub ? 1 : 0);

@@ -91,14 +91,16 @@ export interface FailureInfo {
 
 /** An application row from the Postgres `Application` table. */
 export interface ApplicationRow {
-  num: number;
+  /** UUID primary key (`Application.id`). */
+  num: string;
   date: string;
   company: string;
   role: string;
   score: string;
   status: AppStatus;
   pdf: string;
-  report: string;
+  reportName: string;
+  reportUrl: string | null;
   url: string | null;
 }
 

@@ -2,12 +2,12 @@ import type { ApplicationRow } from "../types.js";
 import { AppStatus } from "@prisma/client";
 import { slugify, today } from "./text.js";
 import { db } from "./db.js";
-import { uploadReport } from "./minio.js";
+import { reportObjectUrl, uploadReport } from "./minio.js";
 
 /** Fetch all applications from the database. */
 export async function getApplications(): Promise<ApplicationRow[]> {
   const apps = await db.application.findMany({
-    orderBy: { id: "asc" },
+    orderBy: { createdAt: "asc" },
   });
 
   return apps.map((app) => ({
@@ -18,7 +18,8 @@ export async function getApplications(): Promise<ApplicationRow[]> {
     score: app.score,
     status: app.status,
     pdf: app.pdf,
-    report: app.report,
+    reportName: app.reportName,
+    reportUrl: app.reportUrl,
     url: app.url,
   }));
 }
@@ -34,7 +35,8 @@ export async function addApplication(opts: {
   score?: string;
   status?: AppStatus;
   pdf?: string;
-  report?: string;
+  reportName?: string;
+  reportUrl?: string;
   date?: string;
 }): Promise<ApplicationRow> {
   const date = opts.date ?? today();
@@ -46,7 +48,8 @@ export async function addApplication(opts: {
       score: opts.score ?? "N/A",
       status: opts.status ?? AppStatus.Evaluated,
       pdf: opts.pdf ?? "❌",
-      report: opts.report ?? "",
+      reportName: opts.reportName ?? "",
+      reportUrl: opts.reportUrl ?? null,
     },
   });
 
@@ -58,7 +61,8 @@ export async function addApplication(opts: {
     score: app.score,
     status: app.status,
     pdf: app.pdf,
-    report: app.report,
+    reportName: app.reportName,
+    reportUrl: app.reportUrl,
     url: app.url,
   };
 }
@@ -68,14 +72,15 @@ export async function addApplication(opts: {
  * Pass only the fields you want to change.
  */
 export async function patchApplication(
-  id: number,
+  id: string,
   fields: Partial<{
     company: string;
     role: string;
     score: string;
     status: AppStatus;
     pdf: string;
-    report: string;
+    reportName: string;
+    reportUrl: string;
   }>,
 ): Promise<boolean> {
   try {
@@ -97,10 +102,12 @@ export async function patchApplication(
  * are stored in MinIO.
  */
 export async function nextReportNumber(): Promise<number> {
-  const apps = await db.application.findMany({ select: { report: true } });
+  const apps = await db.application.findMany({ select: { reportName: true } });
   let max = 0;
   for (const app of apps) {
-    const match = app.report?.match(/^\[(\d+)\]/);
+    // Accepts both the current filename form ("001-acme-….md") and the legacy
+    // markdown-link form ("[001](reports/…)") so old rows still count.
+    const match = app.reportName?.match(/^\[?(\d+)/);
     if (match) {
       const n = parseInt(match[1] as string, 10);
       if (n > max) max = n;
@@ -135,24 +142,28 @@ export async function writeReport(opts: {
 }
 
 /**
- * Update an application's score and report link in the database.
+ * Update an application's score, report filename, and MinIO report URL.
+ *
+ * `report` stores the exact MinIO object name (e.g. "005-acme-2026-06-16.md")
+ * and `reportUrl` stores its resolvable MinIO URL.
  */
 export async function updateTracker(
-  id: number,
+  id: string,
   score: string,
   reportNum: number,
   company: string,
   date: string,
 ): Promise<boolean> {
   const filename = reportFilename(reportNum, company, date);
-  const reportLink = `[${String(reportNum).padStart(3, "0")}](reports/${filename})`;
+  const reportUrl = reportObjectUrl(filename);
 
   try {
     await db.application.update({
       where: { id },
       data: {
         score: `${score}/5`,
-        report: reportLink,
+        reportName: filename,
+        reportUrl,
         updatedAt: new Date(),
       },
     });

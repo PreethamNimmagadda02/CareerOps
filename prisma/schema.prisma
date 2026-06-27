@@ -18,22 +18,23 @@ enum AppStatus {
 }
 
 model Application {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   date      String
   company   String
   role      String
   score     String
   status    AppStatus
   pdf       String
-  report    String
-  url       String?
+  reportName    String
+  reportUrl String?
+  url       String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 /// A scan target (formerly a `tracked_companies` entry in portals.yml).
 model Portal {
-  id         Int      @id @default(autoincrement())
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String   @unique
   careersUrl String?
   api        String?
@@ -44,7 +45,7 @@ model Portal {
 
 /// Title-filter keywords (formerly `title_filter.positive` / `.negative`).
 model FilterKeyword {
-  id    Int    @id @default(autoincrement())
+  id    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   kind  String // "positive" | "negative"
   value String
 

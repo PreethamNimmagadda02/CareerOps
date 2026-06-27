@@ -1,7 +1,8 @@
 /** Shared types for the web dashboard (mirrors the tracker + report formats). */
 
 export interface Application {
-  num: number;
+  /** UUID primary key (`Application.id`). */
+  num: string;
   date: string;
   company: string;
   role: string;
@@ -15,6 +16,7 @@ export interface Application {
   hasPdf: boolean;
   reportNumber: string | null;
   reportPath: string | null;
+  reportUrl: string | null;
   jobUrl: string | null;
   /** Lightweight enrichment pulled from the report header/summary. */
   archetype?: string;
