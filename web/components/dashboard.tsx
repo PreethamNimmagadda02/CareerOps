@@ -8,11 +8,13 @@ import {
   Layers,
   RefreshCw,
   Loader2,
+  Tags,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { MetricsCards } from "@/components/metrics-cards";
 import { PipelineRunner } from "@/components/pipeline-runner";
+import { KeywordsManager } from "@/components/keywords-manager";
 import { ReportModal } from "@/components/report-modal";
 import { StatusBadge, scoreColor } from "@/components/status-badge";
 import { UserMenu } from "@/components/user-menu";
@@ -43,6 +45,7 @@ export function Dashboard() {
   const [grouped, setGrouped] = React.useState(true);
   const [openReport, setOpenReport] = React.useState<{ num: string; title: string } | null>(null);
   const [savingNum, setSavingNum] = React.useState<string | null>(null);
+  const [keywordsOpen, setKeywordsOpen] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -153,6 +156,9 @@ export function Dashboard() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PipelineRunner onComplete={load} />
+          <Button variant="outline" size="sm" onClick={() => setKeywordsOpen(true)}>
+            <Tags className="h-4 w-4" /> Keywords
+          </Button>
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
@@ -236,6 +242,8 @@ export function Dashboard() {
         title={openReport?.title}
         onClose={() => setOpenReport(null)}
       />
+
+      <KeywordsManager open={keywordsOpen} onClose={() => setKeywordsOpen(false)} />
     </div>
   );
 }

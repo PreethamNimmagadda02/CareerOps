@@ -38,6 +38,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "dynamo:init": "tsx scripts/init-dynamo.ts",
     "dynamo:init:dry": "tsx scripts/init-dynamo.ts --dry",
     "dynamo:cv": "tsx scripts/get-cv.ts",
@@ -47,6 +48,12 @@
     "db:check": "tsx scripts/check-portals.ts",
     "db:backfill": "tsx scripts/backfill-scores.ts",
     "db:backfill:dry": "tsx scripts/backfill-scores.ts --dry-run",
+    "db:normalize-keywords": "tsx scripts/normalize-keywords.ts",
+    "db:normalize-keywords:dry": "tsx scripts/normalize-keywords.ts --dry-run",
+    "db:migrate-multitenant": "tsx scripts/migrate-to-multitenant.ts",
+    "db:migrate-multitenant:dry": "tsx scripts/migrate-to-multitenant.ts --dry-run",
+    "db:migrate-bucket": "tsx scripts/migrate-bucket.ts",
+    "db:migrate-bucket:dry": "tsx scripts/migrate-bucket.ts --dry-run",
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "keywords": [

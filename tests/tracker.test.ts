@@ -15,7 +15,10 @@ vi.mock("../src/lib/db.js", () => ({
 
 vi.mock("../src/lib/minio.js", () => ({
   uploadReport: vi.fn().mockResolvedValue("001-acme-2026-06-16.md"),
-  reportObjectUrl: vi.fn((filename: string) => `https://minio.local/careerops/${filename}`),
+  reportObjectUrl: vi.fn(
+    (userId: string, filename: string) =>
+      `https://minio.local/careerops/Reports/${userId}/${filename}`,
+  ),
 }));
 
 describe("reportFilename", () => {
@@ -57,7 +60,7 @@ describe("updateTracker", () => {
       data: {
         score: "3.8/5",
         reportName: "005-acme-2026-06-16.md",
-        reportUrl: "https://minio.local/careerops/005-acme-2026-06-16.md",
+        reportUrl: "https://minio.local/careerops/Reports/user-1/005-acme-2026-06-16.md",
         updatedAt: expect.any(Date),
       },
     });
@@ -77,6 +80,7 @@ describe("writeReport", () => {
   it("uploads to MinIO and returns the filename", async () => {
     const { uploadReport } = await import("../src/lib/minio.js");
     const filename = await writeReport({
+      userId: "user-1",
       num: 1,
       company: "Acme",
       role: "Engineer",

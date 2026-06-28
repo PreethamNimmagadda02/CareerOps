@@ -47,7 +47,7 @@ export async function readApplications(userId: string, enrich = true): Promise<A
     await Promise.all(
       apps.map(async (app) => {
         if (!app.reportPath) return;
-        const summary = await readReportSummary(app.reportPath);
+        const summary = await readReportSummary(userId, app.reportPath);
         if (!summary) return;
         app.jobUrl = summary.url;
         app.archetype = summary.archetype;

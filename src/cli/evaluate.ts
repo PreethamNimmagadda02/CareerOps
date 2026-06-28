@@ -27,6 +27,9 @@ import {
   updateTracker,
   writeReport,
 } from "../lib/tracker.js";
+import { getProfile } from "../lib/profile-store.js";
+import { getCV } from "../lib/cv-store.js";
+import { validateCandidateReadiness } from "../lib/profile-validation.js";
 import { resolveOwnerUserId } from "../lib/owner.js";
 import {  today } from "../lib/text.js";
 
@@ -59,7 +62,19 @@ async function main(): Promise<void> {
 
   const userId = await resolveOwnerUserId();
 
-  const { cv, profileYml } = await loadCandidateContext();
+  // Block evaluation when the candidate's profile/CV is missing required
+  // details — an evaluation against a job description is meaningless without
+  // the core candidate data filled in.
+  const [profileRec, cvRec] = await Promise.all([getProfile(userId), getCV(userId)]);
+  const readiness = validateCandidateReadiness(profileRec, cvRec);
+  if (!readiness.ok) {
+    log.error("❌ Cannot evaluate — your profile is missing required details:");
+    for (const m of readiness.missing) log.error(`   • ${m}`);
+    log.error("\n   Complete your profile in the dashboard, then re-run evaluate.");
+    process.exit(1);
+  }
+
+  const { cv, profileYml } = await loadCandidateContext(userId);
   const allJobs = await getApplications(userId);
 
   // Subsequent evaluations are idempotent: skip an application only when it
@@ -156,6 +171,7 @@ async function main(): Promise<void> {
           trackerLock = trackerLock.then(async () => {
             const reportNum = await nextReportNumber();
             const filename = await writeReport({
+              userId,
               num: reportNum,
               company: job.company,
               role: job.role,

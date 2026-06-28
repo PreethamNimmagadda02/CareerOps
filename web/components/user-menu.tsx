@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { LogOut, User as UserIcon } from "lucide-react";
 
@@ -20,7 +21,11 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-2 rounded-full border border-border bg-card/50 py-1 pl-1 pr-3">
+      <Link
+        href="/profile"
+        className="flex items-center gap-2 rounded-full border border-border bg-card/50 py-1 pl-1 pr-3 transition-colors hover:bg-accent"
+        title="View profile"
+      >
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt={label} className="h-7 w-7 rounded-full" />
@@ -32,7 +37,7 @@ export function UserMenu() {
         <span className="max-w-[12rem] truncate text-sm text-muted-foreground" title={email ?? undefined}>
           {label}
         </span>
-      </div>
+      </Link>
       <Button
         variant="outline"
         size="sm"

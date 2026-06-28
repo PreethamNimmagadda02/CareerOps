@@ -24,11 +24,14 @@ export interface CandidateContext {
 // ─── Public loader ────────────────────────────────────────────────────────────
 
 /**
- * Load CV + Profile from DynamoDB and return them as prompt-ready strings.
- * Throws with an actionable message if either record is not found.
+ * Load CV + Profile from DynamoDB for a specific user and return them as
+ * prompt-ready strings. Throws with an actionable message if either record
+ * is not found.
+ *
+ * @param userId — the user whose CV + Profile to load
  */
-export async function loadCandidateContext(): Promise<CandidateContext> {
-  const [cvRecord, profileRecord] = await Promise.all([getCV(), getProfile()]);
+export async function loadCandidateContext(userId: string): Promise<CandidateContext> {
+  const [cvRecord, profileRecord] = await Promise.all([getCV(userId), getProfile(userId)]);
 
   if (!cvRecord || !profileRecord) {
     const missing = [!cvRecord && "CV", !profileRecord && "Profile"]

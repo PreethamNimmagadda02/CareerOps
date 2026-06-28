@@ -26,7 +26,7 @@ export async function GET(
       return NextResponse.json({ error: `Report ${num} not found` }, { status: 404 });
     }
 
-    const report = await readReportByNumber(num);
+    const report = await readReportByNumber(userId, num);
     if (!report) {
       return NextResponse.json({ error: `Report ${num} not found` }, { status: 404 });
     }

@@ -8,12 +8,13 @@
  *   npm run dynamo:profile
  *   npm run dynamo:profile > /tmp/profile.yml
  */
-
 import "dotenv/config";
 import { getProfile } from "../src/lib/profile-store.js";
 import { profileToYaml } from "../src/lib/candidate-loader.js";
+import { resolveOwnerUserId } from "../src/lib/owner.js";
 
-const profileRecord = await getProfile();
+const userId = await resolveOwnerUserId();
+const profileRecord = await getProfile(userId);
 
 if (!profileRecord) {
   console.error(

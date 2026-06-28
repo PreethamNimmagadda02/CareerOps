@@ -8,13 +8,14 @@
  *   npm run dynamo:cv
  *   npm run dynamo:cv > /tmp/cv.md
  */
-
 import "dotenv/config";
 import { getCV } from "../src/lib/cv-store.js";
 import { getProfile } from "../src/lib/profile-store.js";
 import { cvToMarkdown } from "../src/lib/candidate-loader.js";
+import { resolveOwnerUserId } from "../src/lib/owner.js";
 
-const [cvRecord, profileRecord] = await Promise.all([getCV(), getProfile()]);
+const userId = await resolveOwnerUserId();
+const [cvRecord, profileRecord] = await Promise.all([getCV(userId), getProfile(userId)]);
 
 if (!cvRecord) {
   console.error(

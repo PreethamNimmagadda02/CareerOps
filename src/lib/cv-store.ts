@@ -1,11 +1,12 @@
 /**
- * DynamoDB store for candidate CV data.
+ * DynamoDB store for candidate CV data — multi-tenant.
  *
  * Table layout (single-table design):
- *   PK = "CV"   SK = "v1"
+ *   PK = "CV#<userId>"   SK = "v1"
  *
- * The shape mirrors cv.md, broken into structured sections so individual
- * sections (e.g. a new job) can be patched without rewriting the whole document.
+ * Each user's CV is an independent partition. The userId-prefixed PK gives
+ * good key distribution at scale (no hot-partition risk) and keeps all CV
+ * operations O(1) regardless of total user count.
  */
 
 import { GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
@@ -57,19 +58,19 @@ export interface CV {
 
 // ─── Keys ─────────────────────────────────────────────────────────────────────
 
-const PK = "CV";
+const pk = (userId: string) => `CV#${userId}`;
 const SK = "v1";
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 /**
- * Read the stored CV. Returns null if not yet seeded.
+ * Read the stored CV for a user. Returns null if not yet seeded.
  * Throws with an actionable message if the table does not exist.
  */
-export async function getCV(): Promise<CV | null> {
+export async function getCV(userId: string): Promise<CV | null> {
   try {
     const res = await ddb.send(
-      new GetCommand({ TableName: TABLE, Key: { PK, SK } }),
+      new GetCommand({ TableName: TABLE, Key: { PK: pk(userId), SK } }),
     );
     if (!res.Item) return null;
     const { PK: _pk, SK: _sk, ...cv } = res.Item;
@@ -86,14 +87,14 @@ export async function getCV(): Promise<CV | null> {
 }
 
 /**
- * Write (upsert) the full CV. Overwrites any existing record.
+ * Write (upsert) the full CV for a user. Overwrites any existing record.
  */
-export async function putCV(cv: CV): Promise<void> {
+export async function putCV(userId: string, cv: CV): Promise<void> {
   await ddb.send(
     new PutCommand({
       TableName: TABLE,
       Item: {
-        PK,
+        PK: pk(userId),
         SK,
         ...cv,
         updatedAt: new Date().toISOString(),
@@ -106,6 +107,7 @@ export async function putCV(cv: CV): Promise<void> {
  * Patch individual top-level sections of the CV without rewriting the whole record.
  */
 export async function patchCV(
+  userId: string,
   fields: Partial<Omit<CV, "updatedAt">>,
 ): Promise<void> {
   const keys = Object.keys(fields) as (keyof typeof fields)[];
@@ -121,7 +123,7 @@ export async function patchCV(
   await ddb.send(
     new UpdateCommand({
       TableName: TABLE,
-      Key: { PK, SK },
+      Key: { PK: pk(userId), SK },
       UpdateExpression: `SET ${expr}, updatedAt = :ts`,
       ExpressionAttributeNames: names,
       ExpressionAttributeValues: values,

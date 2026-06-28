@@ -1,11 +1,12 @@
 /**
- * DynamoDB store for candidate profile data.
+ * DynamoDB store for candidate profile data — multi-tenant.
  *
  * Table layout (single-table design):
- *   PK = "PROFILE"   SK = "v1"
+ *   PK = "PROFILE#<userId>"   SK = "v1"
  *
- * The shape mirrors config/profile.yml so the profile can be seeded from that
- * file and later edited/updated programmatically.
+ * Each user's profile is an independent partition. The userId-prefixed PK gives
+ * good key distribution at scale (no hot-partition risk) and keeps all profile
+ * operations O(1) regardless of total user count.
  */
 
 import { GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
@@ -74,19 +75,19 @@ export interface Profile {
 
 // ─── Keys ────────────────────────────────────────────────────────────────────
 
-const PK = "PROFILE";
+const pk = (userId: string) => `PROFILE#${userId}`;
 const SK = "v1";
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 /**
- * Read the stored profile. Returns null if not yet seeded.
+ * Read the stored profile for a user. Returns null if not yet seeded.
  * Throws with an actionable message if the table does not exist.
  */
-export async function getProfile(): Promise<Profile | null> {
+export async function getProfile(userId: string): Promise<Profile | null> {
   try {
     const res = await ddb.send(
-      new GetCommand({ TableName: TABLE, Key: { PK, SK } }),
+      new GetCommand({ TableName: TABLE, Key: { PK: pk(userId), SK } }),
     );
     if (!res.Item) return null;
     const { PK: _pk, SK: _sk, ...profile } = res.Item;
@@ -103,14 +104,14 @@ export async function getProfile(): Promise<Profile | null> {
 }
 
 /**
- * Write (upsert) the full profile. Overwrites any existing record.
+ * Write (upsert) the full profile for a user. Overwrites any existing record.
  */
-export async function putProfile(profile: Profile): Promise<void> {
+export async function putProfile(userId: string, profile: Profile): Promise<void> {
   await ddb.send(
     new PutCommand({
       TableName: TABLE,
       Item: {
-        PK,
+        PK: pk(userId),
         SK,
         ...profile,
         updatedAt: new Date().toISOString(),
@@ -123,6 +124,7 @@ export async function putProfile(profile: Profile): Promise<void> {
  * Patch individual top-level fields of the profile without rewriting the whole record.
  */
 export async function patchProfile(
+  userId: string,
   fields: Partial<Omit<Profile, "updatedAt">>,
 ): Promise<void> {
   const keys = Object.keys(fields) as (keyof typeof fields)[];
@@ -138,7 +140,7 @@ export async function patchProfile(
   await ddb.send(
     new UpdateCommand({
       TableName: TABLE,
-      Key: { PK, SK },
+      Key: { PK: pk(userId), SK },
       UpdateExpression: `SET ${expr}, updatedAt = :ts`,
       ExpressionAttributeNames: names,
       ExpressionAttributeValues: values,

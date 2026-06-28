@@ -84,11 +84,13 @@ async function cmdUpdate(args: Args, userId: string): Promise<void> {
     log.error("❌ --id is required (the application's UUID)");
     process.exit(1);
   }
-  const fields: Record<string, any> = {};
-  for (const key of ["company", "role", "score", "status", "pdf"]) {
+  const fields: Parameters<typeof patchApplication>[2] = {};
+  for (const key of ["company", "role", "score", "pdf"] as const) {
     const v = args.get(`--${key}`);
-    if (v !== undefined) fields[key] = key === "status" ? (v as AppStatus) : v;
+    if (v !== undefined) fields[key] = v;
   }
+  const statusVal = args.get("--status");
+  if (statusVal !== undefined) fields.status = statusVal as AppStatus;
   // The `--report` flag writes to the `reportName` column (MinIO object name).
   const reportVal = args.get("--report");
   if (reportVal !== undefined) fields.reportName = reportVal;
@@ -126,6 +128,7 @@ async function cmdSave(args: Args, userId: string): Promise<void> {
     : await nextReportNumber();
 
   const filename = await writeReport({
+    userId,
     num: reportNum,
     company,
     role,
@@ -133,11 +136,11 @@ async function cmdSave(args: Args, userId: string): Promise<void> {
     evaluation,
     providerLabel: provider,
   });
-  log.info(`☁️  Report uploaded → MinIO / ${MINIO_BUCKET ?? "careerops"}/${filename}`);
+  log.info(`☁️  Report uploaded → MinIO / ${MINIO_BUCKET ?? "careerops"}/Reports/${userId}/${filename}`);
 
   const padded = String(reportNum).padStart(3, "0");
   // `report` mirrors the MinIO object name; `reportUrl` is its resolvable URL.
-  const reportUrl = reportObjectUrl(filename);
+  const reportUrl = reportObjectUrl(userId, filename);
   const scoreStr = score === "N/A" ? "N/A" : score.includes("/") ? score : `${score}/5`;
 
   const row = await addApplication({

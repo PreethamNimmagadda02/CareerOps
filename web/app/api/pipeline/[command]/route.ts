@@ -1,4 +1,5 @@
 import { runPipeline, type PipelineCommand } from "@/lib/pipeline";
+import { preflightPipeline } from "@/lib/preflight";
 import { requireUserId } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -18,6 +19,16 @@ export async function POST(
   const { command } = await params;
   if (!VALID.includes(command as PipelineCommand)) {
     return new Response(`Invalid pipeline command: ${command}\n`, { status: 400 });
+  }
+
+  // Pre-flight: refuse to start scans without keywords or evaluations without a
+  // complete profile, so we never spawn a process that's guaranteed to fail.
+  const blocked = await preflightPipeline(command as PipelineCommand, userId);
+  if (blocked) {
+    return new Response(`${blocked}\n`, {
+      status: 422,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 
   const stream = runPipeline(command as PipelineCommand, userId);

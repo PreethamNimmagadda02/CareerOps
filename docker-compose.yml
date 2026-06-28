@@ -71,7 +71,10 @@ services:
     depends_on:
       dynamodb:
         condition: service_started
+      db:
+        condition: service_healthy
     environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       - DYNAMODB_ENDPOINT=http://dynamodb:8000
       - DYNAMODB_REGION=${DYNAMODB_REGION:-us-east-1}
       - DYNAMODB_TABLE_CV=${DYNAMODB_TABLE_CV:-CVs}

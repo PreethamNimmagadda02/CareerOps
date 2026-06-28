@@ -130,6 +130,7 @@ export function reportFilename(num: number, company: string, date: string = toda
  * No local file is written.
  */
 export async function writeReport(opts: {
+  userId: string;
   num: number;
   company: string;
   role: string;
@@ -137,11 +138,11 @@ export async function writeReport(opts: {
   evaluation: string;
   providerLabel: string;
 }): Promise<string> {
-  const { num, company, role, url, evaluation, providerLabel } = opts;
+  const { userId, num, company, role, url, evaluation, providerLabel } = opts;
   const date = today();
   const filename = reportFilename(num, company, date);
   const content = `# Evaluation: ${company} — ${role}\n\n**Date:** ${date}\n**URL:** ${url}\n**Provider:** ${providerLabel}\n**Report #:** ${num}\n\n---\n\n${evaluation}\n`;
-  await uploadReport(filename, content);
+  await uploadReport(userId, filename, content);
   return filename;
 }
 
@@ -160,7 +161,7 @@ export async function updateTracker(
   date: string,
 ): Promise<boolean> {
   const filename = reportFilename(reportNum, company, date);
-  const reportUrl = reportObjectUrl(filename);
+  const reportUrl = reportObjectUrl(userId, filename);
 
   try {
     const { count } = await db.application.updateMany({

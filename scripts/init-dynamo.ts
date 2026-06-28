@@ -22,6 +22,7 @@ import "dotenv/config";
 import { ddb, TABLE_CV, TABLE_PROFILE } from "../src/lib/dynamo.js";
 import { putProfile, type Profile } from "../src/lib/profile-store.js";
 import { putCV, type CV } from "../src/lib/cv-store.js";
+import { resolveOwnerUserId } from "../src/lib/owner.js";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -78,7 +79,7 @@ async function createTable(tableName: string) {
 
 // ─── 2. Seed profile from profile.yml ────────────────────────────────────────
 
-async function seedProfile() {
+async function seedProfile(userId: string) {
   const ymlPath = path.join(ROOT, "config", "profile.yml");
   if (!fs.existsSync(ymlPath)) {
     log("config/profile.yml not found — skipping profile seed.");
@@ -98,13 +99,13 @@ async function seedProfile() {
   }
 
   if (DRY) {
-    log(`DRY: would write to "${TABLE_PROFILE}" —`);
+    log(`DRY: would write to "${TABLE_PROFILE}" (userId=${userId}) —`);
     console.log(JSON.stringify(profile, null, 2));
     return;
   }
 
-  await putProfile(profile);
-  log(`Profile seeded → "${TABLE_PROFILE}".`);
+  await putProfile(userId, profile);
+  log(`Profile seeded → "${TABLE_PROFILE}" (userId=${userId}).`);
 }
 
 function buildProfileFromYml(raw: string): Profile {
@@ -164,7 +165,7 @@ function buildProfileFromYml(raw: string): Profile {
 
 // ─── 3. Seed CV from cv.md ────────────────────────────────────────────────────
 
-async function seedCV() {
+async function seedCV(userId: string) {
   const cvPath = path.join(ROOT, "cv.md");
   if (!fs.existsSync(cvPath)) {
     log("cv.md not found — skipping CV seed.");
@@ -175,13 +176,13 @@ async function seedCV() {
   const cv = parseCvMarkdown(raw);
 
   if (DRY) {
-    log(`DRY: would write to "${TABLE_CV}" —`);
+    log(`DRY: would write to "${TABLE_CV}" (userId=${userId}) —`);
     console.log(JSON.stringify(cv, null, 2));
     return;
   }
 
-  await putCV(cv);
-  log(`CV seeded → "${TABLE_CV}".`);
+  await putCV(userId, cv);
+  log(`CV seeded → "${TABLE_CV}" (userId=${userId}).`);
 }
 
 function parseCvMarkdown(md: string): CV {
@@ -291,8 +292,11 @@ async function main() {
     await createTable(TABLE_PROFILE);
   }
 
-  await seedProfile();
-  await seedCV();
+  const userId = await resolveOwnerUserId();
+  log(`Owner userId  : "${userId}"`);
+
+  await seedProfile(userId);
+  await seedCV(userId);
 
   log("Done.");
 }

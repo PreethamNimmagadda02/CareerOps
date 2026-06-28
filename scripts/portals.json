@@ -2971,8 +2971,8 @@
   },
   {
     "name": "Netskope",
-    "careersUrl": "https://jobs.ashbyhq.com/netskope",
-    "api": null
+    "careersUrl": "https://boards.greenhouse.io/netskope",
+    "api": "https://boards-api.greenhouse.io/v1/boards/netskope/jobs"
   },
   {
     "name": "Island",
@@ -3096,8 +3096,8 @@
   },
   {
     "name": "Cortex",
-    "careersUrl": "https://jobs.ashbyhq.com/cortex",
-    "api": null
+    "careersUrl": "https://boards.greenhouse.io/cortex",
+    "api": "https://boards-api.greenhouse.io/v1/boards/cortex/jobs"
   },
   {
     "name": "OpsLevel",
@@ -3241,8 +3241,8 @@
   },
   {
     "name": "Jumio",
-    "careersUrl": "https://jobs.ashbyhq.com/jumio",
-    "api": null
+    "careersUrl": "https://boards.greenhouse.io/jumio",
+    "api": "https://boards-api.greenhouse.io/v1/boards/jumio/jobs"
   },
   {
     "name": "Onfido",
@@ -3281,8 +3281,8 @@
   },
   {
     "name": "Brinqa",
-    "careersUrl": "https://jobs.ashbyhq.com/brinqa",
-    "api": null
+    "careersUrl": "https://boards.greenhouse.io/brinqa",
+    "api": "https://boards-api.greenhouse.io/v1/boards/brinqa/jobs"
   },
   {
     "name": "Harness",
@@ -3376,8 +3376,8 @@
   },
   {
     "name": "Outrider",
-    "careersUrl": "https://jobs.ashbyhq.com/outrider",
-    "api": null
+    "careersUrl": "https://boards.greenhouse.io/outrider",
+    "api": "https://boards-api.greenhouse.io/v1/boards/outrider/jobs"
   },
   {
     "name": "Bright Data",

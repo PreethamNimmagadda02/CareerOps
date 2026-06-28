@@ -10,7 +10,9 @@ FROM node:22-alpine AS init
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
-COPY tsconfig.json ./
+COPY tsconfig.json prisma.config.ts ./
+COPY prisma ./prisma
+RUN npx prisma generate
 COPY src ./src
 COPY scripts ./scripts
 

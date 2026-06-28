@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { GetObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import type { ReportPayload } from "./types";
 
 const reUrl = /^\*\*URL:\*\*\s*(https?:\/\/\S+)/m;
@@ -32,15 +32,25 @@ function resolveMinioClient(): S3Client {
 
   return new S3Client({
     endpoint,
-    region: "us-east-1", // required by SDK, MinIO ignores it
+    region: "us-east-1",
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true, // required for MinIO
+    forcePathStyle: true,
   });
 }
 
 const BUCKET = process.env.MINIO_BUCKET ?? "careerops";
 
-/** Extract summary from raw markdown text */
+/** Derive the MinIO object key for a user's report. */
+function reportKey(userId: string, filename: string): string {
+  return `Reports/${userId}/${filename}`;
+}
+
+/** Extract just the filename from a stored reportName value (strips any path prefix). */
+function toFilename(reportRelPath: string): string {
+  return reportRelPath.split("/").pop() ?? reportRelPath;
+}
+
+/** Extract summary from raw markdown text. */
 export function parseReportSummary(text: string): ReportSummary {
   const head = text.slice(0, 4000);
   const title = head.match(reTitle);
@@ -60,14 +70,23 @@ export function parseReportSummary(text: string): ReportSummary {
   };
 }
 
-/** Read a report's lightweight summary by fetching from MinIO. */
-export async function readReportSummary(reportRelPath: string): Promise<ReportSummary | null> {
-  const filename = reportRelPath.split("/").pop();
+/**
+ * Read a report's lightweight summary from MinIO.
+ *
+ * @param userId        — the report owner's user id
+ * @param reportRelPath — filename stored in Application.reportName (e.g. "005-acme.md")
+ */
+export async function readReportSummary(
+  userId: string,
+  reportRelPath: string,
+): Promise<ReportSummary | null> {
+  const filename = toFilename(reportRelPath);
   if (!filename) return null;
 
   try {
     const client = resolveMinioClient();
-    const res = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: filename }));
+    const key = reportKey(userId, filename);
+    const res = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
     const text = await res.Body?.transformToString("utf-8");
     if (!text) return null;
     return parseReportSummary(text);
@@ -76,22 +95,36 @@ export async function readReportSummary(reportRelPath: string): Promise<ReportSu
   }
 }
 
-/** Read a full report by its number (e.g. "030") from MinIO. */
-export async function readReportByNumber(num: string): Promise<ReportPayload | null> {
+/**
+ * Read a full report by its number from MinIO, scoped to a specific user.
+ *
+ * @param userId — the report owner's user id
+ * @param num    — zero-padded or plain report number, e.g. "030" or "30"
+ */
+export async function readReportByNumber(
+  userId: string,
+  num: string,
+): Promise<ReportPayload | null> {
   const client = resolveMinioClient();
   const padded = num.padStart(3, "0");
+    const prefix = `Reports/${userId}/`;
 
   try {
-    // 1. List all objects in the bucket to find the matching filename
-    const listRes = await client.send(new ListObjectsV2Command({ Bucket: BUCKET }));
+    const listRes = await client.send(
+      new ListObjectsV2Command({ Bucket: BUCKET, Prefix: prefix }),
+    );
     const keys = (listRes.Contents ?? []).map((obj) => obj.Key ?? "").filter(Boolean);
 
-    // Find the key matching the report number prefix (e.g. "030-company-date.md")
-    const filename = keys.find((k) => k.startsWith(`${padded}-`) && k.endsWith(".md"));
-    if (!filename) return null;
+    // Find the key matching the report-number prefix within this user's folder.
+    const key = keys.find((k) => {
+      const name = k.slice(prefix.length); // strip user prefix → just the filename
+      return name.startsWith(`${padded}-`) && name.endsWith(".md");
+    });
+    if (!key) return null;
 
-    // 2. Fetch the file content
-    const getRes = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: filename }));
+    const filename = key.slice(prefix.length);
+
+    const getRes = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
     const markdown = await getRes.Body?.transformToString("utf-8");
     if (!markdown) return null;
 
@@ -99,8 +132,8 @@ export async function readReportByNumber(num: string): Promise<ReportPayload | n
 
     return {
       number: padded,
-      path: `reports/${filename}`,
-      absolutePath: `MinIO/${filename}`,
+      path: key,
+      absolutePath: `MinIO/${key}`,
       company: summary.company ?? "",
       role: summary.role ?? "",
       markdown,

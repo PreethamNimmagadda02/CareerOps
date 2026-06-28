@@ -32,6 +32,20 @@ async function main(): Promise<void> {
   const userId = await resolveOwnerUserId();
 
   const config = await loadConfigFromDb(userId);
+
+  // Block the scan when the user has no positive title-filter keywords. The
+  // matcher requires a positive match for a job to be relevant, so a scan with
+  // zero "include" keywords can never surface anything — it would only burn
+  // time and API calls.
+  if (config.positive.length === 0) {
+    log.error(
+      "❌ No title-filter keywords configured. Add at least one “Include” keyword before scanning:\n" +
+      '   npm run portals -- keywords add --kind positive --value "software engineer"\n' +
+      "   (or use the Keywords panel in the dashboard).",
+    );
+    process.exit(1);
+  }
+
   if (config.companies.length === 0) {
     log.error(
       "❌ No portals in Postgres. Add some first: npm run portals -- add --name X --url U",
