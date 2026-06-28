@@ -35,6 +35,28 @@ export interface Metrics {
   scored: number;
 }
 
+/** The four sequential gates a user clears to activate the pipeline. */
+export type OnboardingStep = "profile" | "keywords" | "scan" | "evaluate";
+
+/**
+ * Progress across the activation funnel, computed server-side so the dashboard
+ * can surface a single "do this next" action in one request.
+ */
+export interface OnboardingState {
+  /** Profile + CV have the minimum fields required to evaluate. */
+  profile: { done: boolean; missing: string[] };
+  /** At least one positive ("Include") title keyword exists. */
+  keywords: { done: boolean; count: number };
+  /** At least one role has been discovered (count = total roles). */
+  scan: { done: boolean; count: number };
+  /** At least one role has been scored (count = evaluated roles). */
+  evaluate: { done: boolean; count: number };
+  /** The first incomplete step, or "done" when fully set up. */
+  nextStep: OnboardingStep | "done";
+  /** True when every step is complete. */
+  complete: boolean;
+}
+
 export interface ReportPayload {
   number: string;
   path: string;

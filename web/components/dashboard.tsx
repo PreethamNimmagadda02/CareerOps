@@ -5,22 +5,25 @@ import {
   ArrowUpDown,
   ExternalLink,
   FileText,
+  Inbox,
   Layers,
   RefreshCw,
   Loader2,
-  Tags,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { MetricsCards } from "@/components/metrics-cards";
-import { PipelineRunner } from "@/components/pipeline-runner";
+import { PipelineProvider, usePipeline } from "@/components/pipeline-provider";
+import { LaunchPad } from "@/components/launch-pad";
 import { KeywordsManager } from "@/components/keywords-manager";
 import { ReportModal } from "@/components/report-modal";
 import { StatusBadge, scoreColor } from "@/components/status-badge";
 import { UserMenu } from "@/components/user-menu";
 import { computeMetrics } from "@/lib/metrics";
 import { normalizeStatus, statusLabel, statusPriority, STATUS_OPTIONS } from "@/lib/status";
-import type { Application } from "@/lib/types";
+import type { Application, OnboardingState } from "@/lib/types";
+import type { PipelineCommand } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
 
 type SortMode = "score" | "date" | "company" | "status";
@@ -37,7 +40,18 @@ const TABS = [
 type TabKey = (typeof TABS)[number]["key"];
 
 export function Dashboard() {
+  return (
+    <PipelineProvider>
+      <DashboardInner />
+    </PipelineProvider>
+  );
+}
+
+function DashboardInner() {
+  const { run, running } = usePipeline();
+
   const [apps, setApps] = React.useState<Application[]>([]);
+  const [onboarding, setOnboarding] = React.useState<OnboardingState | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<TabKey>("all");
@@ -51,10 +65,17 @@ export function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/applications", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load");
-      setApps(data.applications as Application[]);
+      const [appsRes, onbRes] = await Promise.all([
+        fetch("/api/applications", { cache: "no-store" }),
+        fetch("/api/onboarding", { cache: "no-store" }),
+      ]);
+      const appsData = await appsRes.json();
+      if (!appsRes.ok) throw new Error(appsData.error || "Failed to load");
+      setApps(appsData.applications as Application[]);
+      if (onbRes.ok) {
+        const onbData = await onbRes.json();
+        setOnboarding(onbData.onboarding as OnboardingState);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -65,6 +86,19 @@ export function Dashboard() {
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  // Keep the "next step" accurate after the user edits their profile on the
+  // /profile route and navigates/tabs back.
+  React.useEffect(() => {
+    const onFocus = () => void load();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [load]);
+
+  const launchRun = React.useCallback(
+    (command: PipelineCommand) => run(command, { onDone: load }),
+    [run, load],
+  );
 
   const metrics = React.useMemo(() => computeMetrics(apps), [apps]);
 
@@ -144,9 +178,11 @@ export function Dashboard() {
     setSort((s) => order[(order.indexOf(s) + 1) % order.length]);
   };
 
+  const hasApps = apps.length > 0;
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
-      {/* Header */}
+      {/* Header — kept intentionally minimal: identity + refresh only. */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -155,10 +191,6 @@ export function Dashboard() {
           <p className="text-sm text-muted-foreground">Job-search pipeline dashboard</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <PipelineRunner onComplete={load} />
-          <Button variant="outline" size="sm" onClick={() => setKeywordsOpen(true)}>
-            <Tags className="h-4 w-4" /> Keywords
-          </Button>
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
@@ -167,39 +199,14 @@ export function Dashboard() {
         </div>
       </div>
 
-      <MetricsCards metrics={metrics} />
-
-      {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                tab === t.key
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              {t.label} <span className="opacity-70">({tabCount(t.key)})</span>
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={cycleSort}>
-            <ArrowUpDown className="h-4 w-4" /> Sort: {sort}
-          </Button>
-          <Button
-            variant={grouped ? "default" : "outline"}
-            size="sm"
-            onClick={() => setGrouped((g) => !g)}
-          >
-            <Layers className="h-4 w-4" /> Group
-          </Button>
-        </div>
-      </div>
+      {/* Guided activation — the single focal point that tells the user what's next. */}
+      <LaunchPad
+        onboarding={onboarding}
+        loading={loading && onboarding === null}
+        running={running}
+        onOpenKeywords={() => setKeywordsOpen(true)}
+        onRun={launchRun}
+      />
 
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -207,35 +214,75 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2 text-left">Score</th>
-              <th className="px-3 py-2 text-left">Company</th>
-              <th className="px-3 py-2 text-left">Role</th>
-              <th className="px-3 py-2 text-left">Status</th>
-              <th className="px-3 py-2 text-left">Comp</th>
-              <th className="px-3 py-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {renderRows(filtered, grouped, {
-              savingNum,
-              onChangeStatus: changeStatus,
-              onOpenReport: setOpenReport,
-            })}
-            {!loading && filtered.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
-                  No applications match this filter.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {hasApps ? (
+        <>
+          <MetricsCards metrics={metrics} />
+
+          {/* Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-1">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    tab === t.key
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {t.label} <span className="opacity-70">({tabCount(t.key)})</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={cycleSort}>
+                <ArrowUpDown className="h-4 w-4" /> Sort: {sort}
+              </Button>
+              <Button
+                variant={grouped ? "default" : "outline"}
+                size="sm"
+                onClick={() => setGrouped((g) => !g)}
+              >
+                <Layers className="h-4 w-4" /> Group
+              </Button>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-hidden rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left">Score</th>
+                  <th className="px-3 py-2 text-left">Company</th>
+                  <th className="px-3 py-2 text-left">Role</th>
+                  <th className="px-3 py-2 text-left">Status</th>
+                  <th className="px-3 py-2 text-left">Comp</th>
+                  <th className="px-3 py-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {renderRows(filtered, grouped, {
+                  savingNum,
+                  onChangeStatus: changeStatus,
+                  onOpenReport: setOpenReport,
+                })}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
+                      No applications match this filter.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        !loading && <EmptyRoles onboarding={onboarding} onRun={launchRun} running={running} />
+      )}
 
       <ReportModal
         reportNumber={openReport?.num ?? null}
@@ -243,8 +290,52 @@ export function Dashboard() {
         onClose={() => setOpenReport(null)}
       />
 
-      <KeywordsManager open={keywordsOpen} onClose={() => setKeywordsOpen(false)} />
+      <KeywordsManager
+        open={keywordsOpen}
+        onClose={() => {
+          setKeywordsOpen(false);
+          void load();
+        }}
+      />
     </div>
+  );
+}
+
+/** Friendly placeholder shown until the first roles are discovered. */
+function EmptyRoles({
+  onboarding,
+  onRun,
+  running,
+}: {
+  onboarding: OnboardingState | null;
+  onRun: (command: PipelineCommand) => void;
+  running: PipelineCommand | null;
+}) {
+  const ready = onboarding?.nextStep === "scan";
+  const message = ready
+    ? "You're ready — run a scan to discover roles that match your keywords."
+    : "Finish the steps above, then run a scan to discover matching roles.";
+
+  return (
+    <Card className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        <Inbox className="h-6 w-6 text-muted-foreground" />
+      </span>
+      <div>
+        <p className="text-sm font-medium">No roles yet</p>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{message}</p>
+      </div>
+      {ready && (
+        <Button size="sm" onClick={() => onRun("scan:fallback")} disabled={running !== null}>
+          {running === "scan" || running === "scan:fallback" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Run scan
+        </Button>
+      )}
+    </Card>
   );
 }
 
