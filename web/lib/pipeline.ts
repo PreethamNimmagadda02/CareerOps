@@ -38,7 +38,7 @@ const ALLOWED: Record<PipelineCommand, { cmd: string; args: string[] }> = {
  *  - cancel() sets the closed flag and SIGTERMs the child when the client
  *    disconnects, avoiding unhandled promise rejections on aborted streams.
  */
-export function runPipeline(command: PipelineCommand): ReadableStream<Uint8Array> {
+export function runPipeline(command: PipelineCommand, userId: string): ReadableStream<Uint8Array> {
   const pipelineConfig = ALLOWED[command];
   if (!pipelineConfig) throw new Error(`Unknown pipeline command: ${command}`);
 
@@ -75,6 +75,9 @@ export function runPipeline(command: PipelineCommand): ReadableStream<Uint8Array
           ...process.env,
           FORCE_COLOR: "0",
           npm_config_progress: "false",
+          // Attribute every scanned/evaluated job to the signed-in user so the
+          // pipeline writes into that user's isolated dataset.
+          CAREER_OPS_USER_ID: userId,
         },
       });
 

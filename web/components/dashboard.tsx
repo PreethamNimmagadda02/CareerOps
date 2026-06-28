@@ -15,6 +15,7 @@ import { MetricsCards } from "@/components/metrics-cards";
 import { PipelineRunner } from "@/components/pipeline-runner";
 import { ReportModal } from "@/components/report-modal";
 import { StatusBadge, scoreColor } from "@/components/status-badge";
+import { UserMenu } from "@/components/user-menu";
 import { computeMetrics } from "@/lib/metrics";
 import { normalizeStatus, statusLabel, statusPriority, STATUS_OPTIONS } from "@/lib/status";
 import type { Application } from "@/lib/types";
@@ -156,6 +157,7 @@ export function Dashboard() {
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
           </Button>
+          <UserMenu />
         </div>
       </div>
 

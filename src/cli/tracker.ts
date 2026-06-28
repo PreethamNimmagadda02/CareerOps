@@ -29,6 +29,7 @@ import {
   writeReport,
 } from "../lib/tracker.js";
 import { reportObjectUrl } from "../lib/minio.js";
+import { resolveOwnerUserId } from "../lib/owner.js";
 import { today } from "../lib/text.js";
 
 const MINIO_BUCKET = process.env.MINIO_BUCKET
@@ -48,8 +49,8 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-async function cmdList(args: Args): Promise<void> {
-  const apps = await getApplications();
+async function cmdList(args: Args, userId: string): Promise<void> {
+  const apps = await getApplications(userId);
   if (args.has("--json")) {
     process.stdout.write(JSON.stringify(apps, null, 2) + "\n");
     return;
@@ -63,8 +64,9 @@ async function cmdList(args: Args): Promise<void> {
   log.info(`\n${apps.length} application(s) in Postgres.`);
 }
 
-async function cmdAdd(args: Args): Promise<void> {
+async function cmdAdd(args: Args, userId: string): Promise<void> {
   const row = await addApplication({
+    userId,
     company: required(args, "--company"),
     role: required(args, "--role"),
     score: args.get("--score"),
@@ -76,7 +78,7 @@ async function cmdAdd(args: Args): Promise<void> {
   log.info(`✅ Added application #${row.num} — ${row.company} — ${row.role} (${row.status})`);
 }
 
-async function cmdUpdate(args: Args): Promise<void> {
+async function cmdUpdate(args: Args, userId: string): Promise<void> {
   const id = args.get("--id");
   if (!id) {
     log.error("❌ --id is required (the application's UUID)");
@@ -94,7 +96,7 @@ async function cmdUpdate(args: Args): Promise<void> {
     log.error("❌ Nothing to update. Pass at least one field (e.g. --status Aplicado).");
     process.exit(1);
   }
-  const ok = await patchApplication(id, fields);
+  const ok = await patchApplication(id, userId, fields);
   if (ok) log.info(`✅ Updated application #${id}: ${Object.keys(fields).join(", ")}`);
   else {
     log.error(`❌ Could not update application #${id} (not found?).`);
@@ -102,7 +104,7 @@ async function cmdUpdate(args: Args): Promise<void> {
   }
 }
 
-async function cmdSave(args: Args): Promise<void> {
+async function cmdSave(args: Args, userId: string): Promise<void> {
   const company = required(args, "--company");
   const role = required(args, "--role");
   const url = required(args, "--url");
@@ -139,6 +141,7 @@ async function cmdSave(args: Args): Promise<void> {
   const scoreStr = score === "N/A" ? "N/A" : score.includes("/") ? score : `${score}/5`;
 
   const row = await addApplication({
+    userId,
     company,
     role,
     score: scoreStr,
@@ -157,19 +160,20 @@ async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const sub = argv[0];
   const args = new Args(argv.slice(1));
+  const userId = await resolveOwnerUserId();
 
   switch (sub) {
     case "list":
-      await cmdList(args);
+      await cmdList(args, userId);
       break;
     case "add":
-      await cmdAdd(args);
+      await cmdAdd(args, userId);
       break;
     case "update":
-      await cmdUpdate(args);
+      await cmdUpdate(args, userId);
       break;
     case "save":
-      await cmdSave(args);
+      await cmdSave(args, userId);
       break;
     default:
       log.error(

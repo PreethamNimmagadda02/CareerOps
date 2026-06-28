@@ -21,11 +21,14 @@ function rowToCompany(p: {
   return c;
 }
 
-/** Load the scan configuration (companies + title-filter keywords) from Postgres. */
-export async function loadConfigFromDb(): Promise<PortalsConfig> {
+/**
+ * Load the scan configuration from Postgres.
+ * Portals are global (shared by all users); keywords are per-user.
+ */
+export async function loadConfigFromDb(userId: string): Promise<PortalsConfig> {
   const [portals, keywords] = await Promise.all([
     db.portal.findMany({ orderBy: { id: "asc" } }),
-    db.filterKeyword.findMany({ orderBy: { id: "asc" } }),
+    db.filterKeyword.findMany({ where: { userId }, orderBy: { id: "asc" } }),
   ]);
 
   return {
@@ -35,7 +38,7 @@ export async function loadConfigFromDb(): Promise<PortalsConfig> {
   };
 }
 
-/** Number of portals currently stored in Postgres. */
+/** Total number of portals in Postgres (global). */
 export async function portalCount(): Promise<number> {
   return db.portal.count();
 }

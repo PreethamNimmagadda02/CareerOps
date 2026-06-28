@@ -27,6 +27,7 @@ import {
   updateTracker,
   writeReport,
 } from "../lib/tracker.js";
+import { resolveOwnerUserId } from "../lib/owner.js";
 import {  today } from "../lib/text.js";
 
 async function main(): Promise<void> {
@@ -56,8 +57,10 @@ async function main(): Promise<void> {
   log.info(`   limit       : ${limit}  dry-run=${dryRun}`);
   log.info(`   concurrency : ${concurrency}\n`);
 
+  const userId = await resolveOwnerUserId();
+
   const { cv, profileYml } = await loadCandidateContext();
-  const allJobs = await getApplications();
+  const allJobs = await getApplications(userId);
 
   // Subsequent evaluations are idempotent: skip an application only when it
   // already has BOTH a report (Postgres `reportName`) AND a score — i.e. a
@@ -164,6 +167,7 @@ async function main(): Promise<void> {
 
             const updated = await updateTracker(
               job.num,
+              userId,
               score || "N/A",
               reportNum,
               job.company,

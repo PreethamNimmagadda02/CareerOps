@@ -15,6 +15,7 @@ import { mapLimit } from "../lib/concurrency.js";
 import { log } from "../lib/logger.js";
 import { engineeringMatch, isHighSignal, locationMatch, titleMatches } from "../lib/matching.js";
 import { loadConfigFromDb } from "../lib/portals-db.js";
+import { resolveOwnerUserId } from "../lib/owner.js";
 import { hasStructuredApi, scanCompany, scanCompanyBrowser } from "../lib/scanner.js";
 import { dedupKey, normalizeUrl } from "../lib/text.js";
 import { db } from "../lib/db.js";
@@ -28,10 +29,12 @@ async function main(): Promise<void> {
   const compact = args.has("--compact");
   const verbose = args.has("--verbose");
 
-  const config = await loadConfigFromDb();
+  const userId = await resolveOwnerUserId();
+
+  const config = await loadConfigFromDb(userId);
   if (config.companies.length === 0) {
     log.error(
-      "❌ No portals in Postgres. Seed them first: npm run portals -- migrate",
+      "❌ No portals in Postgres. Add some first: npm run portals -- add --name X --url U",
     );
     process.exit(1);
   }
@@ -193,6 +196,7 @@ async function main(): Promise<void> {
     const date = new Date().toISOString().slice(0, 10);
 
     const backfill = summary.shortlist.map((job) => ({
+      userId,
       date,
       company: job.company,
       role: job.title,
@@ -251,7 +255,7 @@ async function main(): Promise<void> {
     // Load all applications that are NOT in an active candidate status —
     // these are the only ones eligible for pruning.
     const pruneable = await db.application.findMany({
-      where: { status: { notIn: ACTIVE_STATUSES } },
+      where: { userId, status: { notIn: ACTIVE_STATUSES } },
       select: { id: true, company: true, role: true, status: true },
     });
 

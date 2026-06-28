@@ -42,6 +42,11 @@
     "dynamo:init:dry": "tsx scripts/init-dynamo.ts --dry",
     "dynamo:cv": "tsx scripts/get-cv.ts",
     "dynamo:profile": "tsx scripts/get-profile.ts",
+    "db:restore": "tsx scripts/restore-recovered.ts",
+    "db:restore:dry": "tsx scripts/restore-recovered.ts --dry-run",
+    "db:check": "tsx scripts/check-portals.ts",
+    "db:backfill": "tsx scripts/backfill-scores.ts",
+    "db:backfill:dry": "tsx scripts/backfill-scores.ts --dry-run",
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "keywords": [
@@ -52,11 +57,11 @@
     "career",
     "automation"
   ],
-  "author": "Shreyas Suvarna (https://github.com/ORION2809)",
-  "homepage": "https://github.com/ORION2809/carrer-ops",
+  "author": "Preetham Nimmagadda (https://github.com/PreethamNimmagadda02)",
+  "homepage": "https://github.com/PreethamNimmagadda02/CareerOps",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ORION2809/carrer-ops"
+    "url": "https://github.com/PreethamNimmagadda02/CareerOps"
   },
   "license": "MIT",
   "dependencies": {

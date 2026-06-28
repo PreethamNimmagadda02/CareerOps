@@ -9,9 +9,10 @@ import { AppStatus } from "@prisma/client";
 const reReportNum = /^\[?(\d+)/;
 const reScore = /(\d+\.?\d*)\/5/;
 
-/** Fetch applications from the database and map to UI `Application` format. */
-export async function readApplications(enrich = true): Promise<Application[]> {
+/** Fetch one user's applications from the database, mapped to UI `Application` format. */
+export async function readApplications(userId: string, enrich = true): Promise<Application[]> {
   const dbApps = await db.application.findMany({
+    where: { userId },
     orderBy: { createdAt: 'asc' }
   });
 
@@ -65,6 +66,7 @@ export async function readApplications(enrich = true): Promise<Application[]> {
  * Returns true when a row was updated.
  */
 export async function updateApplicationStatus(opts: {
+  userId: string;
   num?: string;
   reportNumber?: string;
   newStatus: AppStatus;
@@ -72,10 +74,11 @@ export async function updateApplicationStatus(opts: {
   let targetId = opts.num;
 
   if (targetId === undefined && opts.reportNumber) {
-    // Resolve the target id by report number, matching either the filename
-    // form ("005-acme-….md") or the legacy markdown-link form ("[005](…)").
+    // Resolve the target id by report number (scoped to this user), matching
+    // either the filename form ("005-acme-….md") or the legacy markdown-link
+    // form ("[005](…)").
     const wanted = parseInt(opts.reportNumber, 10);
-    const apps = await db.application.findMany();
+    const apps = await db.application.findMany({ where: { userId: opts.userId } });
     const app = apps.find((a) => {
       const m = a.reportName.match(/^\[?(\d+)/);
       return m ? parseInt(m[1] as string, 10) === wanted : false;
@@ -86,11 +89,13 @@ export async function updateApplicationStatus(opts: {
   if (targetId === undefined) return false;
 
   try {
-    await db.application.update({
-      where: { id: targetId },
+    // `updateMany` with the userId in the filter guarantees a user can only
+    // ever mutate their own rows, even if they guess another row's id.
+    const { count } = await db.application.updateMany({
+      where: { id: targetId, userId: opts.userId },
       data: { status: opts.newStatus, updatedAt: new Date() },
     });
-    return true;
+    return count > 0;
   } catch {
     return false;
   }

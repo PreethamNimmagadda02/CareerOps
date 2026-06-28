@@ -4,9 +4,10 @@ import { slugify, today } from "./text.js";
 import { db } from "./db.js";
 import { reportObjectUrl, uploadReport } from "./minio.js";
 
-/** Fetch all applications from the database. */
-export async function getApplications(): Promise<ApplicationRow[]> {
+/** Fetch all applications belonging to one user. */
+export async function getApplications(userId: string): Promise<ApplicationRow[]> {
   const apps = await db.application.findMany({
+    where: { userId },
     orderBy: { createdAt: "asc" },
   });
 
@@ -30,6 +31,7 @@ export async function getApplications(): Promise<ApplicationRow[]> {
  * The row's `id` (autoincrement) is returned as `num`.
  */
 export async function addApplication(opts: {
+  userId: string;
   company: string;
   role: string;
   score?: string;
@@ -42,6 +44,7 @@ export async function addApplication(opts: {
   const date = opts.date ?? today();
   const app = await db.application.create({
     data: {
+      userId: opts.userId,
       date,
       company: opts.company,
       role: opts.role,
@@ -73,6 +76,7 @@ export async function addApplication(opts: {
  */
 export async function patchApplication(
   id: string,
+  userId: string,
   fields: Partial<{
     company: string;
     role: string;
@@ -84,11 +88,11 @@ export async function patchApplication(
   }>,
 ): Promise<boolean> {
   try {
-    await db.application.update({
-      where: { id },
+    const { count } = await db.application.updateMany({
+      where: { id, userId },
       data: { ...fields, updatedAt: new Date() },
     });
-    return true;
+    return count > 0;
   } catch {
     return false;
   }
@@ -149,6 +153,7 @@ export async function writeReport(opts: {
  */
 export async function updateTracker(
   id: string,
+  userId: string,
   score: string,
   reportNum: number,
   company: string,
@@ -158,8 +163,8 @@ export async function updateTracker(
   const reportUrl = reportObjectUrl(filename);
 
   try {
-    await db.application.update({
-      where: { id },
+    const { count } = await db.application.updateMany({
+      where: { id, userId },
       data: {
         score: score === "N/A" ? "N/A" : `${score}/5`,
         reportName: filename,
@@ -167,7 +172,7 @@ export async function updateTracker(
         updatedAt: new Date(),
       },
     });
-    return true;
+    return count > 0;
   } catch {
     return false;
   }

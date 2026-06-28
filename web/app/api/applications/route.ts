@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readApplications, updateApplicationStatus } from "@/lib/tracker";
+import { requireUserId } from "@/lib/session";
 import { STATUS_OPTIONS } from "@/lib/status";
 import { AppStatus } from "@prisma/client";
 
@@ -8,8 +9,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const userId = await requireUserId();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
-    const applications = await readApplications();
+    const applications = await readApplications(userId);
     return NextResponse.json({ applications });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -17,6 +21,9 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const userId = await requireUserId();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const body = (await request.json()) as {
       num?: string;
@@ -41,6 +48,7 @@ export async function PATCH(request: Request) {
     }
 
     const ok = await updateApplicationStatus({
+      userId,
       num: body.num,
       reportNumber: body.reportNumber,
       newStatus: body.newStatus as AppStatus,

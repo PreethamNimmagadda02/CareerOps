@@ -16,6 +16,7 @@ import { Args } from "../src/lib/args.js";
 import { db } from "../src/lib/db.js";
 import { log } from "../src/lib/logger.js";
 import { downloadReport } from "../src/lib/minio.js";
+import { resolveOwnerUserId } from "../src/lib/owner.js";
 import { parseScore } from "../src/lib/prompt.js";
 
 /** A score cell is "proper" when it starts with a digit, e.g. "3.3/5". */
@@ -25,9 +26,10 @@ function hasNumericScore(score: string): boolean {
 
 async function main(): Promise<void> {
   const dryRun = new Args().has("--dry-run");
+  const userId = await resolveOwnerUserId();
 
   const candidates = await db.application.findMany({
-    where: { reportName: { not: "" } },
+    where: { userId, reportName: { not: "" } },
     select: { id: true, company: true, role: true, score: true, reportName: true },
   });
 

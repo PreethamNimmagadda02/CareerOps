@@ -95,6 +95,14 @@ services:
       # Use the docker-compose service name `db` instead of localhost
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       - NODE_ENV=production
+      # Auth.js (NextAuth) — required for the multi-user dashboard.
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
+      - AUTH_TRUST_HOST=true
+      - AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID:-}
+      - AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET:-}
+      - AUTH_GITHUB_ID=${AUTH_GITHUB_ID:-}
+      - AUTH_GITHUB_SECRET=${AUTH_GITHUB_SECRET:-}
       # MinIO S3 — internal Docker network URL (used for SDK calls)
       - MINIO_ENDPOINT=http://minio:9000
       # Browser-reachable URL baked into stored reportUrl values. The host port

@@ -2,8 +2,7 @@
 /**
  * career-ops portals — manage scan targets in Postgres.
  *
- * Postgres is the single source of truth for portal configuration.
- * There is no portals.yml — add, edit, and delete portals here.
+ * Portals are GLOBAL (shared by all users). Keywords are per-user.
  *
  * Usage:
  *   career-ops-portals list     [--json] [--disabled]
@@ -20,6 +19,7 @@
 import { Args } from "../lib/args.js";
 import { db } from "../lib/db.js";
 import { log } from "../lib/logger.js";
+import { resolveOwnerUserId } from "../lib/owner.js";
 import { portalCount } from "../lib/portals-db.js";
 import { slugFromAshby, slugFromLever } from "../lib/scanner.js";
 
@@ -38,7 +38,7 @@ function detectMethod(careersUrl?: string | null, api?: string | null): string {
   return "browser";
 }
 
-// ── sub-commands ──────────────────────────────────────────────────────────────
+// ── portal sub-commands (global) ──────────────────────────────────────────────
 
 async function cmdList(args: Args): Promise<void> {
   const showDisabled = args.has("--disabled");
@@ -117,11 +117,20 @@ async function cmdDisable(args: Args): Promise<void> {
   log.info(`✅ Disabled "${name}".`);
 }
 
+// ── keywords sub-commands (per-user) ─────────────────────────────────────────
+
 async function cmdKeywords(argv: string[]): Promise<void> {
   const sub = argv[0];
   const args = new Args(argv.slice(1));
+
+  // Resolve the owner only when keywords are actually being managed.
+  const userId = await resolveOwnerUserId();
+
   if (sub === "list" || !sub) {
-    const kws = await db.filterKeyword.findMany({ orderBy: [{ kind: "asc" }, { value: "asc" }] });
+    const kws = await db.filterKeyword.findMany({
+      where: { userId },
+      orderBy: [{ kind: "asc" }, { value: "asc" }],
+    });
     const pos = kws.filter(k => k.kind === "positive").map(k => k.value);
     const neg = kws.filter(k => k.kind === "negative").map(k => k.value);
     log.info(`positive (${pos.length}): ${pos.join(", ")}`);
@@ -133,9 +142,9 @@ async function cmdKeywords(argv: string[]): Promise<void> {
     if (kind !== "positive" && kind !== "negative") { log.error('❌ --kind must be "positive" or "negative"'); process.exit(1); }
     const value = required(args, "--value");
     await db.filterKeyword.upsert({
-      where: { kind_value: { kind, value } },
+      where: { userId_kind_value: { userId, kind, value } },
       update: {},
-      create: { kind, value },
+      create: { userId, kind, value },
     });
     log.info(`✅ Added ${kind} keyword: "${value}"`);
     return;
@@ -143,7 +152,7 @@ async function cmdKeywords(argv: string[]): Promise<void> {
   if (sub === "del" || sub === "delete") {
     const kind = required(args, "--kind");
     const value = required(args, "--value");
-    const deleted = await db.filterKeyword.deleteMany({ where: { kind, value } });
+    const deleted = await db.filterKeyword.deleteMany({ where: { userId, kind, value } });
     if (deleted.count) log.info(`✅ Removed ${kind} keyword: "${value}"`);
     else log.error(`❌ Keyword "${value}" (${kind}) not found.`);
     return;
@@ -160,25 +169,25 @@ async function main(): Promise<void> {
   const args = new Args(argv.slice(1));
 
   switch (sub) {
-    case "list":     await cmdList(args);           break;
-    case "count":    await cmdCount();              break;
-    case "add":      await cmdAdd(args);            break;
-    case "update":   await cmdUpdate(args);         break;
-    case "delete":   await cmdDelete(args);         break;
-    case "enable":   await cmdEnable(args);         break;
-    case "disable":  await cmdDisable(args);        break;
+    case "list":     await cmdList(args);              break;
+    case "count":    await cmdCount();                 break;
+    case "add":      await cmdAdd(args);               break;
+    case "update":   await cmdUpdate(args);            break;
+    case "delete":   await cmdDelete(args);            break;
+    case "enable":   await cmdEnable(args);            break;
+    case "disable":  await cmdDisable(args);           break;
     case "keywords": await cmdKeywords(argv.slice(1)); break;
     default:
       log.error(
         "Usage: career-ops-portals <command> [options]\n\n" +
-        "  list     [--json] [--disabled]          list portals\n" +
+        "  list     [--json] [--disabled]          list portals (global)\n" +
         "  count                                   total / enabled count\n" +
-        "  add      --name X --url U [--api]\n" +
+        "  add      --name X --url U [--api]       add a portal (global)\n" +
         "  update   --name X [--url --api]\n" +
         "  delete   --name X\n" +
         "  enable   --name X\n" +
         "  disable  --name X\n" +
-        "  keywords list\n" +
+        "  keywords list                           your title-filter keywords\n" +
         "  keywords add  --kind positive|negative --value WORD\n" +
         "  keywords del  --kind positive|negative --value WORD\n",
       );
