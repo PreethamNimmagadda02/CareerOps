@@ -1,8 +1,8 @@
-# CarrerOps
+# CareerOps
 
 > AI-powered job-search pipeline: scan job boards, evaluate roles against your CV with an LLM, generate ATS-friendly PDFs, and track everything in Postgres with reports stored in Nextcloud.
 
-CarrerOps automates the repetitive parts of a focused job search:
+CareerOps automates the repetitive parts of a focused job search:
 
 1. **Scan** — discover relevant roles across the companies stored in Postgres (Greenhouse / Ashby / Lever APIs, with a Playwright browser fallback).
 2. **Evaluate** — fetch each job description and run a structured A–F evaluation through an OpenAI-compatible LLM, storing a scored report per role in Nextcloud.

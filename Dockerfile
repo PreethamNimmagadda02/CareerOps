@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# CarrerOps pipeline image.
+# CareerOps pipeline image.
 # Based on the official Playwright image so Chromium + its system deps are
 # already present (used by the scanner, JD fetcher, and PDF renderer).
 # Keep the version in sync with the "playwright" dependency in package.json.

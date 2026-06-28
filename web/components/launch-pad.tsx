@@ -160,7 +160,7 @@ function Indicator({ step }: { step: StepView }) {
     );
   }
   if (step.status === "current") {
-    return <span className={cn(base, "bg-primary text-primary-foreground")}>{step.index + 1}</span>;
+    return <span className={cn(base, "brand-gradient text-white")}>{step.index + 1}</span>;
   }
   return <span className={cn(base, "border border-border text-muted-foreground")}>{step.index + 1}</span>;
 }
@@ -264,7 +264,7 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
   // ── Steady state: everything's set up → slim status strip. ──
   if (collapsed) {
     return (
-      <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
+      <Card className="flex animate-fade-in-up flex-wrap items-center justify-between gap-3 p-4">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ctp-green/20">
             <CheckCircle2 className="h-5 w-5 text-ctp-green" />
@@ -304,7 +304,7 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
       : "Finish setup to see your matches";
 
   return (
-    <Card className="p-5">
+    <Card className="animate-fade-in-up p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ListChecks className="h-4 w-4 text-primary" />
@@ -321,7 +321,7 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-primary transition-all duration-500"
+                className="brand-gradient h-full rounded-full transition-all duration-500"
                 style={{ width: `${(doneCount / steps.length) * 100}%` }}
               />
             </div>

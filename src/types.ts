@@ -1,6 +1,6 @@
 import { AppStatus } from "@prisma/client";
 
-/** Shared domain types for the CarrerOps pipeline. */
+/** Shared domain types for the CareerOps pipeline. */
 
 /** A scan target stored in the Postgres `Portal` table. */
 export interface Company {

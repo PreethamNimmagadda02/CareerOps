@@ -55,7 +55,7 @@ export function ReportModal({ reportNumber, title, onClose }: ReportModalProps) 
       {report?.absolutePath && (
         <a
           href={`file://${report.absolutePath}`}
-          className="inline-flex items-center gap-1 text-ctp-green hover:text-ctp-teal"
+          className="inline-flex items-center gap-1 text-ctp-green hover:text-ctp-sky"
           title={report.absolutePath}
         >
           <FileText className="h-3 w-3" /> Open report file

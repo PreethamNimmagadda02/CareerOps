@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 /**
- * Resolve the CarrerOps repository root. The web app lives in `web/`, so we
+ * Resolve the CareerOps repository root. The web app lives in `web/`, so we
  * walk up from the current working directory looking for the marker files that
  * identify the project root. Can be overridden with CAREER_OPS_ROOT.
  */

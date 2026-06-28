@@ -1,8 +1,9 @@
 import { enabledProviders } from "@/auth.config";
 import { LoginForm } from "@/components/login-form";
+import { Logo } from "@/components/brand";
 
 export const metadata = {
-  title: "Sign in · CarrerOps",
+  title: "Sign in · CareerOps",
 };
 
 export default async function LoginPage({
@@ -13,22 +14,27 @@ export default async function LoginPage({
   const { callbackUrl } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-8 rounded-2xl border border-border bg-card/60 p-8 shadow-xl">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Career<span className="text-primary">Ops</span>
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Sign in to access your job-search pipeline dashboard.
-          </p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      {/* Ambient brand wash */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-[hsl(var(--brand-to))] opacity-[0.10] blur-3xl" />
+
+      <div className="relative w-full max-w-sm animate-fade-in-up space-y-7 rounded-2xl border border-border bg-card/70 p-8 brand-glow backdrop-blur">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Logo className="h-12 w-12" />
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Welcome to Career<span className="brand-text">Ops</span>
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Sign in to pick up your job search right where you left off.
+            </p>
+          </div>
         </div>
 
         <LoginForm providers={enabledProviders} callbackUrl={callbackUrl || "/"} />
 
         <p className="text-center text-xs text-muted-foreground">
-          By continuing you agree to authenticate with the provider you choose.
-          Your data is private to your account.
+          We only use your sign-in to keep your data private to you. No spam, ever.
         </p>
       </div>
     </main>

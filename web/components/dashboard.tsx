@@ -18,10 +18,13 @@ import { PipelineProvider, usePipeline } from "@/components/pipeline-provider";
 import { LaunchPad } from "@/components/launch-pad";
 import { KeywordsManager } from "@/components/keywords-manager";
 import { ReportModal } from "@/components/report-modal";
-import { StatusBadge, scoreColor } from "@/components/status-badge";
+import { ScoreBadge } from "@/components/status-badge";
+import { StatusSelect } from "@/components/status-menu";
+import { Wordmark } from "@/components/brand";
 import { UserMenu } from "@/components/user-menu";
+import { useToast } from "@/components/ui/toast";
 import { computeMetrics } from "@/lib/metrics";
-import { normalizeStatus, statusLabel, statusPriority, STATUS_OPTIONS } from "@/lib/status";
+import { normalizeStatus, statusLabel, statusPriority } from "@/lib/status";
 import type { Application, OnboardingState } from "@/lib/types";
 import type { PipelineCommand } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
@@ -49,6 +52,7 @@ export function Dashboard() {
 
 function DashboardInner() {
   const { run, running } = usePipeline();
+  const toast = useToast();
 
   const [apps, setApps] = React.useState<Application[]>([]);
   const [onboarding, setOnboarding] = React.useState<OnboardingState | null>(null);
@@ -166,8 +170,9 @@ function DashboardInner() {
           a.num === app.num ? { ...a, status: newStatus, normStatus: normalizeStatus(newStatus) } : a,
         ),
       );
+      toast.success("Status updated", `${app.company} → ${statusLabel(normalizeStatus(newStatus))}`);
     } catch (err) {
-      alert(`Could not update status: ${(err as Error).message}`);
+      toast.error("Couldn't update status", (err as Error).message);
     } finally {
       setSavingNum(null);
     }
@@ -184,12 +189,7 @@ function DashboardInner() {
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
       {/* Header — kept intentionally minimal: identity + refresh only. */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Career<span className="text-primary">Ops</span>
-          </h1>
-          <p className="text-sm text-muted-foreground">Job-search pipeline dashboard</p>
-        </div>
+        <Wordmark size="lg" subtitle="Find, score, and track your next role." />
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -366,8 +366,8 @@ function renderRows(
 
     rows.push(
       <tr key={app.num} className="border-t border-border/60 transition-colors hover:bg-accent/40">
-        <td className={cn("whitespace-nowrap px-3 py-2 tabular-nums", scoreColor(app.score))}>
-          {app.score !== null ? app.score.toFixed(1) : "—"}
+        <td className="whitespace-nowrap px-3 py-2">
+          <ScoreBadge score={app.score} />
         </td>
         <td className="px-3 py-2 font-medium">{app.company}</td>
         <td className="max-w-[28rem] px-3 py-2 text-muted-foreground">
@@ -376,23 +376,11 @@ function renderRows(
           </span>
         </td>
         <td className="px-3 py-2">
-          <div className="flex items-center gap-2">
-            <StatusBadge status={norm} />
-            <select
-              aria-label="Change status"
-              value=""
-              disabled={handlers.savingNum === app.num}
-              onChange={(e) => e.target.value && handlers.onChangeStatus(app, e.target.value)}
-              className="h-7 rounded-md border border-border bg-background px-1 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">⋯</option>
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
+          <StatusSelect
+            status={app.status}
+            saving={handlers.savingNum === app.num}
+            onChange={(s) => handlers.onChangeStatus(app, s)}
+          />
         </td>
         <td className="px-3 py-2 text-ctp-yellow">{app.comp ?? "—"}</td>
         <td className="px-3 py-2">

@@ -4,6 +4,7 @@ import * as React from "react";
 import { Loader2, Terminal, X, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 import type { PipelineCommand } from "@/lib/pipeline";
 
 interface RunOptions {
@@ -47,7 +48,12 @@ function lineClass(line: string): string {
  * collapsed quick-actions strip, and any future trigger all share one "is
  * something running" source of truth and one output panel.
  */
+function commandLabel(command: PipelineCommand): string {
+  return command === "scan" || command === "scan:fallback" ? "Scan" : "Evaluation";
+}
+
 export function PipelineProvider({ children }: { children: React.ReactNode }) {
+  const toast = useToast();
   const [running, setRunning] = React.useState<PipelineCommand | null>(null);
   const runningRef = React.useRef<PipelineCommand | null>(null);
   const [log, setLog] = React.useState("");
@@ -78,10 +84,17 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     stickToBottom.current = true;
 
     void (async () => {
+      const label = commandLabel(command);
+      let full = "";
+      let ok = true;
+      let status = 0;
       try {
         const res = await fetch(`/api/pipeline/${command}`, { method: "POST" });
+        ok = res.ok;
+        status = res.status;
         if (!res.body) {
-          setLog((l) => l + "\n[error] no response stream\n");
+          full += "\n[error] no response stream\n";
+          setLog((l) => l + full);
           return;
         }
         const reader = res.body.getReader();
@@ -89,17 +102,42 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
-          setLog((l) => l + decoder.decode(value, { stream: true }));
+          const chunk = decoder.decode(value, { stream: true });
+          full += chunk;
+          setLog((l) => l + chunk);
         }
       } catch (err) {
-        setLog((l) => l + `\n[error] ${(err as Error).message}\n`);
+        ok = false;
+        const chunk = `\n[error] ${(err as Error).message}\n`;
+        full += chunk;
+        setLog((l) => l + chunk);
       } finally {
         runningRef.current = null;
         setRunning(null);
+
+        // Surface the outcome as a toast so feedback isn't buried in the console.
+        const exit = full.match(/exited with code (\d+)/);
+        const failed = !ok || /\[error\]/.test(full) || (exit !== null && exit[1] !== "0");
+        if (status === 422) {
+          // Pre-flight guard (e.g. missing keywords/profile) — informative, not a crash.
+          const reason = full.split("\n").map((s) => s.trim()).find(Boolean);
+          toast.info(`${label} skipped`, reason);
+        } else if (failed) {
+          const reason = full
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .reverse()
+            .find((l) => /error|fail/i.test(l));
+          toast.error(`${label} failed`, reason ?? "Open the console for details.");
+        } else {
+          toast.success(`${label} complete`, "Your roles are up to date.");
+        }
+
         opts?.onDone?.();
       }
     })();
-  }, []);
+  }, [toast]);
 
   const value = React.useMemo<PipelineContextValue>(
     () => ({ running, log, run, openConsole: () => setShow(true), hasLog: log.length > 0 }),

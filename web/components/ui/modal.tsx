@@ -37,10 +37,10 @@ export function Modal({ open, onClose, title, subtitle, children, className }: M
       role="dialog"
       aria-modal="true"
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
-          "relative z-10 flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-border bg-card shadow-xl",
+          "relative z-10 flex max-h-[88vh] w-full max-w-3xl animate-scale-in flex-col overflow-hidden rounded-lg border border-border bg-card shadow-xl",
           className,
         )}
       >

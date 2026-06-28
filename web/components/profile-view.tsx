@@ -25,6 +25,8 @@ import {
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
+import { Wordmark } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -317,15 +319,29 @@ type SkillGroup = { category: string; items: string[] };
 type Certification = { name: string; issuer: string; date: string };
 type Language = { name: string; proficiency: string };
 
+// ── section edit states ────────────────────────────────────────────────────
+type SectionKey = "account" | "personal" | "career" | "work" | "summary" | "experience" | "education" | "skills" | "certLang";
+
+const SECTION_LABEL: Record<SectionKey, string> = {
+  account: "Account",
+  personal: "Personal info",
+  career: "Career profile",
+  work: "Work preferences",
+  summary: "Professional summary",
+  experience: "Work experience",
+  education: "Education",
+  skills: "Skills",
+  certLang: "Certifications & languages",
+};
+
 export function ProfileView() {
+  const toast = useToast();
   const [user, setUser] = React.useState<UserData | null>(null);
   const [profile, setProfile] = React.useState<ProfileData | null>(null);
   const [cv, setCv] = React.useState<CvData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [pageError, setPageError] = React.useState<string | null>(null);
 
-  // ── section edit states ────────────────────────────────────────────────────
-  type SectionKey = "account" | "personal" | "career" | "work" | "summary" | "experience" | "education" | "skills" | "certLang";
   const [editing, setEditing] = React.useState<Partial<Record<SectionKey, boolean>>>({});
   const [saving, setSaving] = React.useState<Partial<Record<SectionKey, boolean>>>({});
   const [errors, setErrors] = React.useState<Partial<Record<SectionKey, string | null>>>({});
@@ -400,8 +416,10 @@ export function ProfileView() {
       setProfile((data.profile as ProfileData | null) ?? null);
       setCv((data.cv as CvData | null) ?? null);
       setEditing(e => ({ ...e, [section]: false }));
+      toast.success("Saved", `${SECTION_LABEL[section]} updated.`);
     } catch (err) {
       setErrors(e => ({ ...e, [section]: (err as Error).message }));
+      toast.error("Couldn't save", (err as Error).message);
     } finally {
       setSaving(s => ({ ...s, [section]: false }));
     }
@@ -490,14 +508,20 @@ export function ProfileView() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
-      <div className="flex items-center gap-3">
-        <Link href="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Dashboard
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to dashboard
         </Link>
+        <Wordmark size="sm" />
       </div>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Career<span className="text-primary">Ops</span> — Profile</h1>
-        <p className="text-sm text-muted-foreground">{user?.name || user?.email || "Your profile"}</p>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Your profile</h1>
+        <p className="text-sm text-muted-foreground">
+          {user?.name ? `Hi ${user.name.split(" ")[0]} — keep this current so we can match and score roles for you.` : "Keep this current so we can match and score roles for you."}
+        </p>
       </div>
 
       {/* ── Account ── */}

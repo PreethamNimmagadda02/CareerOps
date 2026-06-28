@@ -4,8 +4,9 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CarrerOps Dashboard",
-  description: "Web dashboard for the CarrerOps job-search pipeline",
+  title: "CareerOps — Your job search, on autopilot",
+  description:
+    "CareerOps finds roles that fit you, scores them against your CV, and tracks every application in one place.",
 };
 
 export default function RootLayout({

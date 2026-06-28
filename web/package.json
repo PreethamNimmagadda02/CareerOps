@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Web dashboard for the CarrerOps job-search pipeline",
+  "description": "Web dashboard for the CareerOps job-search pipeline",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
