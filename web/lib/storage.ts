@@ -17,23 +17,42 @@ const MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export const RESUME_MAX_BYTES = MAX_RESUME_BYTES;
 
+/**
+ * Build an S3 client that targets MinIO (custom endpoint + static keys) in dev
+ * or real AWS S3 (native endpoint + IAM task role) in production. Driven
+ * entirely by env vars — see src/lib/s3-client.ts for the full contract.
+ */
 function resolveClient(): S3Client {
   const endpoint = (process.env.MINIO_ENDPOINT ?? "").replace(/\/$/, "");
   const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";
   const secretAccessKey = process.env.MINIO_SECRET_KEY ?? "";
 
-  if (!endpoint || !accessKeyId || !secretAccessKey) {
+  const region =
+    process.env.S3_REGION ??
+    process.env.AWS_REGION ??
+    process.env.DYNAMODB_REGION ??
+    "us-east-1";
+
+  const forcePathStyle =
+    process.env.S3_FORCE_PATH_STYLE === undefined
+      ? true
+      : ["true", "1"].includes(process.env.S3_FORCE_PATH_STYLE.toLowerCase());
+
+  const config: ConstructorParameters<typeof S3Client>[0] = { region, forcePathStyle };
+
+  if (endpoint) config.endpoint = endpoint;
+
+  if (accessKeyId && secretAccessKey) {
+    config.credentials = { accessKeyId, secretAccessKey };
+  } else if (endpoint) {
     throw new Error(
-      "MinIO is not configured. Set MINIO_ENDPOINT, MINIO_ACCESS_KEY, and MINIO_SECRET_KEY.",
+      "S3 is not configured. With MINIO_ENDPOINT set you must also set " +
+        "MINIO_ACCESS_KEY and MINIO_SECRET_KEY. For real AWS S3, leave " +
+        "MINIO_ENDPOINT unset and grant the task an IAM role.",
     );
   }
 
-  return new S3Client({
-    endpoint,
-    region: "us-east-1",
-    credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true,
-  });
+  return new S3Client(config);
 }
 
 /** Derive the MinIO key for a user's resume. */

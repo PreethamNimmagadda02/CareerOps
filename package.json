@@ -27,6 +27,8 @@
     "pdf": "tsx src/cli/pdf.ts",
     "tracker": "tsx src/cli/tracker.ts",
     "portals": "tsx src/cli/portals.ts",
+    "worker": "node dist/worker/index.js",
+    "worker:dev": "tsx src/worker/index.ts",
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist coverage",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -74,12 +76,13 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1075.0",
     "@aws-sdk/client-s3": "^3.1075.0",
+    "@aws-sdk/client-sqs": "^3.1075.0",
     "@aws-sdk/lib-dynamodb": "^3.1075.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "openai": "^6.42.0",
     "pg": "^8.22.0",
-    "playwright": "^1.58.1"
+    "playwright": "1.59.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

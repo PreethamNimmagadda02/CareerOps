@@ -20,8 +20,9 @@ import {
   GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
-  S3Client,
 } from "@aws-sdk/client-s3";
+
+import { createS3Client } from "./s3-client.js";
 
 const BUCKET = process.env.MINIO_BUCKET ?? "careerops";
 
@@ -37,29 +38,23 @@ export function reportObjectKey(userId: string, filename: string): string {
  * @param filename — e.g. "001-acme-2026-06-22.md"
  */
 export function reportObjectUrl(userId: string, filename: string): string {
+  const key = reportObjectKey(userId, filename);
+
+  // Production (AWS): REPORTS_PUBLIC_BASE_URL points at the bucket ROOT — e.g. a
+  // CloudFront distribution (https://dxxx.cloudfront.net) or a virtual-hosted S3
+  // URL — so the object key maps directly with no bucket path segment.
+  const base = (process.env.REPORTS_PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
+  if (base) return `${base}/${key}`;
+
+  // Dev (MinIO path-style): endpoint/bucket/key.
   const endpoint = (
     process.env.MINIO_PUBLIC_ENDPOINT ?? process.env.MINIO_ENDPOINT ?? ""
   ).replace(/\/$/, "");
-  return `${endpoint}/${BUCKET}/${reportObjectKey(userId, filename)}`;
+  return `${endpoint}/${BUCKET}/${key}`;
 }
 
-function resolveConfig(): S3Client {
-  const endpoint = (process.env.MINIO_ENDPOINT ?? "").replace(/\/$/, "");
-  const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";
-  const secretAccessKey = process.env.MINIO_SECRET_KEY ?? "";
-
-  if (!endpoint || !accessKeyId || !secretAccessKey) {
-    throw new Error(
-      "MinIO not configured. Set MINIO_ENDPOINT, MINIO_ACCESS_KEY, and MINIO_SECRET_KEY in .env",
-    );
-  }
-
-  return new S3Client({
-    endpoint,
-    region: "us-east-1", // required by SDK, MinIO ignores it
-    credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true, // required for MinIO path-style access
-  });
+function resolveConfig() {
+  return createS3Client();
 }
 
 /**

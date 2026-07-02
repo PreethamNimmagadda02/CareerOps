@@ -12,6 +12,10 @@ export default auth((req) => {
   // Auth.js endpoints must always be reachable (sign-in, callback, csrf…).
   if (nextUrl.pathname.startsWith("/api/auth")) return;
 
+  // Infra probes used by the ALB/ECS health checks must be public (no auth),
+  // otherwise the load balancer sees 307 redirects and marks tasks unhealthy.
+  if (nextUrl.pathname === "/api/health" || nextUrl.pathname === "/api/ready") return;
+
   const isLoginPage = nextUrl.pathname === "/login";
 
   if (!isLoggedIn && !isLoginPage) {

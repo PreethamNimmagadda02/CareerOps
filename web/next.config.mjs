@@ -6,6 +6,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Emit a self-contained server bundle (.next/standalone) so the production
+  // image can run `node web/.next/standalone/web/server.js` with a minimal set
+  // of node_modules instead of copying the entire web/node_modules tree.
+  output: "standalone",
   // The repo root (parent of web/) is where route handlers read data/ and reports/.
   outputFileTracingRoot: join(__dirname, ".."),
   // Keep these node-oriented libs out of the webpack bundle — they're loaded at

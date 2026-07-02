@@ -1,0 +1,27 @@
+# Copy to terraform.tfvars and fill in. NON-secret values only — pass secrets via
+# TF_VAR_* environment variables (see deploy/README.md), never commit them.
+
+region          = "us-east-1"
+environment     = "prod"
+name_prefix     = "careerops"
+
+# DNS / TLS — the hosted zone must already exist in Route53.
+domain_name     = "careerops.example.com"
+route53_zone_id = "Z0123456789ABCDEFGHIJ"
+
+# CI/CD
+github_repo = "PreethamNimmagadda02/CareerOps"
+
+# Sizing (override as needed)
+db_instance_class = "db.t4g.medium"
+web_min_count     = 2
+web_max_count     = 10
+worker_min_count  = 0
+worker_max_count  = 10
+
+# Secrets are NOT set here. Export before apply, e.g.:
+#   export TF_VAR_auth_secret="$(openssl rand -base64 33)"
+#   export TF_VAR_nvidia_api_key="nvapi-..."
+#   export TF_VAR_opencode_api_key="sk-..."
+#   export TF_VAR_auth_google_id="..."   TF_VAR_auth_google_secret="..."
+#   export TF_VAR_auth_github_id="..."   TF_VAR_auth_github_secret="..."

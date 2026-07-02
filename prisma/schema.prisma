@@ -27,6 +27,7 @@ model User {
   sessions       Session[]
   applications   Application[]
   filterKeywords FilterKeyword[]
+  pipelineRuns   PipelineRun[]
 }
 
 model Account {
@@ -107,6 +108,31 @@ model Portal {
   enabled    Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+/// A single pipeline execution (scan / evaluate). Used only when the app runs
+/// in decoupled mode (PIPELINE_MODE=sqs): the web tier creates a row + enqueues
+/// an SQS message, the worker tier updates status/logs as it runs, and the web
+/// tier tails `logs` back to the browser. Unused in inline mode.
+model PipelineRun {
+  id         String    @id @default(cuid())
+  userId     String
+  command    String
+  /// queued | running | succeeded | failed | canceled
+  status     String    @default("queued")
+  /// Accumulated stdout/stderr, appended by the worker as the job runs.
+  logs       String    @default("") @db.Text
+  exitCode   Int?
+  error      String?
+  createdAt  DateTime  @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 /// Title-filter keywords (formerly `title_filter.positive` / `.negative`).

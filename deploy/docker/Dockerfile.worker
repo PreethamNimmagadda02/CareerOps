@@ -1,0 +1,53 @@
+# syntax=docker/dockerfile:1.7
+# ─────────────────────────────────────────────────────────────────────────────
+# Worker image (scale-out pipeline).
+#
+# Runs the SQS consumer (npm run worker), which spawns the compiled CLI
+# (dist/cli/*.js) — scan/evaluate — using headless Chromium. Built on the
+# official Playwright image so Chromium + system deps are present.
+#
+# The SAME image is reused for the one-off Prisma migrate task
+# (command override: npx prisma migrate deploy), so it keeps the prisma CLI and
+# prisma/migrations on board.
+#
+# Build context = repo root:
+#   docker build -f deploy/docker/Dockerfile.worker -t careerops-worker .
+#
+# `npm ci` uses a BuildKit cache mount + higher fetch-retry count so a
+# transient registry blip doesn't fail the whole (CI) build.
+# ─────────────────────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/playwright:v1.59.1-noble AS build
+
+WORKDIR /app
+RUN npm config set fetch-retries 5 fetch-retry-mintimeout 20000 fetch-retry-maxtimeout 120000
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
+
+COPY tsconfig.json prisma.config.ts ./
+COPY prisma ./prisma
+COPY src ./src
+RUN npx prisma generate
+RUN npm run build
+
+# ── Runtime ──────────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/playwright:v1.59.1-noble AS runtime
+
+ENV NODE_ENV=production
+WORKDIR /app
+RUN npm config set fetch-retries 5 fetch-retry-mintimeout 20000 fetch-retry-maxtimeout 120000
+
+# Full dependency install (keeps the prisma CLI available for migrate deploy).
+COPY package.json package-lock.json prisma.config.ts ./
+COPY prisma ./prisma
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
+RUN npx prisma generate
+
+# Compiled pipeline + assets the CLI reads at runtime.
+COPY --from=build /app/dist ./dist
+COPY fonts ./fonts
+COPY templates ./templates
+COPY scripts ./scripts
+
+# Runs the SQS worker loop; overridden to `npx prisma migrate deploy` by the
+# migrate task definition.
+CMD ["npm", "run", "worker"]

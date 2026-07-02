@@ -88,11 +88,14 @@ describe("uploadResume", () => {
     });
   });
 
-  it("throws when MinIO env is not configured", async () => {
-    delete process.env.MINIO_ENDPOINT;
+  it("throws when a custom endpoint is set without credentials", async () => {
+    // Endpoint present (MinIO mode) but keys missing → fail fast instead of
+    // silently using the AWS default credential chain.
+    delete process.env.MINIO_ACCESS_KEY;
+    delete process.env.MINIO_SECRET_KEY;
     await expect(
       uploadResume("user-1", Buffer.from("x"), "application/pdf", "pdf"),
-    ).rejects.toThrow(/MinIO is not configured/);
+    ).rejects.toThrow(/S3 is not configured/);
   });
 });
 

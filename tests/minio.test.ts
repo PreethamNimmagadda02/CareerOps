@@ -86,9 +86,13 @@ describe("uploadReport", () => {
     });
   });
 
-  it("throws a configuration error when MinIO env is missing", async () => {
-    delete process.env.MINIO_ENDPOINT;
-    await expect(uploadReport("user-1", "f.md", "x")).rejects.toThrow(/MinIO not configured/);
+  it("throws when a custom endpoint is set without credentials", async () => {
+    // MINIO_ENDPOINT is set (dev/MinIO mode) but the keys are missing — a
+    // misconfiguration that must fail fast rather than silently fall back to
+    // the AWS default credential chain.
+    delete process.env.MINIO_ACCESS_KEY;
+    delete process.env.MINIO_SECRET_KEY;
+    await expect(uploadReport("user-1", "f.md", "x")).rejects.toThrow(/S3 not configured/);
     expect(s3send).not.toHaveBeenCalled();
   });
 });

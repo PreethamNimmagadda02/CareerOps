@@ -25,17 +25,33 @@ export interface ReportSummary {
   comp?: string;
 }
 
+/**
+ * Build an S3 client for reading reports. Targets MinIO (custom endpoint +
+ * static keys) in dev, or real AWS S3 (native endpoint + IAM task role) when
+ * MINIO_ENDPOINT is unset. See src/lib/s3-client.ts for the env contract.
+ */
 function resolveMinioClient(): S3Client {
-  const endpoint = (process.env.MINIO_ENDPOINT || "http://localhost:9000").replace(/\/$/, "");
-  const accessKeyId = process.env.MINIO_ACCESS_KEY || "admin";
-  const secretAccessKey = process.env.MINIO_SECRET_KEY || "careerops123";
+  const endpoint = (process.env.MINIO_ENDPOINT ?? "").replace(/\/$/, "");
+  const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";
+  const secretAccessKey = process.env.MINIO_SECRET_KEY ?? "";
 
-  return new S3Client({
-    endpoint,
-    region: "us-east-1",
-    credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true,
-  });
+  const region =
+    process.env.S3_REGION ??
+    process.env.AWS_REGION ??
+    process.env.DYNAMODB_REGION ??
+    "us-east-1";
+
+  const forcePathStyle =
+    process.env.S3_FORCE_PATH_STYLE === undefined
+      ? true
+      : ["true", "1"].includes(process.env.S3_FORCE_PATH_STYLE.toLowerCase());
+
+  const config: ConstructorParameters<typeof S3Client>[0] = { region, forcePathStyle };
+  if (endpoint) config.endpoint = endpoint;
+  if (accessKeyId && secretAccessKey) {
+    config.credentials = { accessKeyId, secretAccessKey };
+  }
+  return new S3Client(config);
 }
 
 const BUCKET = process.env.MINIO_BUCKET ?? "careerops";

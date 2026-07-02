@@ -1,0 +1,113 @@
+name: Deploy
+
+# Builds the web + worker images, applies DB migrations, then rolls the ECS
+# services to the new image. Auth uses GitHub OIDC (no static AWS keys).
+#
+# Required repo configuration (Settings → Secrets and variables → Actions):
+#   Variables:
+#     AWS_REGION              e.g. us-east-1
+#     AWS_DEPLOY_ROLE_ARN     output github_deploy_role_arn from Terraform
+#     ECR_WEB_REPO            e.g. careerops-prod-web
+#     ECR_WORKER_REPO         e.g. careerops-prod-worker
+#     ECS_CLUSTER             e.g. careerops-prod
+#     ECS_WEB_SERVICE         e.g. careerops-prod-web
+#     ECS_WORKER_SERVICE      e.g. careerops-prod-worker
+#     ECS_MIGRATE_TASKDEF     e.g. careerops-prod-migrate
+#     ECS_SUBNETS             comma-separated private subnet ids
+#     ECS_WORKER_SG           worker security group id
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # OIDC
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: vars
+        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push web image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPO: ${{ vars.ECR_WEB_REPO }}
+          TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          docker build -f deploy/docker/Dockerfile.web -t "$REGISTRY/$REPO:$TAG" -t "$REGISTRY/$REPO:latest" .
+          docker push "$REGISTRY/$REPO:$TAG"
+          docker push "$REGISTRY/$REPO:latest"
+
+      - name: Build & push worker image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPO: ${{ vars.ECR_WORKER_REPO }}
+          TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          docker build -f deploy/docker/Dockerfile.worker -t "$REGISTRY/$REPO:$TAG" -t "$REGISTRY/$REPO:latest" .
+          docker push "$REGISTRY/$REPO:$TAG"
+          docker push "$REGISTRY/$REPO:latest"
+
+      - name: Run database migrations
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          TASKDEF: ${{ vars.ECS_MIGRATE_TASKDEF }}
+          SUBNETS: ${{ vars.ECS_SUBNETS }}
+          SG: ${{ vars.ECS_WORKER_SG }}
+        run: |
+          set -euo pipefail
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASKDEF" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Migrate task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
+          CODE=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "Migrate exit code: $CODE"
+          test "$CODE" = "0"
+
+      - name: Deploy web + worker (force new deployment)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          WEB_REPO: ${{ vars.ECR_WEB_REPO }}
+          WORKER_REPO: ${{ vars.ECR_WORKER_REPO }}
+          TAG: ${{ steps.vars.outputs.tag }}
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          WEB_SERVICE: ${{ vars.ECS_WEB_SERVICE }}
+          WORKER_SERVICE: ${{ vars.ECS_WORKER_SERVICE }}
+        run: |
+          set -euo pipefail
+          deploy/scripts/update-service.sh "$CLUSTER" "$WEB_SERVICE" "$REGISTRY/$WEB_REPO:$TAG"
+          deploy/scripts/update-service.sh "$CLUSTER" "$WORKER_SERVICE" "$REGISTRY/$WORKER_REPO:$TAG"
+
+      - name: Wait for services to stabilize
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+        run: |
+          aws ecs wait services-stable --cluster "$CLUSTER" \
+            --services "${{ vars.ECS_WEB_SERVICE }}" "${{ vars.ECS_WORKER_SERVICE }}"
