@@ -6,6 +6,7 @@ import { LayoutDashboard } from "lucide-react";
 
 import { Wordmark } from "@/components/brand";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -49,8 +50,10 @@ export function SiteHeader() {
             })}
           </nav>
         </div>
-
-        <UserMenu />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <UserMenu />
+        </div>
       </div>
     </header>
   );

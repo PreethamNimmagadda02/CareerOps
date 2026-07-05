@@ -4,6 +4,40 @@
 
 @layer base {
   :root {
+    /* Light mode variables */
+    --background: 0 0% 100%;
+    --foreground: 229 27% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 229 27% 7%;
+    --primary: 252 86% 54%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 229 18% 94%;
+    --secondary-foreground: 229 27% 10%;
+    --muted: 229 18% 94%;
+    --muted-foreground: 227 16% 46%;
+    --accent: 229 18% 94%;
+    --accent-foreground: 229 27% 10%;
+    --destructive: 350 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 229 16% 90%;
+    --input: 229 16% 90%;
+    --ring: 252 86% 54%;
+    --radius: 0.75rem;
+
+    /* Brand identity gradient */
+    --brand-from: 172 72% 42%;
+    --brand-to: 256 90% 60%;
+
+    /* Semantic accent palette */
+    --ctp-green: 152 62% 42%;
+    --ctp-yellow: 40 92% 42%;
+    --ctp-red: 350 84% 50%;
+    --ctp-blue: 217 92% 52%;
+    --ctp-sky: 190 82% 42%;
+    --ctp-mauve: 265 88% 58%;
+  }
+
+  .dark {
     /* CareerOps 2.0 — "modern command center" dark theme.
        Deep indigo-tinted near-black surfaces, a violet primary, and the
        signature teal→violet brand gradient. */
@@ -24,7 +58,6 @@
     --border: 229 16% 18%;
     --input: 229 16% 20%;
     --ring: 252 86% 74%;
-    --radius: 0.75rem;
 
     /* Brand identity gradient: signal teal → electric violet. */
     --brand-from: 172 72% 52%;

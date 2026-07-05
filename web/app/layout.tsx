@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${dmSans.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <body className="min-h-screen font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
