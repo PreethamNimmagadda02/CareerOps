@@ -39,7 +39,9 @@ export default async function setup(): Promise<void> {
     const { db } = await import("../../../src/lib/db.js");
     await db.$queryRaw`SELECT 1`;
   } catch {
-    problems.push("Postgres unreachable via DATABASE_URL (run prisma migrations if the schema is missing)");
+    problems.push(
+      "Postgres unreachable via DATABASE_URL (run prisma migrations if the schema is missing)",
+    );
   }
 
   if (problems.length > 0) {

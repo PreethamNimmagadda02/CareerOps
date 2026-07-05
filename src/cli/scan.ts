@@ -40,16 +40,14 @@ async function main(): Promise<void> {
   if (config.positive.length === 0) {
     log.error(
       "❌ No title-filter keywords configured. Add at least one “Include” keyword before scanning:\n" +
-      '   npm run portals -- keywords add --kind positive --value "software engineer"\n' +
-      "   (or use the Keywords panel in the dashboard).",
+        '   npm run portals -- keywords add --kind positive --value "software engineer"\n' +
+        "   (or use the Keywords panel in the dashboard).",
     );
     process.exit(1);
   }
 
   if (config.companies.length === 0) {
-    log.error(
-      "❌ No portals in Postgres. Add some first: npm run portals -- add --name X --url U",
-    );
+    log.error("❌ No portals in Postgres. Add some first: npm run portals -- add --name X --url U");
     process.exit(1);
   }
   const enabledCompanies = config.companies.filter((c) => c.enabled !== "false");
@@ -66,13 +64,13 @@ async function main(): Promise<void> {
   // but we guard against them so they are cleanly skipped rather than counted
   // as browser failures.
   const unsupportedCompanies = nonStructured.filter((c) => !!c.careers_url);
-  const queryOnlyCompanies  = nonStructured.filter((c) => !c.careers_url);
+  const queryOnlyCompanies = nonStructured.filter((c) => !c.careers_url);
 
   log.step(`Loaded ${enabledCompanies.length} enabled companies from Postgres`);
   log.step(
     `${structuredCompanies.length} structured boards, ` +
-    `${unsupportedCompanies.length} browser-only, ` +
-    `${queryOnlyCompanies.length} query-only (agent WebSearch, skipped by CLI)`,
+      `${unsupportedCompanies.length} browser-only, ` +
+      `${queryOnlyCompanies.length} query-only (agent WebSearch, skipped by CLI)`,
   );
 
   const startedAt = Date.now();
@@ -221,7 +219,11 @@ async function main(): Promise<void> {
       reportName: "",
     }));
 
-    const backfillSnapshot = backfill.map((j) => ({ company: j.company, role: j.role, url: j.url }));
+    const backfillSnapshot = backfill.map((j) => ({
+      company: j.company,
+      role: j.role,
+      url: j.url,
+    }));
 
     const { count: addedCount } = await db.application.createMany({
       data: backfill,
@@ -262,9 +264,7 @@ async function main(): Promise<void> {
   ];
 
   if (summary.relevant.length > 0) {
-    const currentKeys = new Set(
-      summary.relevant.map((j) => dedupKey(j.company, j.title)),
-    );
+    const currentKeys = new Set(summary.relevant.map((j) => dedupKey(j.company, j.title)));
 
     // Load all applications that are NOT in an active candidate status —
     // these are the only ones eligible for pruning.
@@ -273,9 +273,7 @@ async function main(): Promise<void> {
       select: { id: true, company: true, role: true, status: true },
     });
 
-    const stale = pruneable.filter(
-      (a) => !currentKeys.has(dedupKey(a.company, a.role)),
-    );
+    const stale = pruneable.filter((a) => !currentKeys.has(dedupKey(a.company, a.role)));
 
     if (stale.length > 0) {
       await db.application.deleteMany({

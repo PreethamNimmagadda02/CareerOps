@@ -69,9 +69,7 @@ const SK = "v1";
  */
 export async function getCV(userId: string): Promise<CV | null> {
   try {
-    const res = await ddb.send(
-      new GetCommand({ TableName: TABLE, Key: { PK: pk(userId), SK } }),
-    );
+    const res = await ddb.send(new GetCommand({ TableName: TABLE, Key: { PK: pk(userId), SK } }));
     if (!res.Item) return null;
     const { PK: _pk, SK: _sk, ...cv } = res.Item;
     return cv as CV;
@@ -115,9 +113,10 @@ export async function patchCV(
 
   const expr = keys.map((_k, i) => `#f${i} = :v${i}`).join(", ");
   const names = Object.fromEntries(keys.map((k, i) => [`#f${i}`, k]));
-  const values = Object.fromEntries(
-    keys.map((k, i) => [`:v${i}`, fields[k]]),
-  ) as Record<string, unknown>;
+  const values = Object.fromEntries(keys.map((k, i) => [`:v${i}`, fields[k]])) as Record<
+    string,
+    unknown
+  >;
   values[":ts"] = new Date().toISOString();
 
   await ddb.send(

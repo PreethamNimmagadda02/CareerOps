@@ -55,9 +55,7 @@ describe("extFromMime", () => {
     expect(extFromMime("application/pdf")).toBe("pdf");
     expect(extFromMime("application/msword")).toBe("doc");
     expect(
-      extFromMime(
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ),
+      extFromMime("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
     ).toBe("docx");
   });
 

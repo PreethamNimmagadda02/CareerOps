@@ -21,17 +21,12 @@ import { fetchJD, isJdOk } from "../lib/jd.js";
 import { callLLM, resolveProvider } from "../lib/llm.js";
 import { log } from "../lib/logger.js";
 import { buildPrompt, parseScore } from "../lib/prompt.js";
-import {
-  nextReportNumber,
-  getApplications,
-  updateTracker,
-  writeReport,
-} from "../lib/tracker.js";
+import { nextReportNumber, getApplications, updateTracker, writeReport } from "../lib/tracker.js";
 import { getProfile } from "../lib/profile-store.js";
 import { getCV } from "../lib/cv-store.js";
 import { validateCandidateReadiness } from "../lib/profile-validation.js";
 import { resolveOwnerUserId } from "../lib/owner.js";
-import {  today } from "../lib/text.js";
+import { today } from "../lib/text.js";
 
 async function main(): Promise<void> {
   const args = new Args();
@@ -90,7 +85,9 @@ async function main(): Promise<void> {
   let targets = allJobs.filter((j) => !isComplete(j));
   const alreadyComplete = allJobs.length - targets.length;
   if (alreadyComplete > 0) {
-    log.info(`⏭️  Skipping ${alreadyComplete} application(s) that already have a report and score.`);
+    log.info(
+      `⏭️  Skipping ${alreadyComplete} application(s) that already have a report and score.`,
+    );
   }
 
   if (onlyRow !== null) {
@@ -111,7 +108,6 @@ async function main(): Promise<void> {
   log.info(`📋 ${targets.length} job(s) queued:\n`);
   for (const j of targets) log.info(`   #${j.num}  ${j.company} — ${j.role}`);
   log.info("");
-
 
   const browser = await chromium.launch({ headless: true });
   const date = today();

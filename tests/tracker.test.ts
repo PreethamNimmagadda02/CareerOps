@@ -1,6 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { reportFilename, updateTracker, writeReport, nextReportNumber } from "../src/lib/tracker.js";
+import {
+  reportFilename,
+  updateTracker,
+  writeReport,
+  nextReportNumber,
+} from "../src/lib/tracker.js";
 import { db } from "../src/lib/db.js";
 
 vi.mock("../src/lib/db.js", () => ({

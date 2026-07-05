@@ -86,9 +86,7 @@ const SK = "v1";
  */
 export async function getProfile(userId: string): Promise<Profile | null> {
   try {
-    const res = await ddb.send(
-      new GetCommand({ TableName: TABLE, Key: { PK: pk(userId), SK } }),
-    );
+    const res = await ddb.send(new GetCommand({ TableName: TABLE, Key: { PK: pk(userId), SK } }));
     if (!res.Item) return null;
     const { PK: _pk, SK: _sk, ...profile } = res.Item;
     return profile as Profile;
@@ -132,9 +130,10 @@ export async function patchProfile(
 
   const expr = keys.map((_k, i) => `#f${i} = :v${i}`).join(", ");
   const names = Object.fromEntries(keys.map((k, i) => [`#f${i}`, k as string]));
-  const values = Object.fromEntries(
-    keys.map((k, i) => [`:v${i}`, fields[k]]),
-  ) as Record<string, unknown>;
+  const values = Object.fromEntries(keys.map((k, i) => [`:v${i}`, fields[k]])) as Record<
+    string,
+    unknown
+  >;
   values[":ts"] = new Date().toISOString();
 
   await ddb.send(

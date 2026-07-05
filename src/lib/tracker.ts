@@ -98,8 +98,6 @@ export async function patchApplication(
   }
 }
 
-
-
 /**
  * Compute the next sequential report number by inspecting stored report links
  * in the database. This replaces the old local-directory scan now that reports

@@ -27,7 +27,10 @@ import { slugFromAshby, slugFromLever } from "../lib/scanner.js";
 
 function required(args: Args, name: string): string {
   const v = args.get(name);
-  if (!v) { log.error(`❌ Missing required option ${name}`); process.exit(1); }
+  if (!v) {
+    log.error(`❌ Missing required option ${name}`);
+    process.exit(1);
+  }
   return v;
 }
 
@@ -69,26 +72,37 @@ async function cmdCount(): Promise<void> {
 async function cmdAdd(args: Args): Promise<void> {
   const name = required(args, "--name");
   const existing = await db.portal.findFirst({ where: { name } });
-  if (existing) { log.error(`❌ Portal "${name}" already exists (id=${existing.id}). Use update.`); process.exit(1); }
+  if (existing) {
+    log.error(`❌ Portal "${name}" already exists (id=${existing.id}). Use update.`);
+    process.exit(1);
+  }
   const portal = await db.portal.create({
     data: {
       name,
       careersUrl: args.get("--url") ?? null,
-      api:        args.get("--api") ?? null,
-      enabled:    true,
+      api: args.get("--api") ?? null,
+      enabled: true,
     },
   });
-  log.info(`✅ Added portal #${portal.id} — ${portal.name}  [${detectMethod(portal.careersUrl, portal.api)}]`);
+  log.info(
+    `✅ Added portal #${portal.id} — ${portal.name}  [${detectMethod(portal.careersUrl, portal.api)}]`,
+  );
 }
 
 async function cmdUpdate(args: Args): Promise<void> {
   const name = required(args, "--name");
   const portal = await db.portal.findFirst({ where: { name } });
-  if (!portal) { log.error(`❌ Portal "${name}" not found.`); process.exit(1); }
+  if (!portal) {
+    log.error(`❌ Portal "${name}" not found.`);
+    process.exit(1);
+  }
   const fields: Record<string, string | null> = {};
   if (args.get("--url") !== undefined) fields.careersUrl = args.get("--url") ?? null;
-  if (args.get("--api") !== undefined) fields.api        = args.get("--api") ?? null;
-  if (Object.keys(fields).length === 0) { log.error("❌ Nothing to update. Pass at least one field."); process.exit(1); }
+  if (args.get("--api") !== undefined) fields.api = args.get("--api") ?? null;
+  if (Object.keys(fields).length === 0) {
+    log.error("❌ Nothing to update. Pass at least one field.");
+    process.exit(1);
+  }
   await db.portal.update({ where: { id: portal.id }, data: fields });
   log.info(`✅ Updated portal "${name}": ${Object.keys(fields).join(", ")}`);
 }
@@ -96,7 +110,10 @@ async function cmdUpdate(args: Args): Promise<void> {
 async function cmdDelete(args: Args): Promise<void> {
   const name = required(args, "--name");
   const portal = await db.portal.findFirst({ where: { name } });
-  if (!portal) { log.error(`❌ Portal "${name}" not found.`); process.exit(1); }
+  if (!portal) {
+    log.error(`❌ Portal "${name}" not found.`);
+    process.exit(1);
+  }
   await db.portal.delete({ where: { id: portal.id } });
   log.info(`✅ Deleted portal "${name}" (id=${portal.id}).`);
 }
@@ -104,7 +121,10 @@ async function cmdDelete(args: Args): Promise<void> {
 async function cmdEnable(args: Args): Promise<void> {
   const name = required(args, "--name");
   const portal = await db.portal.findFirst({ where: { name } });
-  if (!portal) { log.error(`❌ Portal "${name}" not found.`); process.exit(1); }
+  if (!portal) {
+    log.error(`❌ Portal "${name}" not found.`);
+    process.exit(1);
+  }
   await db.portal.update({ where: { id: portal.id }, data: { enabled: true } });
   log.info(`✅ Enabled "${name}".`);
 }
@@ -112,7 +132,10 @@ async function cmdEnable(args: Args): Promise<void> {
 async function cmdDisable(args: Args): Promise<void> {
   const name = required(args, "--name");
   const portal = await db.portal.findFirst({ where: { name } });
-  if (!portal) { log.error(`❌ Portal "${name}" not found.`); process.exit(1); }
+  if (!portal) {
+    log.error(`❌ Portal "${name}" not found.`);
+    process.exit(1);
+  }
   await db.portal.update({ where: { id: portal.id }, data: { enabled: false } });
   log.info(`✅ Disabled "${name}".`);
 }
@@ -131,15 +154,18 @@ async function cmdKeywords(argv: string[]): Promise<void> {
       where: { userId },
       orderBy: [{ kind: "asc" }, { value: "asc" }],
     });
-    const pos = kws.filter(k => k.kind === "positive").map(k => k.value);
-    const neg = kws.filter(k => k.kind === "negative").map(k => k.value);
+    const pos = kws.filter((k) => k.kind === "positive").map((k) => k.value);
+    const neg = kws.filter((k) => k.kind === "negative").map((k) => k.value);
     log.info(`positive (${pos.length}): ${pos.join(", ")}`);
     log.info(`negative (${neg.length}): ${neg.join(", ")}`);
     return;
   }
   if (sub === "add") {
     const kind = required(args, "--kind");
-    if (kind !== "positive" && kind !== "negative") { log.error('❌ --kind must be "positive" or "negative"'); process.exit(1); }
+    if (kind !== "positive" && kind !== "negative") {
+      log.error('❌ --kind must be "positive" or "negative"');
+      process.exit(1);
+    }
     const value = required(args, "--value");
     await db.filterKeyword.upsert({
       where: { userId_kind_value: { userId, kind, value } },
@@ -165,31 +191,47 @@ async function cmdKeywords(argv: string[]): Promise<void> {
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
-  const sub  = argv[0];
+  const sub = argv[0];
   const args = new Args(argv.slice(1));
 
   switch (sub) {
-    case "list":     await cmdList(args);              break;
-    case "count":    await cmdCount();                 break;
-    case "add":      await cmdAdd(args);               break;
-    case "update":   await cmdUpdate(args);            break;
-    case "delete":   await cmdDelete(args);            break;
-    case "enable":   await cmdEnable(args);            break;
-    case "disable":  await cmdDisable(args);           break;
-    case "keywords": await cmdKeywords(argv.slice(1)); break;
+    case "list":
+      await cmdList(args);
+      break;
+    case "count":
+      await cmdCount();
+      break;
+    case "add":
+      await cmdAdd(args);
+      break;
+    case "update":
+      await cmdUpdate(args);
+      break;
+    case "delete":
+      await cmdDelete(args);
+      break;
+    case "enable":
+      await cmdEnable(args);
+      break;
+    case "disable":
+      await cmdDisable(args);
+      break;
+    case "keywords":
+      await cmdKeywords(argv.slice(1));
+      break;
     default:
       log.error(
         "Usage: career-ops-portals <command> [options]\n\n" +
-        "  list     [--json] [--disabled]          list portals (global)\n" +
-        "  count                                   total / enabled count\n" +
-        "  add      --name X --url U [--api]       add a portal (global)\n" +
-        "  update   --name X [--url --api]\n" +
-        "  delete   --name X\n" +
-        "  enable   --name X\n" +
-        "  disable  --name X\n" +
-        "  keywords list                           your title-filter keywords\n" +
-        "  keywords add  --kind positive|negative --value WORD\n" +
-        "  keywords del  --kind positive|negative --value WORD\n",
+          "  list     [--json] [--disabled]          list portals (global)\n" +
+          "  count                                   total / enabled count\n" +
+          "  add      --name X --url U [--api]       add a portal (global)\n" +
+          "  update   --name X [--url --api]\n" +
+          "  delete   --name X\n" +
+          "  enable   --name X\n" +
+          "  disable  --name X\n" +
+          "  keywords list                           your title-filter keywords\n" +
+          "  keywords add  --kind positive|negative --value WORD\n" +
+          "  keywords del  --kind positive|negative --value WORD\n",
       );
       process.exit(sub ? 1 : 0);
   }

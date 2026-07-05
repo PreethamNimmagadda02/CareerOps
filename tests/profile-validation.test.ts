@@ -33,7 +33,13 @@ function makeCV(over: Partial<CV> = {}): CV {
     summary: "Seasoned engineer.",
     skills: [{ category: "Languages", items: ["TypeScript"] }],
     experience: [
-      { company: "Acme", role: "Engineer", location: "Remote", period: "2020-2024", highlights: ["Shipped"] },
+      {
+        company: "Acme",
+        role: "Engineer",
+        location: "Remote",
+        period: "2020-2024",
+        highlights: ["Shipped"],
+      },
     ],
     education: [],
     certifications: [],

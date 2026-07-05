@@ -32,8 +32,10 @@ export function validateCandidateReadiness(
     missing.push("Your profile has not been set up yet");
   } else {
     if (!filled(profile.candidate?.full_name)) missing.push("Full name (Personal Info)");
-    if (!filled(profile.narrative?.headline)) missing.push("Professional headline (Career Profile)");
-    if (!(profile.target_roles?.primary?.length)) missing.push("At least one target role (Career Profile)");
+    if (!filled(profile.narrative?.headline))
+      missing.push("Professional headline (Career Profile)");
+    if (!profile.target_roles?.primary?.length)
+      missing.push("At least one target role (Career Profile)");
   }
 
   if (!cv) {
@@ -44,7 +46,7 @@ export function validateCandidateReadiness(
     if (!hasSummary && !hasExperience) {
       missing.push("A professional summary or at least one work experience");
     }
-    if (!(cv.skills?.length)) missing.push("At least one skill");
+    if (!cv.skills?.length) missing.push("At least one skill");
   }
 
   return { ok: missing.length === 0, missing };

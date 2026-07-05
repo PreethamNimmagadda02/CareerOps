@@ -34,9 +34,7 @@ export async function loadCandidateContext(userId: string): Promise<CandidateCon
   const [cvRecord, profileRecord] = await Promise.all([getCV(userId), getProfile(userId)]);
 
   if (!cvRecord || !profileRecord) {
-    const missing = [!cvRecord && "CV", !profileRecord && "Profile"]
-      .filter(Boolean)
-      .join(" and ");
+    const missing = [!cvRecord && "CV", !profileRecord && "Profile"].filter(Boolean).join(" and ");
     throw new Error(
       `DynamoDB is missing: ${missing}.\n` +
         `CV table: "${TABLE_CV}", Profile table: "${TABLE_PROFILE}".\n` +
@@ -69,8 +67,7 @@ export function cvToMarkdown(cv: CV, candidateName?: string): string {
 
   if (cv.skills?.length) {
     lines.push("## Skills", "");
-    for (const group of cv.skills)
-      lines.push(`* **${group.category}:** ${group.items.join(", ")}`);
+    for (const group of cv.skills) lines.push(`* **${group.category}:** ${group.items.join(", ")}`);
     lines.push("", "---", "");
   }
 

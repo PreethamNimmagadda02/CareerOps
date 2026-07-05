@@ -65,7 +65,9 @@ export async function uploadReport(filename: string, content: string): Promise<s
   });
 
   if (!res.ok) {
-    throw new Error(`Nextcloud upload failed for "${filename}": HTTP ${res.status} ${res.statusText}`);
+    throw new Error(
+      `Nextcloud upload failed for "${filename}": HTTP ${res.status} ${res.statusText}`,
+    );
   }
 
   return fileUrl;

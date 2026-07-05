@@ -19,12 +19,12 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-export const TABLE_CV      = process.env.DYNAMODB_TABLE_CV      ?? "CVs";
+export const TABLE_CV = process.env.DYNAMODB_TABLE_CV ?? "CVs";
 export const TABLE_PROFILE = process.env.DYNAMODB_TABLE_PROFILE ?? "Profiles";
 
 function createClient(): DynamoDBDocumentClient {
   const endpoint = (process.env.DYNAMODB_ENDPOINT ?? "").replace(/\/$/, "");
-  const region   = process.env.DYNAMODB_REGION ?? "us-east-1";
+  const region = process.env.DYNAMODB_REGION ?? "us-east-1";
 
   const raw = new DynamoDBClient({
     region,
@@ -32,7 +32,7 @@ function createClient(): DynamoDBDocumentClient {
       ? {
           endpoint,
           credentials: {
-            accessKeyId:     process.env.AWS_ACCESS_KEY_ID     ?? "local",
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "local",
             secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "local",
           },
         }
@@ -42,7 +42,7 @@ function createClient(): DynamoDBDocumentClient {
   return DynamoDBDocumentClient.from(raw, {
     marshallOptions: {
       removeUndefinedValues: true,
-      convertEmptyValues:    false,
+      convertEmptyValues: false,
     },
   });
 }
@@ -50,5 +50,4 @@ function createClient(): DynamoDBDocumentClient {
 // Singleton — reuse across hot-reloads in tsx/Next.js dev mode.
 const g = globalThis as typeof globalThis & { _dynamoClient?: DynamoDBDocumentClient };
 
-export const ddb: DynamoDBDocumentClient =
-  g._dynamoClient ?? (g._dynamoClient = createClient());
+export const ddb: DynamoDBDocumentClient = g._dynamoClient ?? (g._dynamoClient = createClient());

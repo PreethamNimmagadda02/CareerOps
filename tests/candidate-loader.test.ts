@@ -1,10 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import {
-  cvToMarkdown,
-  profileToYaml,
-  loadCandidateContext,
-} from "../src/lib/candidate-loader.js";
+import { cvToMarkdown, profileToYaml, loadCandidateContext } from "../src/lib/candidate-loader.js";
 import { getCV, type CV } from "../src/lib/cv-store.js";
 import { getProfile, type Profile } from "../src/lib/profile-store.js";
 
@@ -57,8 +53,19 @@ const profile: Profile = {
     superpowers: ["systems"],
     proof_points: [{ name: "Project X", url: "x.dev", hero_metric: "10x" }],
   },
-  compensation: { target_range: "£100k", currency: "GBP", minimum: "£90k", location_flexibility: "remote" },
-  location: { country: "UK", city: "London", timezone: "GMT", visa_status: "citizen", onsite_availability: "hybrid" },
+  compensation: {
+    target_range: "£100k",
+    currency: "GBP",
+    minimum: "£90k",
+    location_flexibility: "remote",
+  },
+  location: {
+    country: "UK",
+    city: "London",
+    timezone: "GMT",
+    visa_status: "citizen",
+    onsite_availability: "hybrid",
+  },
 };
 
 beforeEach(() => vi.clearAllMocks());

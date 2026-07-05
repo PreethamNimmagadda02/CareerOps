@@ -79,8 +79,14 @@ describe("DynamoDB Profile store (live)", () => {
     const a = e2eUserId("iso-a");
     const b = e2eUserId("iso-b");
     try {
-      await putProfile(a, makeProfile({ candidate: { ...makeProfile().candidate, full_name: "User A" } }));
-      await putProfile(b, makeProfile({ candidate: { ...makeProfile().candidate, full_name: "User B" } }));
+      await putProfile(
+        a,
+        makeProfile({ candidate: { ...makeProfile().candidate, full_name: "User A" } }),
+      );
+      await putProfile(
+        b,
+        makeProfile({ candidate: { ...makeProfile().candidate, full_name: "User B" } }),
+      );
 
       expect((await getProfile(a))!.candidate.full_name).toBe("User A");
       expect((await getProfile(b))!.candidate.full_name).toBe("User B");

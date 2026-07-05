@@ -2,11 +2,7 @@ import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { randomUUID } from "node:crypto";
 
 import { db } from "../../src/lib/db.js";
-import {
-  listKeywords,
-  addKeyword,
-  removeKeyword,
-} from "../../web/lib/keywords.ts";
+import { listKeywords, addKeyword, removeKeyword } from "../../web/lib/keywords.ts";
 import { preflightPipeline } from "../../web/lib/preflight.ts";
 import { putProfile } from "../../src/lib/profile-store.js";
 import { putCV } from "../../src/lib/cv-store.js";

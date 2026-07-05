@@ -32,7 +32,7 @@ import { reportObjectUrl } from "../lib/minio.js";
 import { resolveOwnerUserId } from "../lib/owner.js";
 import { today } from "../lib/text.js";
 
-const MINIO_BUCKET = process.env.MINIO_BUCKET
+const MINIO_BUCKET = process.env.MINIO_BUCKET;
 
 function required(args: Args, name: string): string {
   const value = args.get(name);
@@ -136,7 +136,9 @@ async function cmdSave(args: Args, userId: string): Promise<void> {
     evaluation,
     providerLabel: provider,
   });
-  log.info(`☁️  Report uploaded → MinIO / ${MINIO_BUCKET ?? "careerops"}/Reports/${userId}/${filename}`);
+  log.info(
+    `☁️  Report uploaded → MinIO / ${MINIO_BUCKET ?? "careerops"}/Reports/${userId}/${filename}`,
+  );
 
   const padded = String(reportNum).padStart(3, "0");
   // `report` mirrors the MinIO object name; `reportUrl` is its resolvable URL.
@@ -181,10 +183,10 @@ async function main(): Promise<void> {
     default:
       log.error(
         "Usage: career-ops-tracker <list|add|update|save> [options]\n" +
-        "  list   [--json]\n" +
-        "  add    --company X --role Y [--score --status --pdf --report --date]\n" +
-        "  update --id <uuid> [--score --status --pdf --report --role --company]\n" +
-        "  save   --company X --role Y --url U [--score --status --pdf --provider --file] (body via --file or stdin)",
+          "  list   [--json]\n" +
+          "  add    --company X --role Y [--score --status --pdf --report --date]\n" +
+          "  update --id <uuid> [--score --status --pdf --report --role --company]\n" +
+          "  save   --company X --role Y --url U [--score --status --pdf --provider --file] (body via --file or stdin)",
       );
       process.exit(sub ? 1 : 0);
   }

@@ -8,11 +8,7 @@ import {
   reportObjectKey,
   reportObjectUrl,
 } from "../../src/lib/minio.js";
-import {
-  uploadResume,
-  downloadResume,
-  deleteResume,
-} from "../../web/lib/storage.ts";
+import { uploadResume, downloadResume, deleteResume } from "../../web/lib/storage.ts";
 import { e2eUserId } from "./setup/fixtures.js";
 import { s3Put, s3Exists, s3Delete } from "./setup/clients.js";
 
@@ -60,9 +56,7 @@ describe("MinIO report storage (live)", () => {
 
   it("builds a browser-resolvable public URL", async () => {
     const url = reportObjectUrl(userA, "001-acme-2026-06-28.md");
-    expect(url).toMatch(
-      new RegExp(`/careerops/Reports/${userA}/001-acme-2026-06-28\\.md$`),
-    );
+    expect(url).toMatch(new RegExp(`/careerops/Reports/${userA}/001-acme-2026-06-28\\.md$`));
   });
 
   it("migrates a legacy flat-key report into the user prefix", async () => {

@@ -37,9 +37,10 @@ export function reportObjectKey(userId: string, filename: string): string {
  * @param filename — e.g. "001-acme-2026-06-22.md"
  */
 export function reportObjectUrl(userId: string, filename: string): string {
-  const endpoint = (
-    process.env.MINIO_PUBLIC_ENDPOINT ?? process.env.MINIO_ENDPOINT ?? ""
-  ).replace(/\/$/, "");
+  const endpoint = (process.env.MINIO_PUBLIC_ENDPOINT ?? process.env.MINIO_ENDPOINT ?? "").replace(
+    /\/$/,
+    "",
+  );
   return `${endpoint}/${BUCKET}/${reportObjectKey(userId, filename)}`;
 }
 
@@ -97,10 +98,7 @@ export async function uploadReport(
  * @param filename — e.g. "001-acme-2026-06-22.md"
  * @returns the markdown text, or null if not found
  */
-export async function downloadReport(
-  userId: string,
-  filename: string,
-): Promise<string | null> {
+export async function downloadReport(userId: string, filename: string): Promise<string | null> {
   const client = resolveConfig();
   const key = reportObjectKey(userId, filename);
 
@@ -122,9 +120,7 @@ export async function listReports(userId: string): Promise<string[]> {
   const client = resolveConfig();
   const prefix = `Reports/${userId}/`;
 
-  const res = await client.send(
-    new ListObjectsV2Command({ Bucket: BUCKET, Prefix: prefix }),
-  );
+  const res = await client.send(new ListObjectsV2Command({ Bucket: BUCKET, Prefix: prefix }));
 
   return (res.Contents ?? [])
     .map((obj) => obj.Key ?? "")
@@ -139,10 +135,7 @@ export async function listReports(userId: string): Promise<string[]> {
  * @param userId   — destination user id
  * @param filename — e.g. "001-acme-2026-06-22.md" (flat key in the bucket)
  */
-export async function migrateReportKey(
-  userId: string,
-  filename: string,
-): Promise<void> {
+export async function migrateReportKey(userId: string, filename: string): Promise<void> {
   const client = resolveConfig();
   const srcKey = filename;
   const dstKey = reportObjectKey(userId, filename);

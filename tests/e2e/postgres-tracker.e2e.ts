@@ -1,11 +1,7 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 
 import { db } from "../../src/lib/db.js";
-import {
-  addApplication,
-  getApplications,
-  patchApplication,
-} from "../../src/lib/tracker.js";
+import { addApplication, getApplications, patchApplication } from "../../src/lib/tracker.js";
 import { AppStatus } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
