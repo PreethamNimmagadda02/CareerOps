@@ -1,6 +1,6 @@
 # CareerOps
 
-> AI-powered job-search pipeline: scan job boards, evaluate roles against your CV with an LLM, generate ATS-friendly PDFs, and track everything in Postgres with reports stored in Nextcloud.
+> **The modern solution for job hunting and career building.** CareerOps discovers roles that fit you, scores every match against your CV with AI, generates ATS-ready PDFs, and runs your whole application pipeline from one command center.
 
 CareerOps automates the repetitive parts of a focused job search:
 

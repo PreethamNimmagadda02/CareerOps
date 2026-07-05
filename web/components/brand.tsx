@@ -1,8 +1,16 @@
 import { cn } from "@/lib/utils";
 
+/** Brand voice — single source of truth for product messaging. */
+export const BRAND = {
+  name: "CareerOps",
+  tagline: "The modern way to land your next role",
+  mission:
+    "Job hunting and career building, modernized — discover roles that fit, score them against your CV with AI, and run your whole pipeline from one command center.",
+} as const;
+
 /**
  * CareerOps logo mark — a gradient tile with a rising "career path" line and a
- * goal node. Reads as growth / progress toward a destination.
+ * glowing goal node. Reads as growth / progress toward a destination.
  */
 export function Logo({ className, title = "CareerOps" }: { className?: string; title?: string }) {
   return (
@@ -20,6 +28,16 @@ export function Logo({ className, title = "CareerOps" }: { className?: string; t
         </linearGradient>
       </defs>
       <rect width="32" height="32" rx="9" fill="url(#careerops-mark)" />
+      {/* Faint track the path travels along — adds depth without noise. */}
+      <polyline
+        points="8,21 14,15 19,18 24,10"
+        fill="none"
+        stroke="white"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.16"
+      />
       <polyline
         points="8,21 14,15 19,18 24,10"
         fill="none"
@@ -29,14 +47,15 @@ export function Logo({ className, title = "CareerOps" }: { className?: string; t
         strokeLinejoin="round"
         opacity="0.95"
       />
-      <circle cx="24" cy="10" r="2.6" fill="white" />
+      <circle cx="24" cy="10" r="3.6" fill="white" opacity="0.25" />
+      <circle cx="24" cy="10" r="2.4" fill="white" />
     </svg>
   );
 }
 
 /**
- * Full wordmark: logo mark + "CareerOps" (with a gradient "Ops"), and an
- * optional one-line subtitle underneath.
+ * Full wordmark: logo mark + "CareerOps" set in the display face (with a
+ * gradient "Ops"), and an optional one-line subtitle underneath.
  */
 export function Wordmark({
   className,
@@ -55,7 +74,7 @@ export function Wordmark({
     <div className={cn("flex items-center gap-2.5", className)}>
       <Logo className={cn(mark, markClassName)} />
       <div className="leading-tight">
-        <span className={cn("font-bold tracking-tight", text)}>
+        <span className={cn("font-display font-bold tracking-tight", text)}>
           Career<span className="brand-text">Ops</span>
         </span>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}

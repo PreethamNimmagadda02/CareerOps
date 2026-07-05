@@ -44,11 +44,12 @@ export function LoginForm({
 
   return (
     <div className="flex flex-col gap-3">
-      {providers.map((p) => (
+      {providers.map((p, i) => (
         <Button
           key={p.id}
           size="lg"
-          variant="outline"
+          // Lead with one unmissable brand CTA; alternatives stay quiet.
+          variant={i === 0 ? "default" : "outline"}
           className="w-full justify-center gap-3"
           disabled={pending !== null}
           onClick={() => {

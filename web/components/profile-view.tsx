@@ -26,7 +26,6 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { Wordmark } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -508,17 +507,14 @@ export function ProfileView() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to dashboard
-        </Link>
-        <Wordmark size="sm" />
-      </div>
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to dashboard
+      </Link>
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Your profile</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Your profile</h1>
         <p className="text-sm text-muted-foreground">
           {user?.name ? `Hi ${user.name.split(" ")[0]} — keep this current so we can match and score roles for you.` : "Keep this current so we can match and score roles for you."}
         </p>

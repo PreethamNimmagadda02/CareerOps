@@ -41,6 +41,18 @@ function lineClass(line: string): string {
   return "text-muted-foreground";
 }
 
+/** Keep the console bounded so very chatty runs can't bloat the DOM. */
+const MAX_LINES = 600;
+
+/**
+ * A single console line. Memoized so each streamed chunk only re-renders the
+ * line(s) whose content changed (previously every chunk re-rendered — and
+ * re-classified — the entire log).
+ */
+const LogLine = React.memo(function LogLine({ line }: { line: string }) {
+  return <div className={cn("whitespace-pre-wrap", lineClass(line))}>{line || "\u00a0"}</div>;
+});
+
 /**
  * Owns all pipeline-run state and renders a single docked live console.
  *
@@ -144,7 +156,13 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     [running, log, run],
   );
 
-  const lines = React.useMemo(() => log.split("\n"), [log]);
+  const { lines, truncated } = React.useMemo(() => {
+    const all = log.split("\n");
+    if (all.length > MAX_LINES) {
+      return { lines: all.slice(all.length - MAX_LINES), truncated: true };
+    }
+    return { lines: all, truncated: false };
+  }, [log]);
 
   return (
     <PipelineContext.Provider value={value}>
@@ -152,7 +170,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
 
       {show && (
         <div className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-7xl px-2 sm:px-4">
-          <div className="overflow-hidden rounded-t-lg border border-border bg-card shadow-2xl">
+          <div className="animate-slide-up overflow-hidden rounded-t-xl border border-border bg-card shadow-2xl">
             {/* Title bar */}
             <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-1.5">
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -201,11 +219,16 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
                 className="h-[38vh] overflow-auto bg-background p-3 font-mono text-xs leading-relaxed"
               >
                 {log ? (
-                  lines.map((line, i) => (
-                    <div key={i} className={cn("whitespace-pre-wrap", lineClass(line))}>
-                      {line || "\u00a0"}
-                    </div>
-                  ))
+                  <>
+                    {truncated && (
+                      <div className="text-muted-foreground/60">
+                        … earlier output trimmed (showing last {MAX_LINES} lines)
+                      </div>
+                    )}
+                    {lines.map((line, i) => (
+                      <LogLine key={i} line={line} />
+                    ))}
+                  </>
                 ) : (
                   <div className="text-muted-foreground">Waiting for output…</div>
                 )}

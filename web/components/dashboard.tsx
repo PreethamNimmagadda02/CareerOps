@@ -20,8 +20,6 @@ import { KeywordsManager } from "@/components/keywords-manager";
 import { ReportModal } from "@/components/report-modal";
 import { ScoreBadge } from "@/components/status-badge";
 import { StatusSelect } from "@/components/status-menu";
-import { Wordmark } from "@/components/brand";
-import { UserMenu } from "@/components/user-menu";
 import { useToast } from "@/components/ui/toast";
 import { computeMetrics } from "@/lib/metrics";
 import { normalizeStatus, statusLabel, statusPriority } from "@/lib/status";
@@ -41,6 +39,14 @@ const TABS = [
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
+
+/** Whether an application belongs under a given filter tab. */
+function inTab(app: Application, key: TabKey): boolean {
+  const norm = normalizeStatus(app.status);
+  if (key === "all") return true;
+  if (key === "top") return (app.score ?? 0) >= 4 && norm !== "skip";
+  return norm === key;
+}
 
 export function Dashboard() {
   return (
@@ -106,18 +112,19 @@ function DashboardInner() {
 
   const metrics = React.useMemo(() => computeMetrics(apps), [apps]);
 
-  const filtered = React.useMemo(() => {
-    let list = apps.filter((a) => {
-      const norm = normalizeStatus(a.status);
-      switch (tab) {
-        case "all":
-          return true;
-        case "top":
-          return (a.score ?? 0) >= 4 && norm !== "skip";
-        default:
-          return norm === tab;
+  // Single O(n) pass for every tab count (previously 6 filters per render).
+  const tabCounts = React.useMemo(() => {
+    const counts = Object.fromEntries(TABS.map((t) => [t.key, 0])) as Record<TabKey, number>;
+    for (const app of apps) {
+      for (const t of TABS) {
+        if (inTab(app, t.key)) counts[t.key]++;
       }
-    });
+    }
+    return counts;
+  }, [apps]);
+
+  const filtered = React.useMemo(() => {
+    const list = apps.filter((a) => inTab(a, tab));
 
     const byMode = (a: Application, b: Application) => {
       switch (sort) {
@@ -132,7 +139,7 @@ function DashboardInner() {
       }
     };
 
-    list = [...list].sort((a, b) => {
+    return list.sort((a, b) => {
       if (grouped) {
         const pi = statusPriority(a.status);
         const pj = statusPriority(b.status);
@@ -140,43 +147,47 @@ function DashboardInner() {
       }
       return byMode(a, b);
     });
-    return list;
   }, [apps, tab, sort, grouped]);
 
-  const tabCount = (key: TabKey) =>
-    apps.filter((a) => {
-      const norm = normalizeStatus(a.status);
-      if (key === "all") return true;
-      if (key === "top") return (a.score ?? 0) >= 4 && norm !== "skip";
-      return norm === key;
-    }).length;
+  const changeStatus = React.useCallback(
+    async (app: Application, newStatus: string) => {
+      setSavingNum(app.num);
+      try {
+        const res = await fetch("/api/applications", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            num: app.num,
+            reportNumber: app.reportNumber ?? undefined,
+            newStatus,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update");
+        setApps((prev) =>
+          prev.map((a) =>
+            a.num === app.num
+              ? { ...a, status: newStatus, normStatus: normalizeStatus(newStatus) }
+              : a,
+          ),
+        );
+        toast.success(
+          "Status updated",
+          `${app.company} → ${statusLabel(normalizeStatus(newStatus))}`,
+        );
+      } catch (err) {
+        toast.error("Couldn't update status", (err as Error).message);
+      } finally {
+        setSavingNum(null);
+      }
+    },
+    [toast],
+  );
 
-  async function changeStatus(app: Application, newStatus: string) {
-    setSavingNum(app.num);
-    try {
-      const res = await fetch("/api/applications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          num: app.num,
-          reportNumber: app.reportNumber ?? undefined,
-          newStatus,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update");
-      setApps((prev) =>
-        prev.map((a) =>
-          a.num === app.num ? { ...a, status: newStatus, normStatus: normalizeStatus(newStatus) } : a,
-        ),
-      );
-      toast.success("Status updated", `${app.company} → ${statusLabel(normalizeStatus(newStatus))}`);
-    } catch (err) {
-      toast.error("Couldn't update status", (err as Error).message);
-    } finally {
-      setSavingNum(null);
-    }
-  }
+  const openReportFor = React.useCallback(
+    (r: { num: string; title: string }) => setOpenReport(r),
+    [],
+  );
 
   const cycleSort = () => {
     const order: SortMode[] = ["score", "date", "company", "status"];
@@ -187,16 +198,18 @@ function DashboardInner() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
-      {/* Header — kept intentionally minimal: identity + refresh only. */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Wordmark size="lg" subtitle="Find, score, and track your next role." />
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            Refresh
-          </Button>
-          <UserMenu />
+      {/* Page heading */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Command center</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Discover, score, and track every role — all in one place.
+          </p>
         </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          Refresh
+        </Button>
       </div>
 
       {/* Guided activation — the single focal point that tells the user what's next. */}
@@ -220,19 +233,26 @@ function DashboardInner() {
 
           {/* Controls */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-1">
+            <div
+              className="flex flex-wrap gap-1 rounded-lg border border-border/70 bg-card/60 p-1"
+              role="tablist"
+              aria-label="Filter applications"
+            >
               {TABS.map((t) => (
                 <button
                   key={t.key}
+                  role="tab"
+                  aria-selected={tab === t.key}
                   onClick={() => setTab(t.key)}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                     tab === t.key
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
-                  {t.label} <span className="opacity-70">({tabCount(t.key)})</span>
+                  {t.label}{" "}
+                  <span className="text-xs tabular-nums opacity-70">{tabCounts[t.key]}</span>
                 </button>
               ))}
             </div>
@@ -251,33 +271,37 @@ function DashboardInner() {
           </div>
 
           {/* Table */}
-          <div className="overflow-hidden rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2 text-left">Score</th>
-                  <th className="px-3 py-2 text-left">Company</th>
-                  <th className="px-3 py-2 text-left">Role</th>
-                  <th className="px-3 py-2 text-left">Status</th>
-                  <th className="px-3 py-2 text-left">Comp</th>
-                  <th className="px-3 py-2 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {renderRows(filtered, grouped, {
-                  savingNum,
-                  onChangeStatus: changeStatus,
-                  onOpenReport: setOpenReport,
-                })}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
-                      No applications match this filter.
-                    </td>
+          <div className="overflow-hidden rounded-xl border border-border/80 bg-card/40">
+            <div className="max-h-[70vh] overflow-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 z-10 bg-card text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr className="border-b border-border">
+                    <th className="px-3 py-2.5 text-left font-semibold">Score</th>
+                    <th className="px-3 py-2.5 text-left font-semibold">Company</th>
+                    <th className="px-3 py-2.5 text-left font-semibold">Role</th>
+                    <th className="px-3 py-2.5 text-left font-semibold">Status</th>
+                    <th className="px-3 py-2.5 text-left font-semibold">Comp</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <Rows
+                    apps={filtered}
+                    grouped={grouped}
+                    savingNum={savingNum}
+                    onChangeStatus={changeStatus}
+                    onOpenReport={openReportFor}
+                  />
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
+                        No applications match this filter.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       ) : (
@@ -317,12 +341,12 @@ function EmptyRoles({
     : "Finish the steps above, then run a scan to discover matching roles.";
 
   return (
-    <Card className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-        <Inbox className="h-6 w-6 text-muted-foreground" />
+    <Card className="bg-grid relative flex flex-col items-center gap-3 px-6 py-16 text-center">
+      <span className="brand-gradient flex h-12 w-12 items-center justify-center rounded-2xl opacity-90">
+        <Inbox className="h-6 w-6 text-white" />
       </span>
       <div>
-        <p className="text-sm font-medium">No roles yet</p>
+        <p className="font-display text-base font-semibold">No roles yet</p>
         <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{message}</p>
       </div>
       {ready && (
@@ -339,15 +363,87 @@ function EmptyRoles({
   );
 }
 
-function renderRows(
-  apps: Application[],
-  grouped: boolean,
-  handlers: {
-    savingNum: string | null;
-    onChangeStatus: (app: Application, status: string) => void;
-    onOpenReport: (r: { num: string; title: string }) => void;
-  },
-) {
+interface RowHandlers {
+  savingNum: string | null;
+  onChangeStatus: (app: Application, status: string) => void;
+  onOpenReport: (r: { num: string; title: string }) => void;
+}
+
+/**
+ * One application row. Memoized so status updates / console streams only
+ * re-render the rows whose props actually changed.
+ */
+const AppRow = React.memo(function AppRow({
+  app,
+  saving,
+  onChangeStatus,
+  onOpenReport,
+}: {
+  app: Application;
+  saving: boolean;
+  onChangeStatus: RowHandlers["onChangeStatus"];
+  onOpenReport: RowHandlers["onOpenReport"];
+}) {
+  return (
+    <tr className="border-t border-border/60 transition-colors hover:bg-accent/40">
+      <td className="whitespace-nowrap px-3 py-2">
+        <ScoreBadge score={app.score} />
+      </td>
+      <td className="px-3 py-2 font-medium">{app.company}</td>
+      <td className="max-w-[28rem] px-3 py-2 text-muted-foreground">
+        <span className="line-clamp-1" title={app.role}>
+          {app.role}
+        </span>
+      </td>
+      <td className="px-3 py-2">
+        <StatusSelect
+          status={app.status}
+          saving={saving}
+          onChange={(s) => onChangeStatus(app, s)}
+        />
+      </td>
+      <td className="px-3 py-2 text-ctp-yellow">{app.comp ?? "—"}</td>
+      <td className="px-3 py-2">
+        <div className="flex items-center justify-end gap-1">
+          {app.reportNumber && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                onOpenReport({
+                  num: app.reportNumber!,
+                  title: `${app.company} — ${app.role}`,
+                })
+              }
+              title={`Open report #${app.reportNumber}`}
+            >
+              <FileText className="h-4 w-4" /> #{app.reportNumber}
+            </Button>
+          )}
+          {app.jobUrl && (
+            <a
+              href={app.jobUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              title="Open job posting"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+function Rows({
+  apps,
+  grouped,
+  savingNum,
+  onChangeStatus,
+  onOpenReport,
+}: RowHandlers & { apps: Application[]; grouped: boolean }) {
   const rows: React.ReactNode[] = [];
   let prevStatus = "";
 
@@ -357,7 +453,10 @@ function renderRows(
       prevStatus = norm;
       rows.push(
         <tr key={`group-${norm}`} className="bg-background/60">
-          <td colSpan={6} className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <td
+            colSpan={6}
+            className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             {statusLabel(norm)}
           </td>
         </tr>,
@@ -365,57 +464,15 @@ function renderRows(
     }
 
     rows.push(
-      <tr key={app.num} className="border-t border-border/60 transition-colors hover:bg-accent/40">
-        <td className="whitespace-nowrap px-3 py-2">
-          <ScoreBadge score={app.score} />
-        </td>
-        <td className="px-3 py-2 font-medium">{app.company}</td>
-        <td className="max-w-[28rem] px-3 py-2 text-muted-foreground">
-          <span className="line-clamp-1" title={app.role}>
-            {app.role}
-          </span>
-        </td>
-        <td className="px-3 py-2">
-          <StatusSelect
-            status={app.status}
-            saving={handlers.savingNum === app.num}
-            onChange={(s) => handlers.onChangeStatus(app, s)}
-          />
-        </td>
-        <td className="px-3 py-2 text-ctp-yellow">{app.comp ?? "—"}</td>
-        <td className="px-3 py-2">
-          <div className="flex items-center justify-end gap-1">
-            {app.reportNumber && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  handlers.onOpenReport({
-                    num: app.reportNumber!,
-                    title: `${app.company} — ${app.role}`,
-                  })
-                }
-                title={`Open report #${app.reportNumber}`}
-              >
-                <FileText className="h-4 w-4" /> #{app.reportNumber}
-              </Button>
-            )}
-            {app.jobUrl && (
-              <a
-                href={app.jobUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-                title="Open job posting"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            )}
-          </div>
-        </td>
-      </tr>,
+      <AppRow
+        key={app.num}
+        app={app}
+        saving={savingNum === app.num}
+        onChangeStatus={onChangeStatus}
+        onOpenReport={onOpenReport}
+      />,
     );
   }
 
-  return rows;
+  return <>{rows}</>;
 }

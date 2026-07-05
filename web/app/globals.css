@@ -4,46 +4,48 @@
 
 @layer base {
   :root {
-    /* CareerOps — warm, encouraging dark theme (Catppuccin-derived base
-       with a teal→indigo brand accent). */
-    --background: 240 21% 11%;
-    --foreground: 226 64% 90%;
-    --card: 240 20% 14%;
-    --card-foreground: 226 64% 90%;
-    --primary: 250 72% 75%;
-    --primary-foreground: 240 21% 11%;
-    --secondary: 237 16% 22%;
-    --secondary-foreground: 226 64% 90%;
-    --muted: 237 16% 22%;
-    --muted-foreground: 228 24% 72%;
-    --accent: 237 16% 27%;
-    --accent-foreground: 226 64% 90%;
-    --destructive: 343 81% 75%;
-    --destructive-foreground: 240 21% 11%;
-    --border: 237 16% 25%;
-    --input: 237 16% 25%;
-    --ring: 250 72% 75%;
-    --radius: 0.85rem;
+    /* CareerOps 2.0 — "modern command center" dark theme.
+       Deep indigo-tinted near-black surfaces, a violet primary, and the
+       signature teal→violet brand gradient. */
+    --background: 229 27% 7%;
+    --foreground: 222 32% 92%;
+    --card: 229 24% 10%;
+    --card-foreground: 222 32% 92%;
+    --primary: 252 86% 74%;
+    --primary-foreground: 229 27% 8%;
+    --secondary: 229 18% 16%;
+    --secondary-foreground: 222 32% 92%;
+    --muted: 229 18% 14%;
+    --muted-foreground: 227 16% 66%;
+    --accent: 229 18% 18%;
+    --accent-foreground: 222 32% 92%;
+    --destructive: 350 84% 68%;
+    --destructive-foreground: 229 27% 8%;
+    --border: 229 16% 18%;
+    --input: 229 16% 20%;
+    --ring: 252 86% 74%;
+    --radius: 0.75rem;
 
-    /* Brand identity gradient: teal → indigo. */
-    --brand-from: 174 64% 56%;
-    --brand-to: 252 78% 75%;
+    /* Brand identity gradient: signal teal → electric violet. */
+    --brand-from: 172 72% 52%;
+    --brand-to: 256 90% 74%;
 
-    --ctp-green: 115 54% 76%;
-    --ctp-yellow: 41 86% 83%;
-    --ctp-red: 343 81% 75%;
-    --ctp-blue: 217 92% 76%;
-    --ctp-sky: 189 71% 73%;
-    --ctp-mauve: 267 84% 81%;
+    /* Semantic accent palette (statuses, scores, console). */
+    --ctp-green: 152 62% 62%;
+    --ctp-yellow: 40 92% 66%;
+    --ctp-red: 350 84% 70%;
+    --ctp-blue: 217 92% 72%;
+    --ctp-sky: 190 82% 62%;
+    --ctp-mauve: 265 88% 78%;
   }
 }
 
 @layer components {
-  /* Brand gradient fill — used by the logo tile, hero accents, etc. */
+  /* Brand gradient fill — logo tile, progress bars, hero accents. */
   .brand-gradient {
     background-image: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
   }
-  /* Gradient text — used by the "Ops" in the wordmark and headline accents. */
+  /* Gradient text — the "Ops" in the wordmark and headline accents. */
   .brand-text {
     background-image: linear-gradient(120deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
     -webkit-background-clip: text;
@@ -53,8 +55,21 @@
   /* Soft ambient glow behind brand surfaces (login card, launch pad). */
   .brand-glow {
     box-shadow:
-      0 0 0 1px hsl(var(--brand-to) / 0.12),
-      0 18px 60px -28px hsl(var(--brand-to) / 0.45);
+      0 0 0 1px hsl(var(--brand-to) / 0.14),
+      0 18px 60px -28px hsl(var(--brand-to) / 0.5);
+  }
+  /* Frosted surface — sticky chrome, floating panels. */
+  .glass {
+    background-color: hsl(var(--background) / 0.72);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  }
+  /* Subtle dot grid for hero/empty areas. */
+  .bg-grid {
+    background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%);
   }
 }
 
@@ -62,23 +77,46 @@
   * {
     @apply border-border;
   }
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground;
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: hsl(var(--brand-to) / 0.35);
+  }
+  /* Slim, theme-aware scrollbars for panels and the console. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--accent)) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: hsl(var(--accent));
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
   }
 }
 
 /* Markdown report rendering */
 .markdown-body h1 {
-  @apply mb-3 mt-6 text-2xl font-bold text-primary;
+  @apply mb-3 mt-6 font-display text-2xl font-bold text-primary;
 }
 .markdown-body h2 {
-  @apply mb-2 mt-5 text-xl font-semibold text-ctp-mauve;
+  @apply mb-2 mt-5 font-display text-xl font-semibold text-ctp-mauve;
 }
 .markdown-body h3 {
-  @apply mb-2 mt-4 text-lg font-semibold text-ctp-sky;
+  @apply mb-2 mt-4 font-display text-lg font-semibold text-ctp-sky;
 }
 .markdown-body p {
   @apply my-2 leading-relaxed text-foreground/90;

@@ -17,13 +17,19 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+    <Card className="group relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg">
+      {/* Brand sheen on hover — subtle, no layout cost. */}
+      <div className="brand-gradient pointer-events-none absolute inset-x-0 top-0 h-0.5 opacity-0 transition-opacity duration-200 group-hover:opacity-80" />
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-          <Icon className="h-4 w-4 text-muted-foreground/50" />
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {label}
+          </div>
+          <Icon className="h-4 w-4 text-muted-foreground/50 transition-colors group-hover:text-primary/70" />
         </div>
-        <div className={cn("mt-1 text-2xl font-bold tabular-nums", accent)}>{value}</div>
+        <div className={cn("mt-1 font-display text-2xl font-bold tabular-nums", accent)}>
+          {value}
+        </div>
       </CardContent>
     </Card>
   );
@@ -45,7 +51,12 @@ export function MetricsCards({ metrics }: { metrics: Metrics }) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Total" value={String(metrics.total)} icon={Layers} />
-        <Stat label="Actionable" value={String(metrics.actionable)} accent="text-ctp-sky" icon={Target} />
+        <Stat
+          label="Actionable"
+          value={String(metrics.actionable)}
+          accent="text-ctp-sky"
+          icon={Target}
+        />
         <Stat
           label="Avg score"
           value={metrics.avgScore > 0 ? metrics.avgScore.toFixed(2) : "—"}
@@ -70,7 +81,7 @@ export function MetricsCards({ metrics }: { metrics: Metrics }) {
               <div key={status} className="flex items-center gap-2 text-sm">
                 <span className={cn("h-2.5 w-2.5 rounded-full", STATUS_DOT[status])} />
                 <span className="text-muted-foreground">{statusLabel(status)}</span>
-                <span className="font-semibold">{count}</span>
+                <span className="font-semibold tabular-nums">{count}</span>
               </div>
             );
           })}

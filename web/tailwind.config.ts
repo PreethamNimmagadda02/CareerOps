@@ -9,6 +9,18 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
+        mono: [
+          "ui-monospace",
+          "SFMono-Regular",
+          "SF Mono",
+          "Menlo",
+          "Consolas",
+          "monospace",
+        ],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -79,6 +91,22 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(-8px) scale(0.98)" },
           to: { opacity: "1", transform: "translateY(0) scale(1)" },
         },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(14px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        shimmer: {
+          from: { backgroundPosition: "200% 0" },
+          to: { backgroundPosition: "-200% 0" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        "pulse-dot": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.5", transform: "scale(0.8)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -87,6 +115,10 @@ const config: Config = {
         "fade-in-up": "fade-in-up 0.3s ease-out both",
         "scale-in": "scale-in 0.15s ease-out",
         "toast-in": "toast-in 0.25s cubic-bezier(0.21, 1.02, 0.73, 1) both",
+        "slide-up": "slide-up 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) both",
+        shimmer: "shimmer 2s linear infinite",
+        float: "float 5s ease-in-out infinite",
+        "pulse-dot": "pulse-dot 1.6s ease-in-out infinite",
       },
     },
   },

@@ -23,7 +23,7 @@ export function UserMenu() {
     <div className="flex items-center gap-2">
       <Link
         href="/profile"
-        className="flex items-center gap-2 rounded-full border border-border bg-card/50 py-1 pl-1 pr-3 transition-colors hover:bg-accent"
+        className="flex items-center gap-2 rounded-full border border-border bg-card/50 py-1 pl-1 pr-3 transition-colors hover:border-primary/30 hover:bg-accent"
         title="View profile"
       >
         {image ? (

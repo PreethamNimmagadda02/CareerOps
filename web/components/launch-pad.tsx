@@ -309,7 +309,7 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
         <div className="flex items-center gap-2">
           <ListChecks className="h-4 w-4 text-primary" />
           <div>
-            <h2 className="text-sm font-semibold">{headline}</h2>
+            <h2 className="font-display text-sm font-semibold">{headline}</h2>
             <p className="text-xs text-muted-foreground">
               {onboarding.complete
                 ? "Re-run any step, or collapse this panel."
@@ -346,7 +346,7 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
               className={cn(
                 "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
                 step.status === "current"
-                  ? "border-primary/40 bg-primary/5"
+                  ? "border-primary/40 bg-primary/5 shadow-[0_0_24px_-12px_hsl(var(--brand-to)/0.6)]"
                   : "border-transparent",
                 step.status === "locked" && "opacity-60",
               )}

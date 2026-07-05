@@ -1,12 +1,38 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
+/** Brand body face — humanist, highly legible at data-dense sizes. */
+const dmSans = localFont({
+  src: "./fonts/dm-sans-latin.woff2",
+  weight: "100 1000",
+  display: "swap",
+  variable: "--font-sans",
+});
+
+/** Brand display face — geometric, used for the wordmark and headings. */
+const spaceGrotesk = localFont({
+  src: "./fonts/space-grotesk-latin.woff2",
+  weight: "300 700",
+  display: "swap",
+  variable: "--font-display",
+});
+
 export const metadata: Metadata = {
-  title: "CareerOps — Your job search, on autopilot",
+  title: {
+    default: "CareerOps — The modern way to land your next role",
+    template: "%s · CareerOps",
+  },
   description:
-    "CareerOps finds roles that fit you, scores them against your CV, and tracks every application in one place.",
+    "CareerOps is the modern solution for job hunting and career building — it discovers roles that fit you, scores every match against your CV with AI, and tracks your whole pipeline in one command center.",
+  applicationName: "CareerOps",
+  keywords: ["job search", "career", "applications", "CV", "AI", "job tracker"],
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0c0e15",
 };
 
 export default function RootLayout({
@@ -15,8 +41,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen antialiased">
+    <html lang="en" className={`dark ${dmSans.variable} ${spaceGrotesk.variable}`}>
+      <body className="min-h-screen font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>
