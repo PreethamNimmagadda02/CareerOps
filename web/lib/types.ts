@@ -23,6 +23,24 @@ export interface Application {
   tldr?: string;
   remote?: string;
   comp?: string;
+  /** Parsed verdict: APPLY_NOW | APPLY_WITH_TWEAKS | MONITOR | SKIP. */
+  recommendation?: string | null;
+  /** One-line rationale following the verdict. */
+  recommendationNote?: string | null;
+  /** Per-dimension 1–5 ratings behind the overall score. */
+  dimensions?: ScoreDimensionView[];
+  /** Hard-blocker gaps surfaced by the CV-match section. */
+  gaps?: string[];
+}
+
+export interface ScoreDimensionView {
+  key: string;
+  label: string;
+  /** Contribution to the overall score (0–1). */
+  weight: number;
+  /** 1–5 rating. */
+  score: number;
+  reason?: string;
 }
 
 export interface Metrics {

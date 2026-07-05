@@ -20,7 +20,8 @@ import { loadEnv } from "../lib/env.js";
 import { fetchJD, isJdOk } from "../lib/jd.js";
 import { callLLM, resolveProvider } from "../lib/llm.js";
 import { log } from "../lib/logger.js";
-import { buildPrompt, parseScore } from "../lib/prompt.js";
+import { buildPrompt } from "../lib/prompt.js";
+import { parseEvaluation } from "../lib/evaluation.js";
 import { nextReportNumber, getApplications, updateTracker, writeReport } from "../lib/tracker.js";
 import { getProfile } from "../lib/profile-store.js";
 import { getCV } from "../lib/cv-store.js";
@@ -161,8 +162,12 @@ async function main(): Promise<void> {
             return;
           }
 
-          const score = parseScore(evaluation);
+          const insights = parseEvaluation(evaluation);
+          const score = insights.score;
           log.info(`${tag} 📊 Score: ${score ? score + "/5" : "could not parse — check report"}`);
+          if (insights.recommendation) {
+            log.info(`${tag} 🎯 Verdict: ${insights.recommendation.replace(/_/g, " ")}`);
+          }
 
           trackerLock = trackerLock.then(async () => {
             const reportNum = await nextReportNumber();
@@ -184,6 +189,7 @@ async function main(): Promise<void> {
               reportNum,
               job.company,
               date,
+              insights,
             );
             if (updated) {
               log.info(

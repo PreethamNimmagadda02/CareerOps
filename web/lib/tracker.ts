@@ -1,8 +1,26 @@
 import { db } from "../../src/lib/db";
 import { readReportSummary } from "./reports";
 import { normalizeStatus } from "./status";
-import type { Application } from "./types";
+import type { Application, ScoreDimensionView } from "./types";
 import { AppStatus } from "@prisma/client";
+
+interface StoredInsights {
+  dimensions?: ScoreDimensionView[];
+  gaps?: string[];
+  recommendationNote?: string | null;
+}
+
+/** Safely unwrap the `insights` JSON column. */
+function readInsights(value: unknown): StoredInsights {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const v = value as Record<string, unknown>;
+  return {
+    dimensions: Array.isArray(v.dimensions) ? (v.dimensions as ScoreDimensionView[]) : undefined,
+    gaps: Array.isArray(v.gaps) ? (v.gaps as string[]) : undefined,
+    recommendationNote:
+      typeof v.recommendationNote === "string" ? v.recommendationNote : undefined,
+  };
+}
 
 // Leading report number from either the current filename form
 // ("001-acme-….md") or the legacy markdown-link form ("[001](reports/…)").
@@ -24,6 +42,7 @@ export async function readApplications(userId: string, enrich = true): Promise<A
     const status = app.status ?? "";
     const reportCell = app.reportName ?? "";
     const numMatch = reportCell.match(reReportNum);
+    const stored = readInsights(app.insights);
 
     apps.push({
       num: app.id,
@@ -31,7 +50,7 @@ export async function readApplications(userId: string, enrich = true): Promise<A
       company: app.company ?? "",
       role: app.role ?? "",
       scoreRaw,
-      score: scoreMatch ? parseFloat(scoreMatch[1] as string) : null,
+      score: app.scoreNumeric ?? (scoreMatch ? parseFloat(scoreMatch[1] as string) : null),
       status,
       normStatus: normalizeStatus(status),
       hasPdf: (app.pdf ?? "").includes("✅"),
@@ -40,21 +59,36 @@ export async function readApplications(userId: string, enrich = true): Promise<A
       reportPath: reportCell || null,
       reportUrl: app.reportUrl ?? null,
       jobUrl: app.url ?? null,
+      // Insights persisted at evaluate time (or by the backfill script).
+      archetype: app.archetype ?? undefined,
+      tldr: app.tldr ?? undefined,
+      remote: app.remote ?? undefined,
+      comp: app.comp ?? undefined,
+      recommendation: app.recommendation ?? null,
+      recommendationNote: stored.recommendationNote ?? null,
+      dimensions: stored.dimensions,
+      gaps: stored.gaps,
     });
   }
 
+  // Legacy fallback: rows evaluated before insights were persisted (no
+  // `evaluatedAt`) still get their summary regex-parsed from the MinIO
+  // report. New/backfilled rows skip this entirely — no object reads.
   if (enrich) {
+    const legacy = dbApps.filter((a) => a.reportName && !a.evaluatedAt);
+    const legacyIds = new Set(legacy.map((a) => a.id));
     await Promise.all(
-      apps.map(async (app) => {
-        if (!app.reportPath) return;
-        const summary = await readReportSummary(userId, app.reportPath);
-        if (!summary) return;
-        app.jobUrl = summary.url;
-        app.archetype = summary.archetype;
-        app.tldr = summary.tldr;
-        app.remote = summary.remote;
-        app.comp = summary.comp;
-      })
+      apps
+        .filter((app) => legacyIds.has(app.num) && app.reportPath)
+        .map(async (app) => {
+          const summary = await readReportSummary(userId, app.reportPath as string);
+          if (!summary) return;
+          app.jobUrl = app.jobUrl ?? summary.url;
+          app.archetype = summary.archetype;
+          app.tldr = summary.tldr;
+          app.remote = summary.remote;
+          app.comp = summary.comp;
+        }),
     );
   }
 

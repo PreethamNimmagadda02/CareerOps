@@ -28,10 +28,50 @@ export function StatusBadge({ status }: { status: string }) {
 
 export function scoreColor(score: number | null): string {
   if (score === null) return "text-muted-foreground";
-  if (score >= 4.2) return "text-ctp-green font-bold";
+  if (score >= 4.0) return "text-ctp-green font-bold";
   if (score >= 3.8) return "text-ctp-yellow";
   if (score >= 3.0) return "text-foreground";
   return "text-ctp-red";
+}
+
+/** Verdict chip styles — the evaluation's bottom line, scannable at a glance. */
+const RECOMMENDATION_STYLES: Record<string, { label: string; className: string }> = {
+  APPLY_NOW: {
+    label: "Apply now",
+    className: "bg-ctp-green/20 text-ctp-green ring-1 ring-inset ring-ctp-green/40",
+  },
+  APPLY_WITH_TWEAKS: {
+    label: "Tweak & apply",
+    className: "bg-ctp-yellow/15 text-ctp-yellow ring-1 ring-inset ring-ctp-yellow/30",
+  },
+  MONITOR: {
+    label: "Monitor",
+    className: "bg-ctp-sky/10 text-ctp-sky ring-1 ring-inset ring-ctp-sky/25",
+  },
+  SKIP: {
+    label: "Skip",
+    className: "bg-ctp-red/10 text-ctp-red/90 ring-1 ring-inset ring-ctp-red/25",
+  },
+};
+
+/**
+ * The evaluation verdict (APPLY NOW / TWEAK & APPLY / MONITOR / SKIP) as a
+ * pill. Answers "what should I do with this role?" without opening the report.
+ */
+export function RecommendationBadge({ recommendation }: { recommendation: string | null | undefined }) {
+  if (!recommendation) return <span className="text-xs text-muted-foreground">—</span>;
+  const style = RECOMMENDATION_STYLES[recommendation];
+  if (!style) return <span className="text-xs text-muted-foreground">{recommendation}</span>;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold",
+        style.className,
+      )}
+    >
+      {style.label}
+    </span>
+  );
 }
 
 /** A compact, tonal pill for a role's numeric score — easier to scan than plain text. */
@@ -40,7 +80,7 @@ export function ScoreBadge({ score }: { score: number | null }) {
     return <span className="text-sm text-muted-foreground">—</span>;
   }
   const tone =
-    score >= 4.2
+    score >= 4.0
       ? "bg-ctp-green/15 text-ctp-green"
       : score >= 3.8
         ? "bg-ctp-yellow/15 text-ctp-yellow"

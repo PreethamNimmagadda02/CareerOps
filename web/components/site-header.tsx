@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UserRound } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
 import { Wordmark } from "@/components/brand";
 import { UserMenu } from "@/components/user-menu";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/profile", label: "Profile", icon: UserRound },
 ] as const;
 
 /**

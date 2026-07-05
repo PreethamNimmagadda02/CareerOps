@@ -1,5 +1,6 @@
 import type { ApplicationRow } from "../types.js";
-import { AppStatus } from "@prisma/client";
+import { AppStatus, Prisma } from "@prisma/client";
+import type { EvaluationInsights } from "./evaluation.js";
 import { slugify, today } from "./text.js";
 import { db } from "./db.js";
 import { reportObjectUrl, uploadReport } from "./minio.js";
@@ -145,7 +146,34 @@ export async function writeReport(opts: {
 }
 
 /**
- * Update an application's score, report filename, and MinIO report URL.
+ * Map parsed evaluation insights to the Application columns they populate.
+ * Exposed for the backfill script, which updates rows without touching the
+ * report filename/score cells.
+ */
+export function insightColumns(insights: EvaluationInsights): Prisma.ApplicationUpdateManyMutationInput {
+  return {
+    scoreNumeric: insights.scoreNumeric,
+    recommendation: insights.recommendation,
+    archetype: insights.archetype,
+    tldr: insights.tldr,
+    remote: insights.remote,
+    comp: insights.comp,
+    // Plain JSON-serializable payload; Prisma's InputJsonValue doesn't admit
+    // `null` object properties structurally, hence the through-unknown cast.
+    insights: {
+      dimensions: insights.dimensions,
+      gaps: insights.gaps,
+      recommendationNote: insights.recommendationNote,
+    } as unknown as Prisma.InputJsonValue,
+    evaluatedAt: new Date(),
+  };
+}
+
+/**
+ * Update an application's score, report filename, MinIO report URL, and —
+ * when provided — the parsed evaluation insights (recommendation, dimension
+ * scores, archetype, comp…), so the dashboard never has to re-read report
+ * markdown to display them.
  *
  * `report` stores the exact MinIO object name (e.g. "005-acme-2026-06-16.md")
  * and `reportUrl` stores its resolvable MinIO URL.
@@ -157,6 +185,7 @@ export async function updateTracker(
   reportNum: number,
   company: string,
   date: string,
+  insights?: EvaluationInsights,
 ): Promise<boolean> {
   const filename = reportFilename(reportNum, company, date);
   const reportUrl = reportObjectUrl(userId, filename);
@@ -168,6 +197,7 @@ export async function updateTracker(
         score: score === "N/A" ? "N/A" : `${score}/5`,
         reportName: filename,
         reportUrl,
+        ...(insights ? insightColumns(insights) : {}),
         updatedAt: new Date(),
       },
     });

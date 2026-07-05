@@ -17,6 +17,7 @@ import { engineeringMatch, isHighSignal, locationMatch, titleMatches } from "../
 import { loadConfigFromDb } from "../lib/portals-db.js";
 import { resolveOwnerUserId } from "../lib/owner.js";
 import { hasStructuredApi, scanCompany, scanCompanyBrowser } from "../lib/scanner.js";
+import { validateJobUrls } from "../lib/url-validator.js";
 import { dedupKey, normalizeUrl } from "../lib/text.js";
 import { db } from "../lib/db.js";
 import type { Company, FailureInfo, Job, RelevantJob, ScanResult, ScanSummary } from "../types.js";
@@ -168,10 +169,13 @@ async function main(): Promise<void> {
     relevant.push({ ...job, match, engineeringMatch: eng, locationMatch: loc });
   }
 
+  const relevantValid = await validateJobUrls(relevant, browserConcurrency);
+  const droppedInvalid = relevant.length - relevantValid.length;
+
   const filteredOut =
     skippedTitle.length + skippedNonEngineering.length + skippedLocation.length + duplicates.length;
   log.step(
-    `📊 ${jobs.length} jobs fetched → ${relevant.length} relevant (${filteredOut} filtered out, ${duplicates.length} duplicates)`,
+    `📊 ${jobs.length} jobs fetched → ${relevantValid.length} valid & relevant (${filteredOut} filtered out by matchers, ${duplicates.length} duplicates, ${droppedInvalid} invalid URLs dropped)`,
   );
 
   const summary: ScanSummary = {
@@ -185,14 +189,14 @@ async function main(): Promise<void> {
     browserFailures,
     failedCompanies: browserResults.length ? browserFailures : structuredFailures,
     totalJobs: jobs.length,
-    engineeringRelevant: relevant.length,
-    relevantNew: relevant.length,
+    engineeringRelevant: relevantValid.length,
+    relevantNew: relevantValid.length,
     relevantDuplicates: duplicates.length,
     skippedTitle: skippedTitle.length,
     skippedNonEngineering: skippedNonEngineering.length,
     skippedLocation: skippedLocation.length,
-    relevant,
-    shortlist: relevant.filter(isHighSignal).slice(0, 80),
+    relevant: relevantValid,
+    shortlist: relevantValid.filter(isHighSignal).slice(0, 80),
   };
 
   log.step(`🏁 Scan finished in ${secondsSince(startedAt)}s`);

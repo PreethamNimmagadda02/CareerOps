@@ -48,6 +48,8 @@
     "db:check": "tsx scripts/check-portals.ts",
     "db:backfill": "tsx scripts/backfill-scores.ts",
     "db:backfill:dry": "tsx scripts/backfill-scores.ts --dry-run",
+    "db:backfill-insights": "tsx scripts/backfill-evaluations.ts",
+    "db:backfill-insights:dry": "tsx scripts/backfill-evaluations.ts --dry-run",
     "db:normalize-keywords": "tsx scripts/normalize-keywords.ts",
     "db:normalize-keywords:dry": "tsx scripts/normalize-keywords.ts --dry-run",
     "db:migrate-multitenant": "tsx scripts/migrate-to-multitenant.ts",

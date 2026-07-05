@@ -92,6 +92,22 @@ model Application {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  // ── Evaluation insights ─────────────────────────────────────────────────
+  // Parsed from the LLM report once at evaluate time so the dashboard can
+  // sort/filter without re-reading report markdown from MinIO on every list.
+  /// Overall score as a number (mirrors `score`, e.g. 4.2).
+  scoreNumeric   Float?
+  /// APPLY_NOW | APPLY_WITH_TWEAKS | MONITOR | SKIP
+  recommendation String?
+  archetype      String?
+  tldr           String?
+  remote         String?
+  /// One-line compensation estimate from report section D.
+  comp           String?
+  /// { dimensions: [{key,label,weight,score,reason}], gaps: [], recommendationNote }
+  insights       Json?
+  evaluatedAt    DateTime?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, url])

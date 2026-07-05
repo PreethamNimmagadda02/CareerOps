@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ArrowUpDown,
+  ChevronRight,
   ExternalLink,
   FileText,
   Inbox,
@@ -11,6 +12,8 @@ import {
   Loader2,
 } from "lucide-react";
 
+import { ApplicationInsights } from "@/components/application-detail";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MetricsCards } from "@/components/metrics-cards";
@@ -18,7 +21,7 @@ import { PipelineProvider, usePipeline } from "@/components/pipeline-provider";
 import { LaunchPad } from "@/components/launch-pad";
 import { KeywordsManager } from "@/components/keywords-manager";
 import { ReportModal } from "@/components/report-modal";
-import { ScoreBadge } from "@/components/status-badge";
+import { RecommendationBadge, ScoreBadge } from "@/components/status-badge";
 import { StatusSelect } from "@/components/status-menu";
 import { useToast } from "@/components/ui/toast";
 import { computeMetrics } from "@/lib/metrics";
@@ -31,10 +34,10 @@ type SortMode = "score" | "date" | "company" | "status";
 
 const TABS = [
   { key: "all", label: "All" },
+  { key: "apply", label: "Apply now" },
   { key: "evaluated", label: "Evaluated" },
   { key: "applied", label: "Applied" },
   { key: "interview", label: "Interview" },
-  { key: "top", label: "Top ≥4" },
   { key: "skip", label: "Skip" },
 ] as const;
 
@@ -44,7 +47,13 @@ type TabKey = (typeof TABS)[number]["key"];
 function inTab(app: Application, key: TabKey): boolean {
   const norm = normalizeStatus(app.status);
   if (key === "all") return true;
-  if (key === "top") return (app.score ?? 0) >= 4 && norm !== "skip";
+  if (key === "apply") {
+    // The evaluation's verdict when we have one; a strong score otherwise
+    // (covers rows evaluated before verdicts were persisted).
+    if (norm === "skip") return false;
+    if (app.recommendation) return app.recommendation === "APPLY_NOW";
+    return (app.score ?? 0) >= 4;
+  }
   return norm === key;
 }
 
@@ -70,6 +79,7 @@ function DashboardInner() {
   const [openReport, setOpenReport] = React.useState<{ num: string; title: string } | null>(null);
   const [savingNum, setSavingNum] = React.useState<string | null>(null);
   const [keywordsOpen, setKeywordsOpen] = React.useState(false);
+  const [expandedNum, setExpandedNum] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -189,6 +199,11 @@ function DashboardInner() {
     [],
   );
 
+  const toggleExpanded = React.useCallback(
+    (num: string) => setExpandedNum((cur) => (cur === num ? null : num)),
+    [],
+  );
+
   const cycleSort = () => {
     const order: SortMode[] = ["score", "date", "company", "status"];
     setSort((s) => order[(order.indexOf(s) + 1) % order.length]);
@@ -276,11 +291,12 @@ function DashboardInner() {
               <table className="w-full text-sm">
                 <thead className="sticky top-0 z-10 bg-card text-xs uppercase tracking-wide text-muted-foreground">
                   <tr className="border-b border-border">
+                    <th className="w-8 px-2 py-2.5" aria-label="Expand" />
                     <th className="px-3 py-2.5 text-left font-semibold">Score</th>
                     <th className="px-3 py-2.5 text-left font-semibold">Company</th>
                     <th className="px-3 py-2.5 text-left font-semibold">Role</th>
+                    <th className="px-3 py-2.5 text-left font-semibold">Verdict</th>
                     <th className="px-3 py-2.5 text-left font-semibold">Status</th>
-                    <th className="px-3 py-2.5 text-left font-semibold">Comp</th>
                     <th className="px-3 py-2.5 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
@@ -289,12 +305,14 @@ function DashboardInner() {
                     apps={filtered}
                     grouped={grouped}
                     savingNum={savingNum}
+                    expandedNum={expandedNum}
+                    onToggleExpanded={toggleExpanded}
                     onChangeStatus={changeStatus}
                     onOpenReport={openReportFor}
                   />
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
+                      <td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
                         No applications match this filter.
                       </td>
                     </tr>
@@ -365,45 +383,69 @@ function EmptyRoles({
 
 interface RowHandlers {
   savingNum: string | null;
+  expandedNum: string | null;
+  onToggleExpanded: (num: string) => void;
   onChangeStatus: (app: Application, status: string) => void;
   onOpenReport: (r: { num: string; title: string }) => void;
 }
 
 /**
- * One application row. Memoized so status updates / console streams only
- * re-render the rows whose props actually changed.
+ * One application row. Memoized so status updates / row expansion / console
+ * streams only re-render the rows whose props actually changed. Clicking the
+ * row toggles the insights drawer; interactive children stop propagation.
  */
 const AppRow = React.memo(function AppRow({
   app,
   saving,
+  expanded,
+  onToggleExpanded,
   onChangeStatus,
   onOpenReport,
 }: {
   app: Application;
   saving: boolean;
+  expanded: boolean;
+  onToggleExpanded: RowHandlers["onToggleExpanded"];
   onChangeStatus: RowHandlers["onChangeStatus"];
   onOpenReport: RowHandlers["onOpenReport"];
 }) {
   return (
-    <tr className="border-t border-border/60 transition-colors hover:bg-accent/40">
+    <tr
+      className={cn(
+        "cursor-pointer border-t border-border/60 transition-colors hover:bg-accent/40",
+        expanded && "bg-accent/30",
+      )}
+      onClick={() => onToggleExpanded(app.num)}
+      aria-expanded={expanded}
+    >
+      <td className="px-2 py-2 text-center">
+        <ChevronRight
+          className={cn(
+            "h-4 w-4 text-muted-foreground/50 transition-transform",
+            expanded && "rotate-90 text-muted-foreground",
+          )}
+        />
+      </td>
       <td className="whitespace-nowrap px-3 py-2">
         <ScoreBadge score={app.score} />
       </td>
       <td className="px-3 py-2 font-medium">{app.company}</td>
-      <td className="max-w-[28rem] px-3 py-2 text-muted-foreground">
+      <td className="max-w-[24rem] px-3 py-2 text-muted-foreground">
         <span className="line-clamp-1" title={app.role}>
           {app.role}
         </span>
       </td>
-      <td className="px-3 py-2">
+      <td className="whitespace-nowrap px-3 py-2">
+        <RecommendationBadge recommendation={app.recommendation} />
+      </td>
+      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
         <StatusSelect
           status={app.status}
           saving={saving}
           onChange={(s) => onChangeStatus(app, s)}
         />
       </td>
-      <td className="px-3 py-2 text-ctp-yellow">{app.comp ?? "—"}</td>
-      <td className="px-3 py-2">
+      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-end gap-1">
           {app.reportNumber && (
             <Button
@@ -441,6 +483,8 @@ function Rows({
   apps,
   grouped,
   savingNum,
+  expandedNum,
+  onToggleExpanded,
   onChangeStatus,
   onOpenReport,
 }: RowHandlers & { apps: Application[]; grouped: boolean }) {
@@ -454,7 +498,7 @@ function Rows({
       rows.push(
         <tr key={`group-${norm}`} className="bg-background/60">
           <td
-            colSpan={6}
+            colSpan={7}
             className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
           >
             {statusLabel(norm)}
@@ -463,15 +507,29 @@ function Rows({
       );
     }
 
+    const expanded = expandedNum === app.num;
     rows.push(
       <AppRow
         key={app.num}
         app={app}
         saving={savingNum === app.num}
+        expanded={expanded}
+        onToggleExpanded={onToggleExpanded}
         onChangeStatus={onChangeStatus}
         onOpenReport={onOpenReport}
       />,
     );
+
+    if (expanded) {
+      rows.push(
+        <tr key={`${app.num}-detail`} className="border-t border-border/40 bg-accent/15">
+          <td />
+          <td colSpan={6} className="animate-fade-in px-3 pb-4 pt-2">
+            <ApplicationInsights app={app} />
+          </td>
+        </tr>,
+      );
+    }
   }
 
   return <>{rows}</>;
