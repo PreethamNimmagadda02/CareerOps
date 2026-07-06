@@ -121,10 +121,13 @@ function buildProfileFromYml(raw: string): Profile {
     const result: string[] = [];
     for (let i = start + 1; i < lines.length; i++) {
       const l = lines[i];
-      if (l.trimStart().startsWith("- ")) {
-        result.push(l.trimStart().slice(2).trim().replace(/^"|"$/g, ""));
-      } else if (l.trim() === "" || /^\w/.test(l)) {
-        break;
+      const trimmed = l.trimStart();
+      if (trimmed.startsWith("- ")) {
+        result.push(trimmed.slice(2).trim().replace(/^"|"$/g, ""));
+      } else if (trimmed.startsWith("#")) {
+        continue; // comment inside a list block
+      } else if (l.trim() === "" || /^\w/.test(l) || /^[\w-]+:/.test(trimmed)) {
+        break; // blank line, top-level key, or the next mapping key
       }
     }
     return result;
@@ -159,6 +162,17 @@ function buildProfileFromYml(raw: string): Profile {
       city: val("city"),
       timezone: val("timezone"),
       visa_status: val("visa_status"),
+    },
+    matching: {
+      role_domains: listAfter("role_domains"),
+      role_nouns: listAfter("role_nouns"),
+      include_titles: listAfter("include_titles"),
+      exclude_titles: listAfter("exclude_titles"),
+      strong_titles: listAfter("strong_titles"),
+      seniority_exclusions: listAfter("seniority_exclusions"),
+      preferred_locations: listAfter("preferred_locations"),
+      remote_ok: val("remote_ok") !== "false",
+      excluded_locations: listAfter("excluded_locations"),
     },
   };
 }

@@ -16,6 +16,7 @@ import {
   Plus,
   Sparkles,
   Star,
+  Target,
   Trash2,
   Upload,
   User as UserIcon,
@@ -35,12 +36,25 @@ interface UserData {
   image: string | null; resumeKey: string | null; resumeUpdatedAt: string | null;
 }
 
+interface MatchingData {
+  role_domains?: string[];
+  role_nouns?: string[];
+  include_titles?: string[];
+  exclude_titles?: string[];
+  strong_titles?: string[];
+  seniority_exclusions?: string[];
+  preferred_locations?: string[];
+  remote_ok?: boolean;
+  excluded_locations?: string[];
+}
+
 interface ProfileData {
   candidate?: { full_name?: string; email?: string; phone?: string; location?: string; linkedin?: string; portfolio_url?: string; github?: string; twitter?: string };
   target_roles?: { primary?: string[]; archetypes?: Array<{ name: string; level: string; fit: string }> };
   narrative?: { headline?: string; exit_story?: string; superpowers?: string[]; proof_points?: Array<{ name: string; url?: string; hero_metric: string }> };
   compensation?: { target_range?: string; currency?: string; minimum?: string; location_flexibility?: string };
   location?: { city?: string; country?: string; timezone?: string; visa_status?: string; onsite_availability?: string };
+  matching?: MatchingData;
 }
 
 interface CvData {
@@ -319,13 +333,14 @@ type Certification = { name: string; issuer: string; date: string };
 type Language = { name: string; proficiency: string };
 
 // ── section edit states ────────────────────────────────────────────────────
-type SectionKey = "account" | "personal" | "career" | "work" | "summary" | "experience" | "education" | "skills" | "certLang";
+type SectionKey = "account" | "personal" | "career" | "work" | "matching" | "summary" | "experience" | "education" | "skills" | "certLang";
 
 const SECTION_LABEL: Record<SectionKey, string> = {
   account: "Account",
   personal: "Personal info",
   career: "Career profile",
   work: "Work preferences",
+  matching: "Job matching",
   summary: "Professional summary",
   experience: "Work experience",
   education: "Education",
@@ -373,6 +388,16 @@ export function ProfileView() {
   const [draftTimezone, setDraftTimezone] = React.useState("");
   const [draftVisaStatus, setDraftVisaStatus] = React.useState("");
   const [draftOnsite, setDraftOnsite] = React.useState("");
+  // matching (drives the job-scan matchers)
+  const [draftRoleDomains, setDraftRoleDomains] = React.useState<string[]>([]);
+  const [draftRoleNouns, setDraftRoleNouns] = React.useState<string[]>([]);
+  const [draftIncludeTitles, setDraftIncludeTitles] = React.useState<string[]>([]);
+  const [draftExcludeTitles, setDraftExcludeTitles] = React.useState<string[]>([]);
+  const [draftStrongTitles, setDraftStrongTitles] = React.useState<string[]>([]);
+  const [draftSeniorityExcl, setDraftSeniorityExcl] = React.useState<string[]>([]);
+  const [draftPrefLocations, setDraftPrefLocations] = React.useState<string[]>([]);
+  const [draftRemoteOk, setDraftRemoteOk] = React.useState(true);
+  const [draftExclLocations, setDraftExclLocations] = React.useState<string[]>([]);
   // cv
   const [draftSummary, setDraftSummary] = React.useState("");
   const [draftExperience, setDraftExperience] = React.useState<Experience[]>([]);
@@ -463,6 +488,19 @@ export function ProfileView() {
     setDraftTimezone(l.timezone ?? ""); setDraftVisaStatus(l.visa_status ?? "");
     setDraftOnsite(l.onsite_availability ?? "");
     startEdit("work");
+  }
+  function startMatching() {
+    const m = profile?.matching ?? {};
+    setDraftRoleDomains(m.role_domains ?? []);
+    setDraftRoleNouns(m.role_nouns ?? []);
+    setDraftIncludeTitles(m.include_titles ?? []);
+    setDraftExcludeTitles(m.exclude_titles ?? []);
+    setDraftStrongTitles(m.strong_titles ?? []);
+    setDraftSeniorityExcl(m.seniority_exclusions ?? []);
+    setDraftPrefLocations(m.preferred_locations ?? []);
+    setDraftRemoteOk(m.remote_ok ?? true);
+    setDraftExclLocations(m.excluded_locations ?? []);
+    startEdit("matching");
   }
   function startSummary() {
     setDraftSummary(cv?.summary ?? "");
@@ -665,6 +703,62 @@ export function ProfileView() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Remote / location flexibility" value={isEditing("work") ? draftLocFlex : (p.compensation?.location_flexibility ?? "")} editing={isEditing("work")} onChange={setDraftLocFlex} placeholder="Remote-first, open to hybrid" />
             <Field label="Onsite availability" value={isEditing("work") ? draftOnsite : (p.location?.onsite_availability ?? "")} editing={isEditing("work")} onChange={setDraftOnsite} placeholder="Up to 2 days/week" />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Job Matching ── */}
+      <Section title="Job Matching" icon={<Target className="h-4 w-4" />}
+        editing={isEditing("matching")} saving={isSaving("matching")} error={sectionError("matching")}
+        onEdit={startMatching}
+        onSave={() => save("matching", {
+          profile: {
+            matching: {
+              role_domains: draftRoleDomains,
+              role_nouns: draftRoleNouns,
+              include_titles: draftIncludeTitles,
+              exclude_titles: draftExcludeTitles,
+              strong_titles: draftStrongTitles,
+              seniority_exclusions: draftSeniorityExcl,
+              preferred_locations: draftPrefLocations,
+              remote_ok: draftRemoteOk,
+              excluded_locations: draftExclLocations,
+            },
+          },
+        })}
+        onCancel={() => cancelEdit("matching")}>
+        <div className="space-y-5">
+          <p className="text-xs text-muted-foreground">
+            These preferences drive the job scan — which titles count as your kind of role, which locations you can work from, and how senior a role can be. Keywords match whole words, case-insensitively. Leave an &ldquo;include&rdquo; list empty for no restriction; leave an &ldquo;exclude&rdquo; list empty to exclude nothing.
+          </p>
+          <div>
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">Locations</p>
+            <div className="space-y-4">
+              <ChipsField label="Preferred locations (cities, regions, countries)" values={isEditing("matching") ? draftPrefLocations : (p.matching?.preferred_locations ?? [])} editing={isEditing("matching")} onChange={setDraftPrefLocations} placeholder="e.g. Bengaluru, India, APAC" />
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Open to remote roles</label>
+                {isEditing("matching") ? (
+                  <select value={draftRemoteOk ? "yes" : "no"} onChange={e => setDraftRemoteOk(e.target.value === "yes")} className={inputCls}>
+                    <option value="yes">Yes — include remote roles</option>
+                    <option value="no">No — only my preferred locations</option>
+                  </select>
+                ) : (
+                  <p className="text-sm">{(p.matching?.remote_ok ?? true) ? "Yes" : "No"}</p>
+                )}
+              </div>
+              <ChipsField label="Excluded locations (remote roles restricted to these regions are skipped)" values={isEditing("matching") ? draftExclLocations : (p.matching?.excluded_locations ?? [])} editing={isEditing("matching")} onChange={setDraftExclLocations} placeholder="e.g. US, UK, Europe" />
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">Roles</p>
+            <div className="space-y-4">
+              <ChipsField label="Discipline keywords (combined with role nouns)" values={isEditing("matching") ? draftRoleDomains : (p.matching?.role_domains ?? [])} editing={isEditing("matching")} onChange={setDraftRoleDomains} placeholder="e.g. software, backend, ml" />
+              <ChipsField label="Role nouns" values={isEditing("matching") ? draftRoleNouns : (p.matching?.role_nouns ?? [])} editing={isEditing("matching")} onChange={setDraftRoleNouns} placeholder="e.g. engineer, developer, architect" />
+              <ChipsField label="Always-include titles" values={isEditing("matching") ? draftIncludeTitles : (p.matching?.include_titles ?? [])} editing={isEditing("matching")} onChange={setDraftIncludeTitles} placeholder="e.g. solutions engineer" />
+              <ChipsField label="Excluded title keywords" values={isEditing("matching") ? draftExcludeTitles : (p.matching?.exclude_titles ?? [])} editing={isEditing("matching")} onChange={setDraftExcludeTitles} placeholder="e.g. sales, recruiter, data scientist" />
+              <ChipsField label="Strong-title keywords (high-signal shortlist)" values={isEditing("matching") ? draftStrongTitles : (p.matching?.strong_titles ?? [])} editing={isEditing("matching")} onChange={setDraftStrongTitles} placeholder="e.g. ai engineer, backend engineer" />
+              <ChipsField label="Seniority exclusions (leave empty for no ceiling)" values={isEditing("matching") ? draftSeniorityExcl : (p.matching?.seniority_exclusions ?? [])} editing={isEditing("matching")} onChange={setDraftSeniorityExcl} placeholder="e.g. senior, staff, principal" />
+            </div>
           </div>
         </div>
       </Section>

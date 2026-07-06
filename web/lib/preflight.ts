@@ -1,7 +1,10 @@
 import { db } from "../../src/lib/db";
 import { getProfile } from "../../src/lib/profile-store";
 import { getCV } from "../../src/lib/cv-store";
-import { validateCandidateReadiness } from "../../src/lib/profile-validation";
+import {
+  validateCandidateReadiness,
+  validateMatchingReadiness,
+} from "../../src/lib/profile-validation";
 import type { PipelineCommand } from "./pipeline";
 
 async function safe<T>(fn: () => Promise<T>): Promise<T | null> {
@@ -12,7 +15,8 @@ async function safe<T>(fn: () => Promise<T>): Promise<T | null> {
  * Pre-flight gate for the pipeline. Returns an error message when the command
  * must NOT run, or `null` when it's allowed.
  *
- *  • scan      → requires at least one positive ("Include") keyword.
+ *  • scan      → requires at least one positive ("Include") keyword and the
+ *                profile's Job Matching preferences (they drive the matchers).
  *  • evaluate  → requires the profile/CV to have the minimum required details.
  */
 export async function preflightPipeline(
@@ -27,6 +31,15 @@ export async function preflightPipeline(
       return (
         "Scan skipped — no title-filter keywords configured.\n" +
         'Add at least one "Include" keyword in the Keywords panel, then try again.'
+      );
+    }
+    const profile = await safe(() => getProfile(userId));
+    const matching = validateMatchingReadiness(profile);
+    if (!matching.ok) {
+      return (
+        "Scan skipped — your job matching preferences are missing:\n" +
+        matching.missing.map((m) => `  • ${m}`).join("\n") +
+        '\nFill in the "Job Matching" section on your profile page, then try again.'
       );
     }
     return null;

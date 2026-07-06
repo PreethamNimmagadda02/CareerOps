@@ -13,9 +13,17 @@ import { chromium } from "playwright";
 import { Args } from "../lib/args.js";
 import { mapLimit } from "../lib/concurrency.js";
 import { log } from "../lib/logger.js";
-import { engineeringMatch, isHighSignal, locationMatch, titleMatches } from "../lib/matching.js";
+import {
+  engineeringMatch,
+  isHighSignal,
+  locationMatch,
+  normalizeMatchingPrefs,
+  titleMatches,
+} from "../lib/matching.js";
 import { loadConfigFromDb } from "../lib/portals-db.js";
 import { resolveOwnerUserId } from "../lib/owner.js";
+import { getProfile } from "../lib/profile-store.js";
+import { validateMatchingReadiness } from "../lib/profile-validation.js";
 import { hasStructuredApi, scanCompany, scanCompanyBrowser } from "../lib/scanner.js";
 import { validateJobUrls } from "../lib/url-validator.js";
 import { dedupKey, normalizeUrl } from "../lib/text.js";
@@ -33,6 +41,22 @@ async function main(): Promise<void> {
   const userId = await resolveOwnerUserId();
 
   const config = await loadConfigFromDb(userId);
+
+  // The matchers are driven entirely by the user's profile ("Job Matching"
+  // section) so every user scans against their own roles, seniority ceiling,
+  // and locations. Block the scan when those preferences are missing.
+  const profile = await getProfile(userId);
+  const matchingReadiness = validateMatchingReadiness(profile);
+  if (!matchingReadiness.ok) {
+    log.error(
+      "❌ Scan blocked — job matching preferences are missing:\n" +
+        matchingReadiness.missing.map((m) => `   • ${m}`).join("\n") +
+        "\n   Fill in the “Job Matching” section on your profile page (or config/profile.yml\n" +
+        "   + `npm run dynamo:init` for CLI-only setups), then try again.",
+    );
+    process.exit(1);
+  }
+  const matchingPrefs = normalizeMatchingPrefs(profile?.matching);
 
   // Block the scan when the user has no positive title-filter keywords. The
   // matcher requires a positive match for a job to be relevant, so a scan with
@@ -148,12 +172,12 @@ async function main(): Promise<void> {
       skippedTitle.push(job);
       continue;
     }
-    const eng = engineeringMatch(title);
+    const eng = engineeringMatch(title, matchingPrefs);
     if (!eng.engineering) {
       skippedNonEngineering.push(job);
       continue;
     }
-    const loc = locationMatch(job.location);
+    const loc = locationMatch(job.location, matchingPrefs);
     if (!loc.eligible) {
       skippedLocation.push(job);
       continue;
@@ -196,7 +220,7 @@ async function main(): Promise<void> {
     skippedNonEngineering: skippedNonEngineering.length,
     skippedLocation: skippedLocation.length,
     relevant: relevantValid,
-    shortlist: relevantValid.filter(isHighSignal).slice(0, 80),
+    shortlist: relevantValid.filter((job) => isHighSignal(job, matchingPrefs)),
   };
 
   log.step(`🏁 Scan finished in ${secondsSince(startedAt)}s`);
@@ -332,9 +356,9 @@ function printCompact(summary: ScanSummary, browserCount: number, verbose: boole
   log.info(`Unrecovered failed boards: ${summary.failedCompanies.length}`);
   log.info(`Non-API boards (browser + query-only): ${summary.unsupportedCompanies.length}`);
   log.info(`Jobs fetched: ${summary.totalJobs}`);
-  log.info(`India/remote engineering roles after filters: ${summary.engineeringRelevant}`);
+  log.info(`Location-eligible engineering roles after filters: ${summary.engineeringRelevant}`);
   log.info(`Skipped non-engineering roles: ${summary.skippedNonEngineering}`);
-  log.info(`Skipped non-India/non-remote roles: ${summary.skippedLocation}`);
+  log.info(`Skipped location-ineligible roles: ${summary.skippedLocation}`);
   log.info(`High-signal shortlist: ${summary.shortlist.length}`);
   log.info("");
   for (const [company, companyJobs] of byCompany) {

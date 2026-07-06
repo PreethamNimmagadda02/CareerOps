@@ -31,6 +31,17 @@ const fullProfile: Profile = {
   narrative: { headline: "Builder", exit_story: "", superpowers: [], proof_points: [] },
   compensation: { target_range: "", currency: "", minimum: "", location_flexibility: "" },
   location: { country: "", city: "", timezone: "", visa_status: "" },
+  matching: {
+    role_domains: ["backend"],
+    role_nouns: ["engineer"],
+    include_titles: [],
+    exclude_titles: [],
+    strong_titles: [],
+    seniority_exclusions: [],
+    preferred_locations: ["berlin"],
+    remote_ok: true,
+    excluded_locations: [],
+  },
 };
 
 const fullCV: CV = {
@@ -54,9 +65,29 @@ describe("preflightPipeline — scan", () => {
     });
   });
 
-  it("allows scan when at least one positive keyword exists", async () => {
+  it("allows scan when keywords and job matching preferences exist", async () => {
     countMock.mockResolvedValueOnce(3);
+    getProfileMock.mockResolvedValueOnce(fullProfile);
     expect(await preflightPipeline("scan", "user-1")).toBeNull();
+  });
+
+  it("blocks scan when the profile has no job matching preferences", async () => {
+    countMock.mockResolvedValueOnce(3);
+    getProfileMock.mockResolvedValueOnce({ ...fullProfile, matching: undefined });
+    const msg = await preflightPipeline("scan", "user-1");
+    expect(msg).toMatch(/Scan skipped/);
+    expect(msg).toContain("Job matching preferences");
+  });
+
+  it("blocks scan when the user allows no locations at all", async () => {
+    countMock.mockResolvedValueOnce(3);
+    getProfileMock.mockResolvedValueOnce({
+      ...fullProfile,
+      matching: { ...fullProfile.matching, preferred_locations: [], remote_ok: false },
+    });
+    const msg = await preflightPipeline("scan", "user-1");
+    expect(msg).toMatch(/Scan skipped/);
+    expect(msg).toContain("preferred location");
   });
 
   it("applies the same gate to scan:fallback", async () => {

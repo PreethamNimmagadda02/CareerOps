@@ -175,5 +175,25 @@ export function profileToYaml(profile: Profile): string {
   lines.push(`  visa_status: "${loc.visa_status}"`);
   if (loc.onsite_availability) lines.push(`  onsite_availability: "${loc.onsite_availability}"`);
 
+  const m = profile.matching;
+  if (m) {
+    lines.push("");
+    lines.push("matching:");
+    const list = (key: string, values: string[] | undefined) => {
+      if (!values?.length) return;
+      lines.push(`  ${key}:`);
+      for (const v of values) lines.push(`    - "${v}"`);
+    };
+    list("role_domains", m.role_domains);
+    list("role_nouns", m.role_nouns);
+    list("include_titles", m.include_titles);
+    list("exclude_titles", m.exclude_titles);
+    list("strong_titles", m.strong_titles);
+    list("seniority_exclusions", m.seniority_exclusions);
+    list("preferred_locations", m.preferred_locations);
+    lines.push(`  remote_ok: ${m.remote_ok !== false}`);
+    list("excluded_locations", m.excluded_locations);
+  }
+
   return lines.join("\n");
 }

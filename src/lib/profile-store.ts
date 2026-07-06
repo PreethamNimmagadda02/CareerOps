@@ -64,12 +64,44 @@ export interface LocationPrefs {
   onsite_availability?: string;
 }
 
+/**
+ * Per-user job-matching preferences consumed by the scan matchers
+ * (src/lib/matching.ts). Every list is a set of plain keywords/phrases that
+ * are compiled into case-insensitive word-boundary regexes at scan time, so
+ * each user's scan is driven entirely by their own profile — nothing is
+ * hardcoded for a single candidate.
+ *
+ * Empty "include"-style lists mean "no restriction"; empty "exclude"-style
+ * lists mean "exclude nothing".
+ */
+export interface MatchingPrefs {
+  /** Discipline keywords that mark a title as in-scope (e.g. "software", "backend", "ml"). */
+  role_domains: string[];
+  /** Role nouns combined with the domains (e.g. "engineer", "developer", "architect"). */
+  role_nouns: string[];
+  /** Full title phrases that always count as in-scope (e.g. "solutions engineer"). */
+  include_titles: string[];
+  /** Keywords that disqualify a title regardless of other matches (e.g. "sales", "recruiter"). */
+  exclude_titles: string[];
+  /** Title keywords that mark a role as a strong match for the high-signal shortlist. */
+  strong_titles: string[];
+  /** Seniority keywords to reject (e.g. "senior", "staff"). Empty = no seniority ceiling. */
+  seniority_exclusions: string[];
+  /** Location keywords where the candidate can work (cities, regions, countries). */
+  preferred_locations: string[];
+  /** Whether remote roles are acceptable. */
+  remote_ok: boolean;
+  /** Location keywords that make a remote role ineligible (e.g. foreign-restricted regions). */
+  excluded_locations: string[];
+}
+
 export interface Profile {
   candidate: CandidateIdentity;
   target_roles: TargetRoles;
   narrative: Narrative;
   compensation: Compensation;
   location: LocationPrefs;
+  matching?: MatchingPrefs;
   updatedAt?: string;
 }
 

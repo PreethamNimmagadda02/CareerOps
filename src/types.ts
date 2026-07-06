@@ -50,7 +50,8 @@ export interface EngineeringMatch {
 
 export interface LocationMatch {
   eligible: boolean;
-  india: boolean;
+  /** Matched one of the user's preferred locations. */
+  preferred: boolean;
   remote: boolean;
 }
 

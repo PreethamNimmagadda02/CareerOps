@@ -1,5 +1,63 @@
 import type { EngineeringMatch, Job, LocationMatch, TitleMatch } from "../types.js";
+import type { MatchingPrefs } from "./profile-store.js";
 import { keywordMatch } from "./text.js";
+
+/**
+ * All matchers in this module are driven entirely by the per-user
+ * `MatchingPrefs` stored in the candidate's profile (DynamoDB). No candidate
+ * detail is hardcoded here, so the same pipeline scales to any number of
+ * users with different roles, seniorities, and locations.
+ */
+
+// ─── Keyword → regex helpers ─────────────────────────────────────────────────
+
+/**
+ * Maximum number of keywords that will be compiled into a single matcher
+ * regex. Caps the cost of alternation evaluation so a misconfigured or abusive
+ * profile cannot produce pathological matching. Extra entries are dropped (and
+ * the scan continues with the first N). Keep this comfortably above any
+ * reasonable single-user config.
+ */
+const MAX_KEYWORDS = 200;
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Compile a list of user-entered keywords/phrases into a single
+ * case-insensitive word-boundary regex. Returns null when the list is empty
+ * so callers can distinguish "not configured" from "no match".
+ */
+function keywordRegex(words: string[] | undefined): RegExp | null {
+  const cleaned = (words ?? []).map((w) => w.trim()).filter(Boolean).slice(0, MAX_KEYWORDS);
+  if (cleaned.length === 0) return null;
+  return new RegExp(`\\b(${cleaned.map(escapeRegex).join("|")})\\b`, "i");
+}
+
+/** Generic remote-work markers — not candidate-specific. */
+const REMOTE_RE = /\b(remote|remote-first|work from home|wfh|distributed)\b/i;
+
+/**
+ * Fill in defaults for a possibly partial `matching` record so the matchers
+ * can rely on every field being present. Empty include-lists mean "no
+ * restriction"; empty exclude-lists mean "exclude nothing".
+ */
+export function normalizeMatchingPrefs(prefs: Partial<MatchingPrefs> | undefined): MatchingPrefs {
+  return {
+    role_domains: prefs?.role_domains ?? [],
+    role_nouns: prefs?.role_nouns ?? [],
+    include_titles: prefs?.include_titles ?? [],
+    exclude_titles: prefs?.exclude_titles ?? [],
+    strong_titles: prefs?.strong_titles ?? [],
+    seniority_exclusions: prefs?.seniority_exclusions ?? [],
+    preferred_locations: prefs?.preferred_locations ?? [],
+    remote_ok: prefs?.remote_ok ?? true,
+    excluded_locations: prefs?.excluded_locations ?? [],
+  };
+}
+
+// ─── Matchers ────────────────────────────────────────────────────────────────
 
 /** Determine whether a title is relevant based on positive/negative keywords. */
 export function titleMatches(title: string, positive: string[], negative: string[]): TitleMatch {
@@ -9,64 +67,71 @@ export function titleMatches(title: string, positive: string[], negative: string
   return { relevant: Boolean(pos) && !neg, positive: pos || "", negative: neg || "" };
 }
 
-/** Classify whether a title is an engineering role (and not an excluded role). */
-export function engineeringMatch(title: string): EngineeringMatch {
-  const lower = title.toLowerCase();
-  const include =
-    /\b(software|backend|frontend|front-end|fullstack|full-stack|platform|infrastructure|devops|sre|site reliability|security|data platform|systems|compute|distributed systems|mlops|llmops|machine learning|ml|ai|applied ai|forward deployed|deployed|solutions|solution|customer|implementation|integration|automation)\b/.test(
-      lower,
-    ) && /\b(engineer|engineering|architect|developer)\b/.test(lower);
-  const explicitInclude =
-    /\b(forward deployed engineer|forward deployed software engineer|deployed engineer|deployment engineer|solutions engineer|solution engineer|solutions architect|solution architect|customer engineer|implementation engineer|integration engineer|automation engineer|ai engineer|applied ai engineer|ml engineer|machine learning engineer|llm engineer|backend engineer|software engineer|platform engineer|infrastructure engineer|devops engineer|security engineer|fullstack engineer|full-stack engineer|frontend engineer|front-end engineer)\b/.test(
-      lower,
-    );
-  const exclude =
-    /\b(account executive|sales|pre-sales|presales|marketing|product marketing|growth marketing|recruiter|recruiting|talent|people|hr|legal|counsel|finance|accounting|trainer|assistant|compliance officer|program manager|project manager|product manager|strategist|strategy|researcher|research scientist|scientist|data scientist|analyst|customer success|support engineer|technical support|solutions consultant|solution consultant|consultant|evangelist|advocate|writer|designer|design engineer|field cto|cto|chief|operations|ops manager)\b/.test(
-      lower,
-    );
-  return { engineering: (include || explicitInclude) && !exclude, excluded: exclude };
-}
+/**
+ * Classify whether a title is within the user's target discipline (and not an
+ * excluded role). A title is in-scope when it either combines a domain keyword
+ * with a role noun (e.g. "backend" + "engineer") or matches one of the
+ * explicit include phrases.
+ *
+ * When the user configured no role indicators at all (no domains, nouns, or
+ * include titles) nothing is considered in-scope. That case is also blocked
+ * upstream by `validateMatchingReadiness`, which requires at least one role
+ * indicator before a scan can run — so a misconfigured profile fails loudly
+ * rather than silently widening the funnel.
+ */
+export function engineeringMatch(title: string, prefs: MatchingPrefs): EngineeringMatch {
+  const domainRe = keywordRegex(prefs.role_domains);
+  const nounRe = keywordRegex(prefs.role_nouns);
+  const includeRe = keywordRegex(prefs.include_titles);
 
-/** Determine India/remote eligibility from a location string. */
-export function locationMatch(location: string | undefined): LocationMatch {
-  const lower = String(location || "").toLowerCase();
-  const india =
-    /\b(india|bangalore|bengaluru|hyderabad|mumbai|pune|delhi|gurgaon|gurugram|noida|chennai|kolkata|ahmedabad|apac)\b/.test(
-      lower,
-    );
-  const remote = /\b(remote|remote-first|work from home|wfh|distributed)\b/.test(lower);
-  const foreignStrict =
-    /\b(us|usa|united states|uk|united kingdom|canada|europe|eu|germany|france|spain|london|berlin|paris|amsterdam|sf|san francisco|new york|nyc|ca|ny|tx|wa|seattle|austin|boston|chicago|toronto|vancouver)\b/.test(
-      lower,
-    );
-  const eligible = india || (remote && (!foreignStrict || india));
-  return { eligible, india, remote };
+  const domainAndNoun =
+    domainRe && nounRe
+      ? domainRe.test(title) && nounRe.test(title)
+      : (domainRe?.test(title) ?? nounRe?.test(title) ?? false);
+  const included = domainAndNoun || (includeRe?.test(title) ?? false);
+
+  const excluded = keywordRegex(prefs.exclude_titles)?.test(title) ?? false;
+  return { engineering: included && !excluded, excluded };
 }
 
 /**
- * A job is "high signal" when it is an engineering role with a strong title,
- * no weak/non-target keywords, a friendly location, and not too senior for an
- * entry-level candidate.
+ * Determine location eligibility from a location string, based on the user's
+ * preferred locations, remote preference, and excluded (foreign-restricted)
+ * locations.
  */
-export function isHighSignal(job: Job): boolean {
-  const strongTitle =
-    /(forward deployed|deployed engineer|deployment engineer|solutions architect|solutions engineer|software engineer|backend engineer|platform engineer|full.?stack|machine learning|ml engineer|llm|agent|agentic|generative ai|ai engineer|automation)/i.test(
-      job.title,
-    );
-  const weakTitle =
-    /(account executive|sales|marketing|recruit|talent|legal|finance|trainer|assistant|compliance officer|program manager|product manager|data scientist|scientist|researcher)/i.test(
-      job.title,
-    );
-  const friendlyLocation =
-    /(remote|india|hyderabad|bengaluru|bangalore|mumbai|pune|delhi|gurgaon|noida|chennai|kolkata|ahmedabad|apac|singapore)/i.test(
-      job.location || "",
-    );
-  const likelyTooSenior = /(staff|principal|lead|senior|manager|director|head)/i.test(job.title);
+export function locationMatch(
+  location: string | undefined,
+  prefs: MatchingPrefs,
+): LocationMatch {
+  const text = String(location || "");
+  const preferred = keywordRegex(prefs.preferred_locations)?.test(text) ?? false;
+  const remote = REMOTE_RE.test(text);
+  const excluded = keywordRegex(prefs.excluded_locations)?.test(text) ?? false;
+  const eligible = preferred || (prefs.remote_ok && remote && !excluded);
+  return { eligible, preferred, remote };
+}
+
+/**
+ * A job is "high signal" when it is an in-scope role with a strong title,
+ * no excluded keywords, an eligible location, and not above the user's
+ * seniority ceiling. All thresholds come from the user's profile.
+ */
+export function isHighSignal(job: Job, prefs: MatchingPrefs): boolean {
+  const strongRe = keywordRegex(prefs.strong_titles);
+  const strongTitle = strongRe ? strongRe.test(job.title) : true;
+
+  const weakTitle = keywordRegex(prefs.exclude_titles)?.test(job.title) ?? false;
+
+  const loc = locationMatch(job.location, prefs);
+  const friendlyLocation = loc.preferred || (prefs.remote_ok && loc.remote);
+
+  const tooSenior = keywordRegex(prefs.seniority_exclusions)?.test(job.title) ?? false;
+
   return (
-    engineeringMatch(job.title).engineering &&
+    engineeringMatch(job.title, prefs).engineering &&
     strongTitle &&
     !weakTitle &&
     friendlyLocation &&
-    !likelyTooSenior
+    !tooSenior
   );
 }

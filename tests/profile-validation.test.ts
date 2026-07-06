@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { validateCandidateReadiness } from "../src/lib/profile-validation.js";
-import type { Profile } from "../src/lib/profile-store.js";
+import {
+  validateCandidateReadiness,
+  validateMatchingReadiness,
+} from "../src/lib/profile-validation.js";
+import type { Profile, MatchingPrefs } from "../src/lib/profile-store.js";
 import type { CV } from "../src/lib/cv-store.js";
 
 function makeProfile(over: Partial<Profile> = {}): Profile {
@@ -134,5 +137,102 @@ describe("validateCandidateReadiness", () => {
       "A professional summary or at least one work experience",
       "At least one skill",
     ]);
+  });
+});
+
+const MATCHING_OK: MatchingPrefs = {
+  role_domains: ["backend"],
+  role_nouns: ["engineer"],
+  include_titles: [],
+  exclude_titles: [],
+  strong_titles: [],
+  seniority_exclusions: [],
+  preferred_locations: ["berlin"],
+  remote_ok: true,
+  excluded_locations: [],
+};
+
+describe("validateMatchingReadiness", () => {
+  it("passes when matching prefs have role + location config", () => {
+    const r = validateMatchingReadiness(makeProfile({ matching: MATCHING_OK }));
+    expect(r.ok).toBe(true);
+    expect(r.missing).toEqual([]);
+  });
+
+  it("reports when the profile is null", () => {
+    const r = validateMatchingReadiness(null);
+    expect(r.ok).toBe(false);
+    expect(r.missing).toContain("Your profile has not been set up yet");
+  });
+
+  it("reports when matching is missing", () => {
+    const r = validateMatchingReadiness(makeProfile({ matching: undefined }));
+    expect(r.ok).toBe(false);
+    expect(r.missing).toContain(
+      "Job matching preferences (Job Matching section of your profile)",
+    );
+  });
+
+  it("reports when no role indicator is configured", () => {
+    const r = validateMatchingReadiness(
+      makeProfile({
+        matching: {
+          ...MATCHING_OK,
+          role_domains: [],
+          role_nouns: [],
+          include_titles: [],
+        },
+      }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.missing).toContain(
+      "At least one role indicator (Job Matching section — discipline keywords, role nouns, or include titles)",
+    );
+  });
+
+  it("accepts include_titles alone as a role indicator", () => {
+    const r = validateMatchingReadiness(
+      makeProfile({
+        matching: { ...MATCHING_OK, role_domains: [], role_nouns: [], include_titles: ["ai engineer"] },
+      }),
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("reports when neither preferred locations nor remote are allowed", () => {
+    const r = validateMatchingReadiness(
+      makeProfile({ matching: { ...MATCHING_OK, preferred_locations: [], remote_ok: false } }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.missing).toContain(
+      "At least one preferred location — or allow remote roles (Job Matching section)",
+    );
+  });
+
+  it("accepts remote_ok without preferred locations", () => {
+    const r = validateMatchingReadiness(
+      makeProfile({ matching: { ...MATCHING_OK, preferred_locations: [] } }),
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("accumulates both role and location errors when both are missing", () => {
+    const r = validateMatchingReadiness(
+      makeProfile({
+        matching: {
+          role_domains: [],
+          role_nouns: [],
+          include_titles: [],
+          exclude_titles: [],
+          strong_titles: [],
+          seniority_exclusions: [],
+          preferred_locations: [],
+          remote_ok: false,
+          excluded_locations: [],
+        },
+      }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.missing.length).toBe(2);
   });
 });

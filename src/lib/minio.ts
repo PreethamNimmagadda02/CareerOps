@@ -44,7 +44,7 @@ export function reportObjectUrl(userId: string, filename: string): string {
   return `${endpoint}/${BUCKET}/${reportObjectKey(userId, filename)}`;
 }
 
-function resolveConfig(): S3Client {
+export function resolveConfig(): S3Client {
   const endpoint = (process.env.MINIO_ENDPOINT ?? "").replace(/\/$/, "");
   const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";
   const secretAccessKey = process.env.MINIO_SECRET_KEY ?? "";

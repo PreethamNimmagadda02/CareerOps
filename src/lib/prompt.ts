@@ -48,7 +48,7 @@ Map each key JD requirement to a specific line/project from the CV:
 - If likely downleveled: acceptable and why?
 
 ## D) COMPENSATION
-- Estimated salary range for this role + India/remote location
+- Estimated salary range for this role in the candidate's location (see profile) or remote
 - Does it meet the candidate's target based on their profile?
 
 ## E) CV PERSONALIZATION (Top 5 changes)
