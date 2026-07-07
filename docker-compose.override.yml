@@ -8,6 +8,9 @@
 
 services:
   app:
+    build:
+      target: dev
+    entrypoint: ["npm"]
     # Run the Next.js development server inside the container
     command: ["run", "dev", "--prefix", "web"]
     environment:

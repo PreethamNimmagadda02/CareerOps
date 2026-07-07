@@ -39,6 +39,19 @@ RUN cd web && npm ci --ignore-scripts
 COPY web ./web
 RUN cd web && npm run build
 
+# ── Dev ──────────────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/playwright:v1.59.1-noble AS dev
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY tsconfig.json prisma.config.ts ./
+COPY prisma ./prisma
+RUN npx prisma generate
+
+COPY web/package.json web/package-lock.json ./web/
+RUN cd web && npm ci --ignore-scripts
+
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/playwright:v1.59.1-noble AS runtime
 
