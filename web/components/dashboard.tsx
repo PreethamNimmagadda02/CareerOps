@@ -19,7 +19,7 @@ import { ApplicationInsights } from "@/components/application-detail";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MetricsCards } from "@/components/metrics-cards";
-import { PipelineProvider, usePipeline } from "@/components/pipeline-provider";
+import { usePipeline } from "@/components/pipeline-provider";
 import { LaunchPad } from "@/components/launch-pad";
 import { KeywordsManager } from "@/components/keywords-manager";
 import { ReportModal } from "@/components/report-modal";
@@ -60,11 +60,7 @@ function inTab(app: Application, key: TabKey): boolean {
 }
 
 export function Dashboard() {
-  return (
-    <PipelineProvider>
-      <DashboardInner />
-    </PipelineProvider>
-  );
+  return <DashboardInner />;
 }
 
 function DashboardInner() {
