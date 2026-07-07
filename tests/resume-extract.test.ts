@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { fillEmpty } from "../web/lib/resume-extract.ts";
+import { deriveMatchingDefaults, fillEmpty } from "../web/lib/resume-extract.ts";
+import type { ExtractedProfile } from "../web/lib/resume-extract.ts";
 
 describe("fillEmpty — scalars", () => {
   it("keeps a non-empty target value over the source", () => {
@@ -79,5 +80,101 @@ describe("fillEmpty — objects", () => {
     const snapshot = { ...target };
     fillEmpty(target, { name: "X", email: "a@b.c" });
     expect(target).toEqual(snapshot);
+  });
+});
+
+// ── deriveMatchingDefaults ───────────────────────────────────────────────────
+
+type MatchingInput = Pick<ExtractedProfile, "target_roles" | "candidate" | "location">;
+
+function makeInput(over: Partial<MatchingInput> = {}): MatchingInput {
+  return {
+    target_roles: { primary: [], archetypes: [] },
+    candidate: {
+      full_name: "", email: "", phone: "", location: "",
+      linkedin: "", portfolio_url: "", github: "", twitter: "",
+    },
+    location: { country: "", city: "", timezone: "", visa_status: "", onsite_availability: "" },
+    ...over,
+  };
+}
+
+describe("deriveMatchingDefaults", () => {
+  it("splits a simple title into a single-word domain + noun", () => {
+    const m = deriveMatchingDefaults(makeInput({ target_roles: { primary: ["Backend Engineer"], archetypes: [] } }));
+    expect(m.role_domains).toEqual(["backend"]);
+    expect(m.role_nouns).toEqual(["engineer"]);
+    expect(m.include_titles).toEqual(["backend engineer"]);
+  });
+
+  it("keeps a multi-word domain phrase intact", () => {
+    const m = deriveMatchingDefaults(
+      makeInput({ target_roles: { primary: ["Machine Learning Engineer"], archetypes: [] } }),
+    );
+    expect(m.role_domains).toEqual(["machine learning"]);
+    expect(m.role_nouns).toEqual(["engineer"]);
+  });
+
+  it("pulls titles from both target_roles.primary and archetype names, deduped", () => {
+    const m = deriveMatchingDefaults(
+      makeInput({
+        target_roles: {
+          primary: ["Backend Engineer", "Platform Engineer"],
+          archetypes: [{ name: "Backend Engineer", level: "Mid", fit: "primary" }],
+        },
+      }),
+    );
+    expect(m.include_titles).toEqual(["backend engineer", "platform engineer"]);
+    expect(m.role_domains.sort()).toEqual(["backend", "platform"]);
+    expect(m.role_nouns).toEqual(["engineer"]);
+  });
+
+  it("falls back to include_titles only when the title has no recognized trailing noun", () => {
+    const m = deriveMatchingDefaults(makeInput({ target_roles: { primary: ["Founder"], archetypes: [] } }));
+    expect(m.role_domains).toEqual([]);
+    expect(m.role_nouns).toEqual([]);
+    expect(m.include_titles).toEqual(["founder"]);
+  });
+
+  it("derives preferred locations from candidate.location, city, and country", () => {
+    const m = deriveMatchingDefaults(
+      makeInput({
+        candidate: {
+          full_name: "", email: "", phone: "", location: "Bengaluru, Karnataka, India",
+          linkedin: "", portfolio_url: "", github: "", twitter: "",
+        },
+        location: { country: "India", city: "Bengaluru", timezone: "", visa_status: "", onsite_availability: "" },
+      }),
+    );
+    expect(m.preferred_locations).toEqual(["bengaluru", "karnataka", "india"]);
+  });
+
+  it("always defaults remote_ok to true", () => {
+    expect(deriveMatchingDefaults(makeInput()).remote_ok).toBe(true);
+  });
+
+  it("never invents exclusions or a seniority ceiling", () => {
+    const m = deriveMatchingDefaults(
+      makeInput({ target_roles: { primary: ["Senior Backend Engineer"], archetypes: [] } }),
+    );
+    expect(m.exclude_titles).toEqual([]);
+    expect(m.strong_titles).toEqual([]);
+    expect(m.seniority_exclusions).toEqual([]);
+    expect(m.excluded_locations).toEqual([]);
+  });
+
+  it("returns a fully-formed object with empty lists when there is no signal at all", () => {
+    const m = deriveMatchingDefaults(makeInput());
+    expect(m).toEqual({
+      role_domains: [],
+      role_nouns: [],
+      include_titles: [],
+      exclude_titles: [],
+      strong_titles: [],
+      seniority_exclusions: [],
+      preferred_locations: [],
+      remote_ok: true,
+      excluded_locations: [],
+    });
   });
 });

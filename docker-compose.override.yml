@@ -1,0 +1,29 @@
+# Development overrides for docker-compose
+# This file is automatically merged when you run `docker compose up` (no need to specify `-f`).
+# It configures the `app` service to use hot-reloading without rebuilding the image.
+#
+# Usage:
+#   docker compose up   # development mode (uses these overrides)
+#   docker compose -f docker-compose.yml up   # production mode (ignores this file)
+
+services:
+  app:
+    # Run the Next.js development server inside the container
+    command: ["run", "dev", "--prefix", "web"]
+    environment:
+      - NODE_ENV=development
+    # Mount source code so changes are reflected instantly.
+    # The `cached` flag improves performance on macOS.
+    #
+    # IMPORTANT: node_modules and .next are excluded (via the anonymous
+    # volumes below) on purpose. These are build artifacts / native
+    # dependencies tied to the container's OS/arch and Next.js run — if the
+    # host's own copies (e.g. from running `npm install` or `npm run dev`
+    # locally on macOS) get bind-mounted over the container's, you'll hit
+    # "Cannot find module './NNN.js'" / MODULE_NOT_FOUND errors from stale
+    # or architecture-mismatched build output.
+    volumes:
+      - ./:/app:cached
+      - /app/node_modules
+      - /app/web/node_modules
+      - /app/web/.next

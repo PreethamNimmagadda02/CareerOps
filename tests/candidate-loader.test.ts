@@ -25,11 +25,6 @@ const cv: CV = {
       highlights: ["Shipped X", "Scaled Y"],
     },
   ],
-  education: [
-    { institution: "MIT", degree: "BSc", field: "CS", location: "US", period: "2012-2016" },
-  ],
-  certifications: [{ name: "AWS SA", issuer: "Amazon", date: "2021" }],
-  languages: [{ name: "English", proficiency: "Native" }],
 };
 
 const profile: Profile = {
@@ -80,10 +75,7 @@ describe("cvToMarkdown", () => {
     expect(md).toContain("### Acme");
     expect(md).toContain("**Senior Engineer** | Remote");
     expect(md).toContain("* Shipped X");
-    expect(md).toContain("### MIT");
-    expect(md).toContain("**BSc (CS)** | US");
-    expect(md).toContain("* AWS SA — Amazon · 2021");
-    expect(md).toContain("* **English:** Native");
+
   });
 
   it("omits empty sections and the name heading when not provided", () => {
@@ -91,9 +83,6 @@ describe("cvToMarkdown", () => {
       summary: "",
       skills: [],
       experience: [],
-      education: [],
-      certifications: [],
-      languages: [],
     });
     expect(md).not.toContain("#");
     expect(md).not.toContain("Professional Summary");

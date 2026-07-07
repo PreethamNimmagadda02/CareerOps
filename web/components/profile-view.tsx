@@ -2,20 +2,19 @@
 
 import * as React from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   BookOpen,
   Briefcase,
   Check,
   Download,
+  ExternalLink,
   FileText,
-  GraduationCap,
-  Languages,
   Loader2,
   MapPin,
   Pencil,
   Plus,
   Sparkles,
-  Star,
   Target,
   Trash2,
   Upload,
@@ -27,6 +26,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { buildMatchingPrefs } from "@/lib/matching-defaults";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -61,10 +61,81 @@ interface CvData {
   summary?: string;
   skills?: Array<{ category: string; items: string[] }>;
   experience?: Array<{ company: string; role: string; location: string; period: string; highlights: string[] }>;
-  education?: Array<{ institution: string; degree: string; field: string; location: string; period: string }>;
-  certifications?: Array<{ name: string; issuer?: string; date?: string }>;
-  languages?: Array<{ name: string; proficiency: string }>;
+
 }
+
+// ── Profile completeness ─────────────────────────────────────────────────────
+//
+// Lightweight client-side mirror of the server-side readiness checks
+// (src/lib/profile-validation.ts). Kept intentionally simple — this only
+// drives UI hints (progress bar, "what's missing" chips); the server remains
+// the source of truth for whether a scan/evaluation is actually allowed to run.
+
+function isFilled(s: string | undefined): boolean {
+  return typeof s === "string" && s.trim().length > 0;
+}
+
+function hasRoleIndicator(m: MatchingData | undefined): boolean {
+  return Boolean(m?.role_domains?.length || m?.role_nouns?.length || m?.include_titles?.length);
+}
+
+function hasLocationIndicator(m: MatchingData | undefined): boolean {
+  return Boolean(m?.preferred_locations?.length || m?.remote_ok);
+}
+
+interface ChecklistItem {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
+function buildChecklist(p: ProfileData, c: CvData, resumeKey: string | null): ChecklistItem[] {
+  return [
+    { id: "section-basics", label: "Upload your résumé", done: Boolean(resumeKey) },
+    {
+      id: "section-basics",
+      label: "Personal info",
+      done: isFilled(p.candidate?.full_name) && isFilled(p.candidate?.location),
+    },
+    {
+      id: "section-career",
+      label: "Career profile",
+      done: isFilled(p.narrative?.headline) && (p.target_roles?.primary?.length ?? 0) > 0,
+    },
+    {
+      id: "section-matching",
+      label: "Job matching preferences",
+      done: hasRoleIndicator(p.matching) && hasLocationIndicator(p.matching),
+    },
+    {
+      // "Professional summary" lives inside the Career Profile card (it's the
+      // same text as narrative.exit_story — see startCareer/onSave below).
+      id: "section-career",
+      label: "Professional summary",
+      done: isFilled(c.summary) || (c.experience?.length ?? 0) > 0,
+    },
+    { id: "section-skills", label: "Skills", done: (c.skills?.length ?? 0) > 0 },
+  ];
+}
+
+const SECTION_NAV: { id: string; label: string }[] = [
+  { id: "section-basics", label: "Basics" },
+  { id: "section-career", label: "Career" },
+  { id: "section-work", label: "Preferences" },
+  { id: "section-matching", label: "Job matching" },
+  { id: "section-experience", label: "Experience" },
+  { id: "section-skills", label: "Skills" },
+];
+
+// Icons for the quick nav – matches the Section icons used below.
+const SECTION_ICONS: Record<string, React.ReactNode> = {
+  "section-basics": <UserIcon className="h-4 w-4" />,
+  "section-career": <Briefcase className="h-4 w-4" />,
+  "section-work": <MapPin className="h-4 w-4" />,
+  "section-matching": <Target className="h-4 w-4" />,
+  "section-experience": <Briefcase className="h-4 w-4" />,
+  "section-skills": <Zap className="h-4 w-4" />,
+};
 
 // ── Primitives ─────────────────────────────────────────────────────────────────
 
@@ -73,54 +144,168 @@ function fmt(d: string | null | undefined) {
   return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-const inputCls = "w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring";
+const inputCls = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent placeholder:text-muted-foreground/50 disabled:opacity-50 disabled:cursor-not-allowed";
 
-function Field({ label, value, editing, onChange, placeholder, multiline = false, type = "text" }: {
+function Field({ label, value, editing, onChange, placeholder, multiline = false, type = "text", helpText }: {
   label: string; value: string; editing: boolean;
-  onChange: (v: string) => void; placeholder?: string; multiline?: boolean; type?: string;
+  onChange: (v: string) => void; placeholder?: string; multiline?: boolean; type?: string; helpText?: string;
 }) {
   return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+        {label}
+        {helpText && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground/70 font-normal">
+            {helpText}
+          </span>
+        )}
+      </label>
       {editing ? (
-        multiline
-          ? <textarea rows={3} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? label} className={cn(inputCls, "resize-y")} />
-          : <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? label} className={inputCls} />
+        <div className="relative">
+          {multiline
+            ? <textarea rows={4} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? label} className={cn(inputCls, "resize-y min-h-[100px]")} />
+            : <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? label} className={inputCls} autoComplete="off" />}
+          {value && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 text-xs">{value.length} chars</span>}
+        </div>
       ) : (
-        <p className="text-sm leading-relaxed">
-          {value
-            ? value.startsWith("http")
-              ? <a href={value} target="_blank" rel="noreferrer" className="text-primary underline-offset-2 hover:underline">{value}</a>
-              : value
-            : <span className="text-muted-foreground">—</span>}
-        </p>
+        <div className="p-3 rounded-md bg-muted/30 border border-border min-h-[44px]">
+          <p className="text-sm leading-relaxed text-foreground">
+            {value
+              ? value.startsWith("http")
+                ? <a href={value} target="_blank" rel="noreferrer" className="text-primary underline-offset-2 hover:underline flex items-center gap-1">
+                  {value}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                : value
+              : <span className="text-muted-foreground italic">Not set — click Edit to add</span>}
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
-function ChipsField({ label, values, editing, onChange, placeholder }: {
+/** Maps a `ChipsField` autocomplete source to its API route. */
+const AUTOCOMPLETE_ENDPOINTS = {
+  locations: "/api/locations",
+  "job-titles": "/api/job-titles",
+} as const;
+
+/**
+ * ChipsField — add / remove string tags in a text input. When `autocomplete`
+ * is set, the component fetches suggestions from the matching public-data
+ * API route as the user types (see `AUTOCOMPLETE_ENDPOINTS`).
+ */
+function ChipsField({ label, values, editing, onChange, placeholder, helpText, maxItems, autocomplete }: {
   label: string; values: string[]; editing: boolean;
-  onChange: (v: string[]) => void; placeholder?: string;
+  onChange: (v: string[]) => void; placeholder?: string; helpText?: string; maxItems?: number;
+  autocomplete?: keyof typeof AUTOCOMPLETE_ENDPOINTS;
 }) {
   const [draft, setDraft] = React.useState("");
-  function add(e: React.FormEvent) {
-    e.preventDefault();
-    const v = draft.trim();
-    if (!v || values.includes(v)) { setDraft(""); return; }
+  const [autoList, setAutoList] = React.useState<string[]>([]);
+  const [autoIdx, setAutoIdx] = React.useState(-1); // keyboard nav index
+  const [autocompleteOpen, setAutocompleteOpen] = React.useState(false);
+  const isAtMax = Boolean(maxItems && values.length >= maxItems);
+
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Fetch suggestions from the matching public API when draft has 2+ chars.
+  React.useEffect(() => {
+    if (!editing || draft.trim().length < 2 || !autocomplete) {
+      setAutoList([]);
+      setAutoIdx(-1);
+      setAutocompleteOpen(false);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+    const endpoint = AUTOCOMPLETE_ENDPOINTS[autocomplete];
+
+    // Debounce slightly so we don't hammer the API on every keystroke.
+    const timer = setTimeout(() => {
+      fetch(`${endpoint}?q=${encodeURIComponent(draft.trim())}`, {
+        signal: controller.signal,
+      })
+        .then(r => (r.ok ? r.json() : null))
+        .then((data: string[] | null) => {
+          if (cancelled || !data) return;
+          setAutoList(data);
+          setAutoIdx(-1);
+          setAutocompleteOpen(data.length > 0);
+        })
+        .catch(() => { setAutoList([]); setAutocompleteOpen(false); });
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [draft, editing, autocomplete]);
+
+  function selectSuggestion(v: string) {
+    if (!v || values.includes(v) || isAtMax) return;
     onChange([...values, v]);
     setDraft("");
+    setAutoList([]);
+    setAutocompleteOpen(false);
+    inputRef.current?.focus();
   }
+
+  function add(e: React.FormEvent) {
+    e.preventDefault();
+    // If a suggestion is highlighted via keyboard, select it.
+    if (autoIdx >= 0 && autoIdx < autoList.length) {
+      selectSuggestion(autoList[autoIdx]);
+      return;
+    }
+    const v = draft.trim();
+    if (!v || values.includes(v) || isAtMax) { setDraft(""); return; }
+    onChange([...values, v]);
+    setDraft("");
+    setAutoList([]);
+    setAutocompleteOpen(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown" && autoList.length > 0) {
+      e.preventDefault();
+      setAutoIdx(i => Math.min(i + 1, autoList.length - 1));
+    } else if (e.key === "ArrowUp" && autoList.length > 0) {
+      e.preventDefault();
+      setAutoIdx(i => (i <= 0 ? -1 : i - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      add(e as unknown as React.FormEvent);
+    } else if (e.key === "Escape") {
+      setDraft("");
+      setAutoList([]);
+      setAutocompleteOpen(false);
+      (e.target as HTMLInputElement).blur();
+    }
+  }
+
   return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
-      <div className="flex flex-wrap gap-1.5">
-        {values.length === 0 && !editing && <span className="text-sm text-muted-foreground">—</span>}
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+        {label}
+        {helpText && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground/70 font-normal">
+            {helpText}
+          </span>
+        )}
+        {maxItems && <span className="text-xs text-muted-foreground/60">{values.length}/{maxItems}</span>}
+      </label>
+      <div className="flex flex-wrap gap-1.5 min-h-[44px]">
+        {values.length === 0 && !editing && (
+          <span className="text-sm text-muted-foreground italic flex items-center h-full">No entries yet — click Edit to add</span>
+        )}
         {values.map(v => (
-          <span key={v} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs">
+          <span key={v} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium transition-colors hover:bg-accent/50">
             {v}
             {editing && (
-              <button type="button" onClick={() => onChange(values.filter(x => x !== v))} className="hover:text-destructive" aria-label={`Remove ${v}`}>
+              <button type="button" onClick={() => onChange(values.filter(x => x !== v))} className="hover:text-destructive hover:bg-destructive/10 rounded-full p-0.5" aria-label={`Remove ${v}`}>
                 <X className="h-3 w-3" />
               </button>
             )}
@@ -128,47 +313,95 @@ function ChipsField({ label, values, editing, onChange, placeholder }: {
         ))}
       </div>
       {editing && (
-        <form onSubmit={add} className="flex gap-2">
-          <input value={draft} onChange={e => setDraft(e.target.value)} placeholder={placeholder ?? `Add ${label.toLowerCase()}…`}
-            className="h-7 flex-1 rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
-          <button type="submit" disabled={!draft.trim()} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40">
-            <Plus className="h-3 w-3" /> Add
-          </button>
-        </form>
+        <div className="relative">
+          <form onSubmit={add} className="flex gap-2">
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={e => { setDraft(e.target.value); setAutoIdx(-1); }}
+              onKeyDown={handleKeyDown}
+              onFocus={() => { if (autoList.length > 0) setAutocompleteOpen(true); }}
+              onBlur={() => { setTimeout(() => setAutocompleteOpen(false), 150); }}
+              placeholder={placeholder ?? `Add ${label.toLowerCase()}…`}
+              disabled={isAtMax}
+              autoComplete="off"
+              role={autocomplete ? "combobox" : undefined}
+              aria-expanded={autocompleteOpen ? "true" : "false"}
+              aria-autocomplete={autocomplete ? "list" : undefined}
+              aria-controls={autocomplete ? `${label}-autocomplete-list` : undefined}
+              className="h-8 flex-1 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            />
+            <button type="submit" disabled={!draft.trim() || isAtMax} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-foreground disabled:opacity-40 transition-colors">
+              <Plus className="h-4 w-4" /> Add
+            </button>
+          </form>
+
+          {autocompleteOpen && autoList.length > 0 && (
+            <ul
+              id={`${label}-autocomplete-list`}
+              role="listbox"
+              className="absolute bottom-full left-0 z-50 mb-1 max-h-[240px] w-[min(calc(100vw-3rem),420px)] overflow-y-auto rounded-lg border border-border bg-card p-1 shadow-xl ring-1 ring-black/5"
+            >
+              {autoList.map((item, idx) => (
+                <li
+                  key={item}
+                  role="option"
+                  aria-selected={autoIdx === idx}
+                  onMouseDown={() => selectSuggestion(item)}
+                  onMouseEnter={() => setAutoIdx(idx)}
+                  className={cn(
+                    "rounded-md px-3 py-2 text-sm cursor-pointer transition-colors break-words",
+                    autoIdx === idx
+                      ? "bg-accent text-foreground font-medium"
+                      : "text-foreground hover:bg-accent/70",
+                  )}
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );
 }
 
-function Section({ title, icon, editing, saving, onEdit, onSave, onCancel, error, children }: {
-  title: string; icon: React.ReactNode; editing: boolean; saving: boolean;
-  onEdit: () => void; onSave: () => void; onCancel: () => void; error?: string | null; children: React.ReactNode;
+function Section({ id, title, icon, badge, editing, saving, onEdit, onSave, onCancel, error, children, description }: {
+  id?: string; title: string; icon: React.ReactNode; badge?: React.ReactNode; editing: boolean; saving: boolean;
+  onEdit: () => void; onSave: () => void; onCancel: () => void; error?: string | null; children: React.ReactNode; description?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">{icon}</span>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+    <div id={id} className="scroll-mt-28 rounded-xl border border-border bg-card p-5 sm:p-6 space-y-5 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            {icon}
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-foreground">{title}</h2>
+            {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+            {badge && <span className="inline-block mt-1">{badge}</span>}
+          </div>
         </div>
         {!editing ? (
-          <button onClick={onEdit} className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
-            <Pencil className="h-3 w-3" /> Edit
+          <button onClick={onEdit} className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors whitespace-nowrap">
+            <Pencil className="h-4 w-4" /> Edit
           </button>
         ) : (
-          <div className="flex items-center gap-1.5">
-            <Button size="sm" onClick={onSave} disabled={saving}>
-              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-              Save
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={onSave} disabled={saving} className="min-w-[80px]">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {saving ? "Saving…" : "Save"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving}>
-              <X className="h-3 w-3" /> Cancel
+            <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving} className="min-w-[80px]">
+              <X className="h-4 w-4" /> Cancel
             </Button>
           </div>
         )}
       </div>
-      {error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
-      {children}
+      {error && <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>}
+      <div className="pt-1">{children}</div>
     </div>
   );
 }
@@ -263,10 +496,15 @@ function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: 
   const busy = uploading || extracting;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-3">
+    <div id="section-resume" className="scroll-mt-28 rounded-lg border border-border bg-card p-5 space-y-3">
       <div className="flex items-center gap-2">
         <FileText className="h-4 w-4 text-muted-foreground" />
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Resume / CV File</h2>
+        {!resumeKey && (
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+            Start here
+          </span>
+        )}
       </div>
       {error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
       {notice && (
@@ -327,13 +565,10 @@ function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: 
 type Archetype = { name: string; level: string; fit: string };
 type ProofPoint = { name: string; url: string; hero_metric: string };
 type Experience = { company: string; role: string; location: string; period: string; highlights: string[] };
-type Education = { institution: string; degree: string; field: string; location: string; period: string };
 type SkillGroup = { category: string; items: string[] };
-type Certification = { name: string; issuer: string; date: string };
-type Language = { name: string; proficiency: string };
 
 // ── section edit states ────────────────────────────────────────────────────
-type SectionKey = "account" | "personal" | "career" | "work" | "matching" | "summary" | "experience" | "education" | "skills" | "certLang";
+type SectionKey = "account" | "personal" | "career" | "work" | "matching" | "experience" | "skills";
 
 const SECTION_LABEL: Record<SectionKey, string> = {
   account: "Account",
@@ -341,11 +576,8 @@ const SECTION_LABEL: Record<SectionKey, string> = {
   career: "Career profile",
   work: "Work preferences",
   matching: "Job matching",
-  summary: "Professional summary",
   experience: "Work experience",
-  education: "Education",
   skills: "Skills",
-  certLang: "Certifications & languages",
 };
 
 export function ProfileView() {
@@ -355,6 +587,8 @@ export function ProfileView() {
   const [cv, setCv] = React.useState<CvData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [pageError, setPageError] = React.useState<string | null>(null);
+  const [activeSection, setActiveSection] = React.useState<string>(SECTION_NAV[0].id);
+  const navRef = React.useRef<HTMLDivElement>(null);
 
   const [editing, setEditing] = React.useState<Partial<Record<SectionKey, boolean>>>({});
   const [saving, setSaving] = React.useState<Partial<Record<SectionKey, boolean>>>({});
@@ -370,7 +604,6 @@ export function ProfileView() {
   const [draftLinkedin, setDraftLinkedin] = React.useState("");
   const [draftGithub, setDraftGithub] = React.useState("");
   const [draftPortfolio, setDraftPortfolio] = React.useState("");
-  const [draftTwitter, setDraftTwitter] = React.useState("");
   // career
   const [draftHeadline, setDraftHeadline] = React.useState("");
   const [draftExitStory, setDraftExitStory] = React.useState("");
@@ -383,28 +616,16 @@ export function ProfileView() {
   const [draftCompMin, setDraftCompMin] = React.useState("");
   const [draftCurrency, setDraftCurrency] = React.useState("");
   const [draftLocFlex, setDraftLocFlex] = React.useState("");
-  const [draftCity, setDraftCity] = React.useState("");
-  const [draftCountry, setDraftCountry] = React.useState("");
   const [draftTimezone, setDraftTimezone] = React.useState("");
   const [draftVisaStatus, setDraftVisaStatus] = React.useState("");
-  const [draftOnsite, setDraftOnsite] = React.useState("");
-  // matching (drives the job-scan matchers)
-  const [draftRoleDomains, setDraftRoleDomains] = React.useState<string[]>([]);
-  const [draftRoleNouns, setDraftRoleNouns] = React.useState<string[]>([]);
-  const [draftIncludeTitles, setDraftIncludeTitles] = React.useState<string[]>([]);
-  const [draftExcludeTitles, setDraftExcludeTitles] = React.useState<string[]>([]);
-  const [draftStrongTitles, setDraftStrongTitles] = React.useState<string[]>([]);
-  const [draftSeniorityExcl, setDraftSeniorityExcl] = React.useState<string[]>([]);
+  // matching (drives the job-scan matchers — expanded via buildMatchingPrefs)
+  const [draftTitles, setDraftTitles] = React.useState<string[]>([]);
+  const [draftAvoid, setDraftAvoid] = React.useState<string[]>([]);
   const [draftPrefLocations, setDraftPrefLocations] = React.useState<string[]>([]);
   const [draftRemoteOk, setDraftRemoteOk] = React.useState(true);
-  const [draftExclLocations, setDraftExclLocations] = React.useState<string[]>([]);
   // cv
-  const [draftSummary, setDraftSummary] = React.useState("");
   const [draftExperience, setDraftExperience] = React.useState<Experience[]>([]);
-  const [draftEducation, setDraftEducation] = React.useState<Education[]>([]);
   const [draftSkills, setDraftSkills] = React.useState<SkillGroup[]>([]);
-  const [draftCerts, setDraftCerts] = React.useState<Certification[]>([]);
-  const [draftLanguages, setDraftLanguages] = React.useState<Language[]>([]);
 
   // ── load ───────────────────────────────────────────────────────────────────
 
@@ -422,6 +643,16 @@ export function ProfileView() {
   }, []);
 
   React.useEffect(() => { void load(); }, [load]);
+
+  // Only one section is rendered at a time (tab-style navigation). Whenever
+  // the active tab changes: reset scroll to the top of the page, and make
+  // sure the corresponding nav button is fully visible in the (horizontally
+  // scrollable) quick-nav bar.
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const activeBtn = navRef.current?.querySelector('[aria-current="true"]') as HTMLElement | null;
+    activeBtn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeSection]);
 
   // ── save helper ────────────────────────────────────────────────────────────
 
@@ -469,12 +700,14 @@ export function ProfileView() {
     setDraftFullName(c.full_name ?? ""); setDraftPhone(c.phone ?? "");
     setDraftLocation(c.location ?? ""); setDraftLinkedin(c.linkedin ?? "");
     setDraftGithub(c.github ?? ""); setDraftPortfolio(c.portfolio_url ?? "");
-    setDraftTwitter(c.twitter ?? "");
     startEdit("personal");
   }
   function startCareer() {
     const n = profile?.narrative ?? {}; const tr = profile?.target_roles ?? {};
-    setDraftHeadline(n.headline ?? ""); setDraftExitStory(n.exit_story ?? "");
+    setDraftHeadline(n.headline ?? "");
+    // "Professional summary" is shared with cv.summary (see onSave below) —
+    // fall back to it so a summary written before this merge isn't hidden.
+    setDraftExitStory(n.exit_story || cv?.summary || "");
     setDraftRoles(tr.primary ?? []); setDraftSuperpowers(n.superpowers ?? []);
     setDraftArchetypes((tr.archetypes ?? []).map(a => ({ name: a.name ?? "", level: a.level ?? "", fit: a.fit ?? "primary" })));
     setDraftProofPoints((n.proof_points ?? []).map(p => ({ name: p.name ?? "", url: p.url ?? "", hero_metric: p.hero_metric ?? "" })));
@@ -483,48 +716,40 @@ export function ProfileView() {
   function startWork() {
     const c = profile?.compensation ?? {}; const l = profile?.location ?? {};
     setDraftCompRange(c.target_range ?? ""); setDraftCompMin(c.minimum ?? "");
-    setDraftCurrency(c.currency ?? ""); setDraftLocFlex(c.location_flexibility ?? "");
-    setDraftCity(l.city ?? ""); setDraftCountry(l.country ?? "");
+    setDraftCurrency(c.currency ?? "");
+    // Flexibility and onsite-availability are now one field — merge them so
+    // anything already saved under the old, separate field isn't hidden.
+    setDraftLocFlex([c.location_flexibility, l.onsite_availability].filter(Boolean).join(" · "));
     setDraftTimezone(l.timezone ?? ""); setDraftVisaStatus(l.visa_status ?? "");
-    setDraftOnsite(l.onsite_availability ?? "");
     startEdit("work");
   }
   function startMatching() {
     const m = profile?.matching ?? {};
-    setDraftRoleDomains(m.role_domains ?? []);
-    setDraftRoleNouns(m.role_nouns ?? []);
-    setDraftIncludeTitles(m.include_titles ?? []);
-    setDraftExcludeTitles(m.exclude_titles ?? []);
-    setDraftStrongTitles(m.strong_titles ?? []);
-    setDraftSeniorityExcl(m.seniority_exclusions ?? []);
+    setDraftTitles(m.include_titles ?? []);
+    // Merge the two legacy exclusion lists so nothing already saved is lost.
+    setDraftAvoid([...new Set([...(m.exclude_titles ?? []), ...(m.seniority_exclusions ?? [])])]);
     setDraftPrefLocations(m.preferred_locations ?? []);
     setDraftRemoteOk(m.remote_ok ?? true);
-    setDraftExclLocations(m.excluded_locations ?? []);
     startEdit("matching");
-  }
-  function startSummary() {
-    setDraftSummary(cv?.summary ?? "");
-    startEdit("summary");
   }
   function startExperience() {
     setDraftExperience((cv?.experience ?? []).map(e => ({ ...e, highlights: [...e.highlights] })));
     startEdit("experience");
   }
-  function startEducation() {
-    setDraftEducation((cv?.education ?? []).map(e => ({ ...e })));
-    startEdit("education");
-  }
   function startSkills() {
     setDraftSkills((cv?.skills ?? []).map(s => ({ category: s.category, items: [...s.items] })));
     startEdit("skills");
   }
-  function startCertLang() {
-    setDraftCerts((cv?.certifications ?? []).map(c => ({ name: c.name, issuer: c.issuer ?? "", date: c.date ?? "" })));
-    setDraftLanguages((cv?.languages ?? []).map(l => ({ ...l })));
-    startEdit("certLang");
-  }
 
   // ── renders ────────────────────────────────────────────────────────────────
+
+  const checklist = React.useMemo(
+    () => buildChecklist(profile ?? {}, cv ?? {}, user?.resumeKey ?? null),
+    [profile, cv, user?.resumeKey],
+  );
+  const completedCount = checklist.filter(i => i.done).length;
+  const completionPct = Math.round((completedCount / checklist.length) * 100);
+  const matchingComplete = checklist.find(i => i.id === "section-matching")?.done ?? false;
 
   if (loading) return (
     <div className="flex items-center justify-center py-24">
@@ -558,375 +783,355 @@ export function ProfileView() {
         </p>
       </div>
 
-      {/* ── Account ── */}
-      <Section title="Account" icon={<UserIcon className="h-4 w-4" />}
-        editing={isEditing("account")} saving={isSaving("account")} error={sectionError("account")}
-        onEdit={startAccount} onSave={() => save("account", { name: draftName })} onCancel={() => cancelEdit("account")}>
-        <div className="flex items-start gap-4">
-          {user?.image
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={user.image} alt="" className="h-16 w-16 shrink-0 rounded-full border border-border" />
-            : <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-muted"><UserIcon className="h-8 w-8 text-muted-foreground" /></span>}
-          <dl className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Display name" value={isEditing("account") ? draftName : (user?.name ?? "")}
-              editing={isEditing("account")} onChange={setDraftName} placeholder="Your name" />
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Email</p>
-              <p className="text-sm">{user?.email ?? "—"}</p>
+      {/* ── Profile completeness ── */}
+      {completionPct < 100 && (
+        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium">Profile completeness</p>
+            <p className="text-sm text-muted-foreground">{completedCount}/{checklist.length} · {completionPct}%</p>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${completionPct}%` }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {checklist.filter(i => !i.done).map(i => (
+              <button key={i.id} type="button" onClick={() => setActiveSection(i.id)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-accent">
+                <AlertCircle className="h-3 w-3 text-muted-foreground" /> {i.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Quick section nav ── */}
+      <nav
+        aria-label="Profile sections"
+        ref={navRef}
+        className="sticky top-14 z-20 -mx-4 flex gap-1 overflow-x-auto border-b border-border bg-card/95 shadow-sm px-4 py-2 backdrop-blur-sm sm:-mx-0 sm:rounded-lg sm:border sm:px-2"
+      >
+        {SECTION_NAV.map(s => (
+          <button key={s.id} type="button" onClick={() => setActiveSection(s.id)}
+            aria-current={activeSection === s.id ? "true" : undefined}
+            className={cn(
+              "shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              activeSection === s.id
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}>
+            <span className="flex items-center gap-1">{SECTION_ICONS[s.id]}{s.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* ── Basics: account, personal info, then résumé ── */}
+      {activeSection === "section-basics" && (
+        <div className="space-y-5">
+          <Section id="section-account" title="Personal Info" icon={<UserIcon className="h-4 w-4" />}
+            editing={isEditing("account") || isEditing("personal")} saving={isSaving("account") || isSaving("personal")} error={sectionError("account") || sectionError("personal")}
+            onEdit={() => { startAccount(); startPersonal(); }}
+            onSave={() => { save("account", { name: draftFullName }); save("personal", { profile: { candidate: { ...(p.candidate ?? {}), full_name: draftFullName, phone: draftPhone, location: draftLocation, linkedin: draftLinkedin, github: draftGithub, portfolio_url: draftPortfolio } } }); }}
+            onCancel={() => { cancelEdit("account"); cancelEdit("personal"); }}>
+            <div className="space-y-5">
+              <div className="flex items-start gap-4">
+                {user?.image
+                  ? <img src={user.image} alt={user.name ? `${user.name}'s avatar` : "Profile avatar"} className="h-16 w-16 shrink-0 rounded-full border border-border" />
+                  : <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-muted"><UserIcon className="h-8 w-8 text-muted-foreground" /></span>}
+                <dl className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field label="Email" value={user?.email ?? "—"} editing={false} onChange={() => { }} />
+                </dl>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Full name" value={isEditing("personal") ? draftFullName : (p.candidate?.full_name ?? "")} editing={isEditing("personal")} onChange={setDraftFullName} placeholder="Jane Smith" />
+                <Field label="Phone" value={isEditing("personal") ? draftPhone : (p.candidate?.phone ?? "")} editing={isEditing("personal")} onChange={setDraftPhone} placeholder="+1 (555) 000-0000" type="tel" />
+                <Field label="Location" value={isEditing("personal") ? draftLocation : (p.candidate?.location ?? "")} editing={isEditing("personal")} onChange={setDraftLocation} placeholder="San Francisco, CA" />
+                <Field label="LinkedIn" value={isEditing("personal") ? draftLinkedin : (p.candidate?.linkedin ?? "")} editing={isEditing("personal")} onChange={setDraftLinkedin} placeholder="https://linkedin.com/in/..." type="url" />
+                <Field label="GitHub" value={isEditing("personal") ? draftGithub : (p.candidate?.github ?? "")} editing={isEditing("personal")} onChange={setDraftGithub} placeholder="https://github.com/..." type="url" />
+                <Field label="Portfolio / website" value={isEditing("personal") ? draftPortfolio : (p.candidate?.portfolio_url ?? "")} editing={isEditing("personal")} onChange={setDraftPortfolio} placeholder="https://..." type="url" />
+              </div>
             </div>
-          </dl>
-        </div>
-      </Section>
+          </Section>
 
-      {/* ── Resume file ── */}
-      <ResumeSection
-        resumeKey={user?.resumeKey ?? null} resumeUpdatedAt={user?.resumeUpdatedAt ?? null}
-        onUploaded={(key, updatedAt) => setUser(u => u ? { ...u, resumeKey: key || null, resumeUpdatedAt: updatedAt || null } : u)}
-        onExtracted={(newProfile, newCv) => { setProfile(newProfile); setCv(newCv); }}
-      />
-
-      {/* ── Personal Info ── */}
-      <Section title="Personal Info" icon={<UserIcon className="h-4 w-4" />}
-        editing={isEditing("personal")} saving={isSaving("personal")} error={sectionError("personal")}
-        onEdit={startPersonal}
-        onSave={() => save("personal", { profile: { candidate: { ...(p.candidate ?? {}), full_name: draftFullName, phone: draftPhone, location: draftLocation, linkedin: draftLinkedin, github: draftGithub, portfolio_url: draftPortfolio, twitter: draftTwitter } } })}
-        onCancel={() => cancelEdit("personal")}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Full name" value={isEditing("personal") ? draftFullName : (p.candidate?.full_name ?? "")} editing={isEditing("personal")} onChange={setDraftFullName} placeholder="Jane Smith" />
-          <Field label="Phone" value={isEditing("personal") ? draftPhone : (p.candidate?.phone ?? "")} editing={isEditing("personal")} onChange={setDraftPhone} placeholder="+1 (555) 000-0000" type="tel" />
-          <Field label="Location" value={isEditing("personal") ? draftLocation : (p.candidate?.location ?? "")} editing={isEditing("personal")} onChange={setDraftLocation} placeholder="San Francisco, CA" />
-          <Field label="LinkedIn" value={isEditing("personal") ? draftLinkedin : (p.candidate?.linkedin ?? "")} editing={isEditing("personal")} onChange={setDraftLinkedin} placeholder="https://linkedin.com/in/..." type="url" />
-          <Field label="GitHub" value={isEditing("personal") ? draftGithub : (p.candidate?.github ?? "")} editing={isEditing("personal")} onChange={setDraftGithub} placeholder="https://github.com/..." type="url" />
-          <Field label="Portfolio / website" value={isEditing("personal") ? draftPortfolio : (p.candidate?.portfolio_url ?? "")} editing={isEditing("personal")} onChange={setDraftPortfolio} placeholder="https://..." type="url" />
-          <Field label="Twitter / X" value={isEditing("personal") ? draftTwitter : (p.candidate?.twitter ?? "")} editing={isEditing("personal")} onChange={setDraftTwitter} placeholder="https://twitter.com/..." type="url" />
+          <ResumeSection
+            resumeKey={user?.resumeKey ?? null} resumeUpdatedAt={user?.resumeUpdatedAt ?? null}
+            onUploaded={(key, updatedAt) => setUser(u => u ? { ...u, resumeKey: key || null, resumeUpdatedAt: updatedAt || null } : u)}
+            onExtracted={(newProfile, newCv) => { setProfile(newProfile); setCv(newCv); }}
+          />
         </div>
-      </Section>
+      )}
 
       {/* ── Career Profile ── */}
-      <Section title="Career Profile" icon={<Briefcase className="h-4 w-4" />}
-        editing={isEditing("career")} saving={isSaving("career")} error={sectionError("career")}
-        onEdit={startCareer}
-        onSave={() => save("career", {
-          profile: {
-            narrative: { ...(p.narrative ?? {}), headline: draftHeadline, exit_story: draftExitStory, superpowers: draftSuperpowers, proof_points: draftProofPoints.map(pp => ({ name: pp.name, url: pp.url || undefined, hero_metric: pp.hero_metric })) },
-            target_roles: { ...(p.target_roles ?? {}), primary: draftRoles, archetypes: draftArchetypes },
-          },
-        })}
-        onCancel={() => cancelEdit("career")}>
-        <div className="space-y-4">
-          <Field label="Headline" value={isEditing("career") ? draftHeadline : (p.narrative?.headline ?? "")} editing={isEditing("career")} onChange={setDraftHeadline} placeholder="e.g. Senior Software Engineer · AI/ML" />
-          <Field label="Professional summary" value={isEditing("career") ? draftExitStory : (p.narrative?.exit_story ?? "")} editing={isEditing("career")} onChange={setDraftExitStory} placeholder="Your background, motivations, and what you're looking for…" multiline />
-          <ChipsField label="Target roles" values={isEditing("career") ? draftRoles : (p.target_roles?.primary ?? [])} editing={isEditing("career")} onChange={setDraftRoles} placeholder="e.g. Software Engineer" />
-          <ChipsField label="Superpowers" values={isEditing("career") ? draftSuperpowers : (p.narrative?.superpowers ?? [])} editing={isEditing("career")} onChange={setDraftSuperpowers} placeholder="e.g. distributed systems" />
+      {activeSection === "section-career" && (
+        <Section id="section-career" title="Career Profile" icon={<Briefcase className="h-4 w-4" />}
+          editing={isEditing("career")} saving={isSaving("career")} error={sectionError("career")}
+          onEdit={startCareer}
+          onSave={() => save("career", {
+            profile: {
+              narrative: { ...(p.narrative ?? {}), headline: draftHeadline, exit_story: draftExitStory, superpowers: draftSuperpowers, proof_points: draftProofPoints.map(pp => ({ name: pp.name, url: pp.url || undefined, hero_metric: pp.hero_metric })) },
+              target_roles: { ...(p.target_roles ?? {}), primary: draftRoles, archetypes: draftArchetypes },
+            },
+            // Same text as the profile's "Professional summary" — kept in sync
+            // with cv.summary so it also satisfies the CV-readiness check.
+            cv: { summary: draftExitStory },
+          })}
+          onCancel={() => cancelEdit("career")}>
+          <div className="space-y-4">
+            <Field label="Headline" value={isEditing("career") ? draftHeadline : (p.narrative?.headline ?? "")} editing={isEditing("career")} onChange={setDraftHeadline} placeholder="e.g. Senior Software Engineer · AI/ML" />
+            <Field label="Professional summary" value={isEditing("career") ? draftExitStory : (p.narrative?.exit_story ?? "")} editing={isEditing("career")} onChange={setDraftExitStory} placeholder="Your background, motivations, and what you're looking for…" multiline />
+            <ChipsField label="Target roles" values={isEditing("career") ? draftRoles : (p.target_roles?.primary ?? [])} editing={isEditing("career")} onChange={setDraftRoles} placeholder="e.g. Software Engineer" />
+            <ChipsField label="Superpowers" values={isEditing("career") ? draftSuperpowers : (p.narrative?.superpowers ?? [])} editing={isEditing("career")} onChange={setDraftSuperpowers} placeholder="e.g. distributed systems" />
 
-          {/* Archetypes */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Role archetypes</label>
-            {(isEditing("career") ? draftArchetypes : (p.target_roles?.archetypes ?? [])).map((a, i) => (
-              <EntryCard key={i} editing={isEditing("career")} onRemove={() => setDraftArchetypes(d => d.filter((_, j) => j !== i))}>
-                {isEditing("career") ? (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <input value={(a as Archetype).name} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name (e.g. Backend Engineer)" className={inputCls} />
-                    <input value={(a as Archetype).level} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, level: e.target.value } : x))} placeholder="Level (e.g. Senior)" className={inputCls} />
-                    <select value={(a as Archetype).fit} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, fit: e.target.value } : x))} className={inputCls}>
-                      <option value="primary">Primary</option>
-                      <option value="secondary">Secondary</option>
-                      <option value="adjacent">Adjacent</option>
-                    </select>
-                  </div>
-                ) : (
-                  <p className="text-sm"><span className="font-medium">{(a as { name: string }).name}</span>{" · "}{(a as { level: string }).level}{" · "}<span className="text-muted-foreground capitalize">{(a as { fit: string }).fit}</span></p>
-                )}
-              </EntryCard>
-            ))}
-            {isEditing("career") && (
-              <AddButton onClick={() => setDraftArchetypes(d => [...d, { name: "", level: "", fit: "primary" }])} label="Add archetype" />
-            )}
-            {!isEditing("career") && (p.target_roles?.archetypes ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-          </div>
+            {/* Archetypes */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Role archetypes</label>
+              {(isEditing("career") ? draftArchetypes : (p.target_roles?.archetypes ?? [])).map((a, i) => (
+                <EntryCard key={i} editing={isEditing("career")} onRemove={() => setDraftArchetypes(d => d.filter((_, j) => j !== i))}>
+                  {isEditing("career") ? (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <input value={(a as Archetype).name} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name (e.g. Backend Engineer)" className={inputCls} />
+                      <select value={(a as Archetype).fit} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, fit: e.target.value } : x))} className={inputCls}>
+                        <option value="primary">Primary</option>
+                        <option value="secondary">Secondary</option>
+                        <option value="adjacent">Adjacent</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <p className="text-sm"><span className="font-medium">{(a as { name: string }).name}</span>{" · "}<span className="text-muted-foreground capitalize">{(a as { fit: string }).fit}</span></p>
+                  )}
+                </EntryCard>
+              ))}
+              {isEditing("career") && (
+                <AddButton onClick={() => setDraftArchetypes(d => [...d, { name: "", level: "", fit: "primary" }])} label="Add archetype" />
+              )}
+              {!isEditing("career") && (p.target_roles?.archetypes ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
+            </div>
 
-          {/* Proof points */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Proof points</label>
-            {(isEditing("career") ? draftProofPoints : (p.narrative?.proof_points ?? [])).map((pp, i) => (
-              <EntryCard key={i} editing={isEditing("career")} onRemove={() => setDraftProofPoints(d => d.filter((_, j) => j !== i))}>
-                {isEditing("career") ? (
-                  <div className="grid grid-cols-1 gap-2">
-                    <input value={(pp as ProofPoint).name} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name (e.g. Launched payment system)" className={inputCls} />
-                    <input value={(pp as ProofPoint).hero_metric} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, hero_metric: e.target.value } : x))} placeholder="Hero metric (e.g. reduced latency by 40%)" className={inputCls} />
-                    <input value={(pp as ProofPoint).url} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} placeholder="URL (optional)" type="url" className={inputCls} />
-                  </div>
-                ) : (
-                  <div className="text-sm space-y-0.5">
-                    <p className="font-medium">{(pp as { name: string }).name}</p>
-                    <p className="text-muted-foreground">{(pp as { hero_metric: string }).hero_metric}</p>
-                    {(pp as { url?: string }).url && <a href={(pp as { url: string }).url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">{(pp as { url: string }).url}</a>}
-                  </div>
-                )}
-              </EntryCard>
-            ))}
-            {isEditing("career") && <AddButton onClick={() => setDraftProofPoints(d => [...d, { name: "", url: "", hero_metric: "" }])} label="Add proof point" />}
-            {!isEditing("career") && (p.narrative?.proof_points ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-          </div>
-        </div>
-      </Section>
-
-      {/* ── Work Preferences ── */}
-      <Section title="Work Preferences" icon={<MapPin className="h-4 w-4" />}
-        editing={isEditing("work")} saving={isSaving("work")} error={sectionError("work")}
-        onEdit={startWork}
-        onSave={() => save("work", {
-          profile: {
-            compensation: { ...(p.compensation ?? {}), target_range: draftCompRange, minimum: draftCompMin, currency: draftCurrency, location_flexibility: draftLocFlex },
-            location: { ...(p.location ?? {}), city: draftCity, country: draftCountry, timezone: draftTimezone, visa_status: draftVisaStatus, onsite_availability: draftOnsite },
-          },
-        })}
-        onCancel={() => cancelEdit("work")}>
-        <div className="space-y-5">
-          <div>
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">Compensation</p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Field label="Target range" value={isEditing("work") ? draftCompRange : (p.compensation?.target_range ?? "")} editing={isEditing("work")} onChange={setDraftCompRange} placeholder="$180k–$220k" />
-              <Field label="Minimum" value={isEditing("work") ? draftCompMin : (p.compensation?.minimum ?? "")} editing={isEditing("work")} onChange={setDraftCompMin} placeholder="$160k" />
-              <Field label="Currency" value={isEditing("work") ? draftCurrency : (p.compensation?.currency ?? "")} editing={isEditing("work")} onChange={setDraftCurrency} placeholder="USD" />
+            {/* Proof points */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Proof points</label>
+              {(isEditing("career") ? draftProofPoints : (p.narrative?.proof_points ?? [])).map((pp, i) => (
+                <EntryCard key={i} editing={isEditing("career")} onRemove={() => setDraftProofPoints(d => d.filter((_, j) => j !== i))}>
+                  {isEditing("career") ? (
+                    <div className="grid grid-cols-1 gap-2">
+                      <input value={(pp as ProofPoint).name} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name (e.g. Launched payment system)" className={inputCls} />
+                      <input value={(pp as ProofPoint).hero_metric} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, hero_metric: e.target.value } : x))} placeholder="Hero metric (e.g. reduced latency by 40%)" className={inputCls} />
+                      <input value={(pp as ProofPoint).url} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} placeholder="URL (optional)" type="url" className={inputCls} />
+                    </div>
+                  ) : (
+                    <div className="text-sm space-y-0.5">
+                      <p className="font-medium">{(pp as { name: string }).name}</p>
+                      <p className="text-muted-foreground">{(pp as { hero_metric: string }).hero_metric}</p>
+                      {(pp as { url?: string }).url && <a href={(pp as { url: string }).url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">{(pp as { url: string }).url}</a>}
+                    </div>
+                  )}
+                </EntryCard>
+              ))}
+              {isEditing("career") && <AddButton onClick={() => setDraftProofPoints(d => [...d, { name: "", url: "", hero_metric: "" }])} label="Add proof point" />}
+              {!isEditing("career") && (p.narrative?.proof_points ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
             </div>
           </div>
-          <div>
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">Location</p>
+        </Section>
+      )}
+
+      {/* ── Work Preferences ── */}
+      {activeSection === "section-work" && (
+        <Section id="section-work" title="Work Preferences" icon={<MapPin className="h-4 w-4" />}
+          editing={isEditing("work")} saving={isSaving("work")} error={sectionError("work")}
+          onEdit={startWork}
+          onSave={() => save("work", {
+            profile: {
+              compensation: { ...(p.compensation ?? {}), target_range: draftCompRange, minimum: draftCompMin, currency: draftCurrency, location_flexibility: draftLocFlex },
+              // City/country live in Personal Info's "Location" field — no need
+              // to ask for them twice. Onsite availability is now folded into
+              // the flexibility text above, so clear the old separate field.
+              location: { ...(p.location ?? {}), timezone: draftTimezone, visa_status: draftVisaStatus, onsite_availability: "" },
+            },
+          })}
+          onCancel={() => cancelEdit("work")}>
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Compensation</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Field label="Target range" value={isEditing("work") ? draftCompRange : (p.compensation?.target_range ?? "")} editing={isEditing("work")} onChange={setDraftCompRange} placeholder="$180k–$220k" />
+                <Field label="Minimum" value={isEditing("work") ? draftCompMin : (p.compensation?.minimum ?? "")} editing={isEditing("work")} onChange={setDraftCompMin} placeholder="$160k" />
+                <Field label="Currency" value={isEditing("work") ? draftCurrency : (p.compensation?.currency ?? "")} editing={isEditing("work")} onChange={setDraftCurrency} placeholder="USD" />
+              </div>
+            </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="City" value={isEditing("work") ? draftCity : (p.location?.city ?? "")} editing={isEditing("work")} onChange={setDraftCity} placeholder="San Francisco" />
-              <Field label="Country" value={isEditing("work") ? draftCountry : (p.location?.country ?? "")} editing={isEditing("work")} onChange={setDraftCountry} placeholder="United States" />
               <Field label="Timezone" value={isEditing("work") ? draftTimezone : (p.location?.timezone ?? "")} editing={isEditing("work")} onChange={setDraftTimezone} placeholder="America/Los_Angeles" />
               <Field label="Visa status" value={isEditing("work") ? draftVisaStatus : (p.location?.visa_status ?? "")} editing={isEditing("work")} onChange={setDraftVisaStatus} placeholder="US Citizen / H-1B…" />
             </div>
+            <Field label="Remote / location flexibility" value={isEditing("work") ? draftLocFlex : ([p.compensation?.location_flexibility, p.location?.onsite_availability].filter(Boolean).join(" · "))} editing={isEditing("work")} onChange={setDraftLocFlex} placeholder="Remote-first, open to hybrid; can travel occasionally if needed" />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Remote / location flexibility" value={isEditing("work") ? draftLocFlex : (p.compensation?.location_flexibility ?? "")} editing={isEditing("work")} onChange={setDraftLocFlex} placeholder="Remote-first, open to hybrid" />
-            <Field label="Onsite availability" value={isEditing("work") ? draftOnsite : (p.location?.onsite_availability ?? "")} editing={isEditing("work")} onChange={setDraftOnsite} placeholder="Up to 2 days/week" />
-          </div>
-        </div>
-      </Section>
+        </Section>
+      )}
 
       {/* ── Job Matching ── */}
-      <Section title="Job Matching" icon={<Target className="h-4 w-4" />}
-        editing={isEditing("matching")} saving={isSaving("matching")} error={sectionError("matching")}
-        onEdit={startMatching}
-        onSave={() => save("matching", {
-          profile: {
-            matching: {
-              role_domains: draftRoleDomains,
-              role_nouns: draftRoleNouns,
-              include_titles: draftIncludeTitles,
-              exclude_titles: draftExcludeTitles,
-              strong_titles: draftStrongTitles,
-              seniority_exclusions: draftSeniorityExcl,
-              preferred_locations: draftPrefLocations,
-              remote_ok: draftRemoteOk,
-              excluded_locations: draftExclLocations,
+      {activeSection === "section-matching" && (
+        <Section id="section-matching" title="Job Matching" icon={<Target className="h-4 w-4" />}
+          badge={!matchingComplete && (
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              Required for scans
+            </span>
+          )}
+          editing={isEditing("matching")} saving={isSaving("matching")} error={sectionError("matching")}
+          onEdit={startMatching}
+          onSave={() => save("matching", {
+            profile: {
+              matching: buildMatchingPrefs({
+                titles: draftTitles,
+                avoid: draftAvoid,
+                locations: draftPrefLocations,
+                remoteOk: draftRemoteOk,
+              }),
             },
-          },
-        })}
-        onCancel={() => cancelEdit("matching")}>
-        <div className="space-y-5">
-          <p className="text-xs text-muted-foreground">
-            These preferences drive the job scan — which titles count as your kind of role, which locations you can work from, and how senior a role can be. Keywords match whole words, case-insensitively. Leave an &ldquo;include&rdquo; list empty for no restriction; leave an &ldquo;exclude&rdquo; list empty to exclude nothing.
-          </p>
-          <div>
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">Locations</p>
-            <div className="space-y-4">
-              <ChipsField label="Preferred locations (cities, regions, countries)" values={isEditing("matching") ? draftPrefLocations : (p.matching?.preferred_locations ?? [])} editing={isEditing("matching")} onChange={setDraftPrefLocations} placeholder="e.g. Bengaluru, India, APAC" />
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Open to remote roles</label>
-                {isEditing("matching") ? (
-                  <select value={draftRemoteOk ? "yes" : "no"} onChange={e => setDraftRemoteOk(e.target.value === "yes")} className={inputCls}>
-                    <option value="yes">Yes — include remote roles</option>
-                    <option value="no">No — only my preferred locations</option>
-                  </select>
-                ) : (
-                  <p className="text-sm">{(p.matching?.remote_ok ?? true) ? "Yes" : "No"}</p>
-                )}
+          })}
+          onCancel={() => cancelEdit("matching")}>
+          <div className="space-y-6">
+            {!matchingComplete && !isEditing("matching") && (
+              <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs text-foreground">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                <span>Scans are blocked until you&apos;ve added at least one job title and one location — or allowed remote roles.</span>
               </div>
-              <ChipsField label="Excluded locations (remote roles restricted to these regions are skipped)" values={isEditing("matching") ? draftExclLocations : (p.matching?.excluded_locations ?? [])} editing={isEditing("matching")} onChange={setDraftExclLocations} placeholder="e.g. US, UK, Europe" />
-            </div>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">Roles</p>
-            <div className="space-y-4">
-              <ChipsField label="Discipline keywords (combined with role nouns)" values={isEditing("matching") ? draftRoleDomains : (p.matching?.role_domains ?? [])} editing={isEditing("matching")} onChange={setDraftRoleDomains} placeholder="e.g. software, backend, ml" />
-              <ChipsField label="Role nouns" values={isEditing("matching") ? draftRoleNouns : (p.matching?.role_nouns ?? [])} editing={isEditing("matching")} onChange={setDraftRoleNouns} placeholder="e.g. engineer, developer, architect" />
-              <ChipsField label="Always-include titles" values={isEditing("matching") ? draftIncludeTitles : (p.matching?.include_titles ?? [])} editing={isEditing("matching")} onChange={setDraftIncludeTitles} placeholder="e.g. solutions engineer" />
-              <ChipsField label="Excluded title keywords" values={isEditing("matching") ? draftExcludeTitles : (p.matching?.exclude_titles ?? [])} editing={isEditing("matching")} onChange={setDraftExcludeTitles} placeholder="e.g. sales, recruiter, data scientist" />
-              <ChipsField label="Strong-title keywords (high-signal shortlist)" values={isEditing("matching") ? draftStrongTitles : (p.matching?.strong_titles ?? [])} editing={isEditing("matching")} onChange={setDraftStrongTitles} placeholder="e.g. ai engineer, backend engineer" />
-              <ChipsField label="Seniority exclusions (leave empty for no ceiling)" values={isEditing("matching") ? draftSeniorityExcl : (p.matching?.seniority_exclusions ?? [])} editing={isEditing("matching")} onChange={setDraftSeniorityExcl} placeholder="e.g. senior, staff, principal" />
-            </div>
-          </div>
-        </div>
-      </Section>
+            )}
 
-      {/* ── CV: Professional Summary ── */}
-      <Section title="Professional Summary" icon={<FileText className="h-4 w-4" />}
-        editing={isEditing("summary")} saving={isSaving("summary")} error={sectionError("summary")}
-        onEdit={startSummary}
-        onSave={() => save("summary", { cv: { summary: draftSummary } })}
-        onCancel={() => cancelEdit("summary")}>
-        <Field label="Summary" value={isEditing("summary") ? draftSummary : (c.summary ?? "")}
-          editing={isEditing("summary")} onChange={setDraftSummary}
-          placeholder="A concise overview of your professional background, key skills, and career goals…" multiline />
-      </Section>
+            {/* ── Roles ── */}
+            <div>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Roles</p>
+              <div className="space-y-3">
+                <ChipsField label="Job titles you want" values={isEditing("matching") ? draftTitles : (p.matching?.include_titles ?? [])} editing={isEditing("matching")} onChange={setDraftTitles} placeholder="Start typing a title…" autocomplete="job-titles" />
+                <ChipsField label="Avoid these roles (optional)" values={isEditing("matching") ? draftAvoid : ([...new Set([...(p.matching?.exclude_titles ?? []), ...(p.matching?.seniority_exclusions ?? [])])])} editing={isEditing("matching")} onChange={setDraftAvoid} placeholder="Start typing a title…" helpText="optional" autocomplete="job-titles" />
+              </div>
+            </div>
 
-      {/* ── CV: Experience ── */}
-      <Section title="Work Experience" icon={<Briefcase className="h-4 w-4" />}
-        editing={isEditing("experience")} saving={isSaving("experience")} error={sectionError("experience")}
-        onEdit={startExperience}
-        onSave={() => save("experience", { cv: { experience: draftExperience } })}
-        onCancel={() => cancelEdit("experience")}>
-        <div className="space-y-3">
-          {(isEditing("experience") ? draftExperience : (c.experience ?? [])).map((exp, i) => (
-            <EntryCard key={i} editing={isEditing("experience")} onRemove={() => setDraftExperience(d => d.filter((_, j) => j !== i))}>
-              {isEditing("experience") ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <input value={exp.company} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, company: e.target.value } : x))} placeholder="Company" className={inputCls} />
-                    <input value={exp.role} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} placeholder="Role / Title" className={inputCls} />
-                    <input value={exp.location} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, location: e.target.value } : x))} placeholder="Location" className={inputCls} />
-                    <input value={exp.period} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, period: e.target.value } : x))} placeholder="Period (e.g. Jan 2022 – Present)" className={inputCls} />
-                  </div>
-                  <ChipsField label="Highlights" values={exp.highlights} editing onChange={v => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, highlights: v } : x))} placeholder="Add a bullet point…" />
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-medium">{exp.company}</p>
-                    <p className="text-xs text-muted-foreground">{exp.period}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{exp.role}{exp.location ? ` · ${exp.location}` : ""}</p>
-                  {exp.highlights.length > 0 && (
-                    <ul className="mt-1 space-y-0.5 pl-4">
-                      {exp.highlights.map((h, hi) => <li key={hi} className="list-disc text-sm">{h}</li>)}
-                    </ul>
+            {/* ── Location ── */}
+            <div>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Location</p>
+              <div className="space-y-3">
+                <ChipsField label="Preferred locations" values={isEditing("matching") ? draftPrefLocations : (p.matching?.preferred_locations ?? [])} editing={isEditing("matching")} onChange={setDraftPrefLocations} placeholder="Start typing a city…" autocomplete="locations" />
+
+                {/* Remote toggle — styled as a toggle chip */}
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground mb-1.5 block">Remote work</span>
+                  {isEditing("matching") ? (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDraftRemoteOk(true)}
+                        className={cn(
+                          "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+                          draftRemoteOk
+                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
+                            : "border-border text-muted-foreground hover:bg-accent/50",
+                        )}
+                      >
+                        Yes — include remote roles
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDraftRemoteOk(false)}
+                        className={cn(
+                          "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+                          !draftRemoteOk
+                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
+                            : "border-border text-muted-foreground hover:bg-accent/50",
+                        )}
+                      >
+                        No — only my locations
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 text-sm">
+                      <span className={cn(
+                        "rounded-full px-3 py-1 text-xs font-medium",
+                        (p.matching?.remote_ok ?? true) ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                      )}>
+                        {(p.matching?.remote_ok ?? true) ? "Remote OK" : "Locations only"}
+                      </span>
+                    </div>
                   )}
                 </div>
-              )}
-            </EntryCard>
-          ))}
-          {isEditing("experience") && <AddButton onClick={() => setDraftExperience(d => [...d, { company: "", role: "", location: "", period: "", highlights: [] }])} label="Add experience" />}
-          {!isEditing("experience") && (c.experience ?? []).length === 0 && <p className="text-sm text-muted-foreground">No experience added yet.</p>}
-        </div>
-      </Section>
+              </div>
+            </div>
+          </div>
+        </Section>
+      )}
 
-      {/* ── CV: Education ── */}
-      <Section title="Education" icon={<GraduationCap className="h-4 w-4" />}
-        editing={isEditing("education")} saving={isSaving("education")} error={sectionError("education")}
-        onEdit={startEducation}
-        onSave={() => save("education", { cv: { education: draftEducation } })}
-        onCancel={() => cancelEdit("education")}>
-        <div className="space-y-3">
-          {(isEditing("education") ? draftEducation : (c.education ?? [])).map((edu, i) => (
-            <EntryCard key={i} editing={isEditing("education")} onRemove={() => setDraftEducation(d => d.filter((_, j) => j !== i))}>
-              {isEditing("education") ? (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <input value={edu.institution} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, institution: e.target.value } : x))} placeholder="Institution" className={inputCls} />
-                  <input value={edu.period} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, period: e.target.value } : x))} placeholder="Period (e.g. 2018 – 2022)" className={inputCls} />
-                  <input value={edu.degree} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, degree: e.target.value } : x))} placeholder="Degree (e.g. B.S.)" className={inputCls} />
-                  <input value={edu.field} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, field: e.target.value } : x))} placeholder="Field (e.g. Computer Science)" className={inputCls} />
-                  <input value={edu.location} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, location: e.target.value } : x))} placeholder="Location" className={inputCls} />
-                </div>
-              ) : (
-                <div className="space-y-0.5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-medium">{edu.institution}</p>
-                    <p className="text-xs text-muted-foreground">{edu.period}</p>
+      {/* ── CV: Experience ── */}
+      {activeSection === "section-experience" && (
+        <Section id="section-experience" title="Work Experience" icon={<Briefcase className="h-4 w-4" />}
+          editing={isEditing("experience")} saving={isSaving("experience")} error={sectionError("experience")}
+          onEdit={startExperience}
+          onSave={() => save("experience", { cv: { experience: draftExperience } })}
+          onCancel={() => cancelEdit("experience")}>
+          <div className="space-y-3">
+            {(isEditing("experience") ? draftExperience : (c.experience ?? [])).map((exp, i) => (
+              <EntryCard key={i} editing={isEditing("experience")} onRemove={() => setDraftExperience(d => d.filter((_, j) => j !== i))}>
+                {isEditing("experience") ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <input value={exp.company} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, company: e.target.value } : x))} placeholder="Company" className={inputCls} />
+                      <input value={exp.role} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} placeholder="Role / Title" className={inputCls} />
+                      <input value={exp.location} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, location: e.target.value } : x))} placeholder="Location" className={inputCls} />
+                      <input value={exp.period} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, period: e.target.value } : x))} placeholder="Period (e.g. Jan 2022 – Present)" className={inputCls} />
+                    </div>
+                    <ChipsField label="Highlights" values={exp.highlights} editing onChange={v => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, highlights: v } : x))} placeholder="Add a bullet point…" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{[edu.degree, edu.field].filter(Boolean).join(" · ")}{edu.location ? ` · ${edu.location}` : ""}</p>
-                </div>
-              )}
-            </EntryCard>
-          ))}
-          {isEditing("education") && <AddButton onClick={() => setDraftEducation(d => [...d, { institution: "", degree: "", field: "", location: "", period: "" }])} label="Add education" />}
-          {!isEditing("education") && (c.education ?? []).length === 0 && <p className="text-sm text-muted-foreground">No education added yet.</p>}
-        </div>
-      </Section>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="font-medium">{exp.company}</p>
+                      <p className="text-xs text-muted-foreground">{exp.period}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{exp.role}{exp.location ? ` · ${exp.location}` : ""}</p>
+                    {exp.highlights.length > 0 && (
+                      <ul className="mt-1 space-y-0.5 pl-4">
+                        {exp.highlights.map((h, hi) => <li key={hi} className="list-disc text-sm">{h}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </EntryCard>
+            ))}
+            {isEditing("experience") && <AddButton onClick={() => setDraftExperience(d => [...d, { company: "", role: "", location: "", period: "", highlights: [] }])} label="Add experience" />}
+            {!isEditing("experience") && (c.experience ?? []).length === 0 && <p className="text-sm text-muted-foreground">No experience added yet.</p>}
+          </div>
+        </Section>
+      )}
 
       {/* ── CV: Skills ── */}
-      <Section title="Skills" icon={<Zap className="h-4 w-4" />}
-        editing={isEditing("skills")} saving={isSaving("skills")} error={sectionError("skills")}
-        onEdit={startSkills}
-        onSave={() => save("skills", { cv: { skills: draftSkills } })}
-        onCancel={() => cancelEdit("skills")}>
-        <div className="space-y-3">
-          {(isEditing("skills") ? draftSkills : (c.skills ?? [])).map((sg, i) => (
-            <EntryCard key={i} editing={isEditing("skills")} onRemove={() => setDraftSkills(d => d.filter((_, j) => j !== i))}>
-              {isEditing("skills") ? (
-                <div className="space-y-2">
-                  <input value={sg.category} onChange={e => setDraftSkills(d => d.map((x, j) => j === i ? { ...x, category: e.target.value } : x))} placeholder="Category (e.g. Languages, Frameworks)" className={inputCls} />
-                  <ChipsField label="Items" values={sg.items} editing onChange={v => setDraftSkills(d => d.map((x, j) => j === i ? { ...x, items: v } : x))} placeholder="Add a skill…" />
-                </div>
-              ) : (
-                <div className="text-sm">
-                  <span className="font-medium">{sg.category}:</span>{" "}
-                  <span className="text-muted-foreground">{sg.items.join(", ")}</span>
-                </div>
-              )}
-            </EntryCard>
-          ))}
-          {isEditing("skills") && <AddButton onClick={() => setDraftSkills(d => [...d, { category: "", items: [] }])} label="Add skill group" />}
-          {!isEditing("skills") && (c.skills ?? []).length === 0 && <p className="text-sm text-muted-foreground">No skills added yet.</p>}
-        </div>
-      </Section>
-
-      {/* ── CV: Certifications & Languages ── */}
-      <Section title="Certifications & Languages" icon={<Star className="h-4 w-4" />}
-        editing={isEditing("certLang")} saving={isSaving("certLang")} error={sectionError("certLang")}
-        onEdit={startCertLang}
-        onSave={() => save("certLang", { cv: { certifications: draftCerts.map(c => ({ name: c.name, issuer: c.issuer || undefined, date: c.date || undefined })), languages: draftLanguages } })}
-        onCancel={() => cancelEdit("certLang")}>
-        <div className="space-y-5">
-          {/* Certifications */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">Certifications</p>
-            {(isEditing("certLang") ? draftCerts : (c.certifications ?? [])).map((cert, i) => (
-              <EntryCard key={i} editing={isEditing("certLang")} onRemove={() => setDraftCerts(d => d.filter((_, j) => j !== i))}>
-                {isEditing("certLang") ? (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <input value={(cert as Certification).name} onChange={e => setDraftCerts(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Certification name" className={inputCls} />
-                    <input value={(cert as Certification).issuer} onChange={e => setDraftCerts(d => d.map((x, j) => j === i ? { ...x, issuer: e.target.value } : x))} placeholder="Issuer (optional)" className={inputCls} />
-                    <input value={(cert as Certification).date} onChange={e => setDraftCerts(d => d.map((x, j) => j === i ? { ...x, date: e.target.value } : x))} placeholder="Date (optional)" className={inputCls} />
+      {activeSection === "section-skills" && (
+        <Section id="section-skills" title="Skills" icon={<Zap className="h-4 w-4" />}
+          editing={isEditing("skills")} saving={isSaving("skills")} error={sectionError("skills")}
+          onEdit={startSkills}
+          onSave={() => save("skills", { cv: { skills: draftSkills } })}
+          onCancel={() => cancelEdit("skills")}>
+          <div className="space-y-3">
+            {(isEditing("skills") ? draftSkills : (c.skills ?? [])).map((sg, i) => (
+              <EntryCard key={i} editing={isEditing("skills")} onRemove={() => setDraftSkills(d => d.filter((_, j) => j !== i))}>
+                {isEditing("skills") ? (
+                  <div className="space-y-2">
+                    <input value={sg.category} onChange={e => setDraftSkills(d => d.map((x, j) => j === i ? { ...x, category: e.target.value } : x))} placeholder="Category (e.g. Languages, Frameworks)" className={inputCls} />
+                    <ChipsField label="Items" values={sg.items} editing onChange={v => setDraftSkills(d => d.map((x, j) => j === i ? { ...x, items: v } : x))} placeholder="Add a skill…" />
                   </div>
                 ) : (
-                  <p className="text-sm">
-                    <span className="font-medium">{(cert as { name: string }).name}</span>
-                    {(cert as { issuer?: string }).issuer && <span className="text-muted-foreground"> · {(cert as { issuer: string }).issuer}</span>}
-                    {(cert as { date?: string }).date && <span className="text-muted-foreground"> · {(cert as { date: string }).date}</span>}
-                  </p>
+                  <div className="text-sm">
+                    <span className="font-medium">{sg.category}:</span>{" "}
+                    <span className="text-muted-foreground">{sg.items.join(", ")}</span>
+                  </div>
                 )}
               </EntryCard>
             ))}
-            {isEditing("certLang") && <AddButton onClick={() => setDraftCerts(d => [...d, { name: "", issuer: "", date: "" }])} label="Add certification" />}
-            {!isEditing("certLang") && (c.certifications ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
+            {isEditing("skills") && <AddButton onClick={() => setDraftSkills(d => [...d, { category: "", items: [] }])} label="Add skill group" />}
+            {!isEditing("skills") && (c.skills ?? []).length === 0 && <p className="text-sm text-muted-foreground">No skills added yet.</p>}
           </div>
+        </Section>
+      )}
 
-          {/* Languages */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">Languages</p>
-            {(isEditing("certLang") ? draftLanguages : (c.languages ?? [])).map((lang, i) => (
-              <EntryCard key={i} editing={isEditing("certLang")} onRemove={() => setDraftLanguages(d => d.filter((_, j) => j !== i))}>
-                {isEditing("certLang") ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <input value={lang.name} onChange={e => setDraftLanguages(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Language" className={inputCls} />
-                    <input value={lang.proficiency} onChange={e => setDraftLanguages(d => d.map((x, j) => j === i ? { ...x, proficiency: e.target.value } : x))} placeholder="Proficiency (e.g. Native, Fluent)" className={inputCls} />
-                  </div>
-                ) : (
-                  <p className="text-sm"><span className="font-medium">{lang.name}</span><span className="text-muted-foreground"> · {lang.proficiency}</span></p>
-                )}
-              </EntryCard>
-            ))}
-            {isEditing("certLang") && <AddButton onClick={() => setDraftLanguages(d => [...d, { name: "", proficiency: "" }])} label="Add language" />}
-            {!isEditing("certLang") && (c.languages ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-          </div>
-        </div>
-      </Section>
-
-      {/* ── CV: Books / Reading ── placeholder for future ── */}
     </div>
   );
 }

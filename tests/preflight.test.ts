@@ -48,9 +48,6 @@ const fullCV: CV = {
   summary: "Engineer",
   skills: [{ category: "Lang", items: ["TS"] }],
   experience: [],
-  education: [],
-  certifications: [],
-  languages: [],
 };
 
 beforeEach(() => vi.clearAllMocks());

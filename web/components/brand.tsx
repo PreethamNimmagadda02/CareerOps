@@ -21,34 +21,36 @@ export function Logo({ className, title = "CareerOps" }: { className?: string; t
       className={cn("h-8 w-8", className)}
       xmlns="http://www.w3.org/2000/svg"
     >
+      {/* Gradient definition for the futuristic hexagon */}
       <defs>
         <linearGradient id="careerops-mark" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="hsl(var(--brand-from))" />
           <stop offset="100%" stopColor="hsl(var(--brand-to))" />
         </linearGradient>
+        {/* Glow filter to give a neon‑like outline */}
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+          <feMerge>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
-      <rect width="32" height="32" rx="9" fill="url(#careerops-mark)" />
-      {/* Faint track the path travels along — adds depth without noise. */}
+      {/* Hexagonal mark with a subtle drop‑glow */}
+      <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" fill="url(#careerops-mark)" filter="url(#glow)" />
+      {/* Futuristic path: crisp circuit‑style line */}
       <polyline
         points="8,21 14,15 19,18 24,10"
         fill="none"
         stroke="white"
-        strokeWidth="5"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.16"
+        opacity="0.6"
       />
-      <polyline
-        points="8,21 14,15 19,18 24,10"
-        fill="none"
-        stroke="white"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.95"
-      />
-      <circle cx="24" cy="10" r="3.6" fill="white" opacity="0.25" />
-      <circle cx="24" cy="10" r="2.4" fill="white" />
+      {/* Accent node at the path’s end – glows softly */}
+      <circle cx="24" cy="10" r="3" fill="white" opacity="0.3" />
+      <circle cx="24" cy="10" r="1.5" fill="white" />
     </svg>
   );
 }

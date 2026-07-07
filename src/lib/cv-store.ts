@@ -22,37 +22,15 @@ export interface ExperienceEntry {
   highlights: string[];
 }
 
-export interface EducationEntry {
-  institution: string;
-  degree: string;
-  field: string;
-  location: string;
-  period: string;
-}
-
 export interface SkillGroup {
   category: string;
   items: string[];
-}
-
-export interface Certification {
-  name: string;
-  issuer?: string;
-  date?: string;
-}
-
-export interface Language {
-  name: string;
-  proficiency: string;
 }
 
 export interface CV {
   summary: string;
   skills: SkillGroup[];
   experience: ExperienceEntry[];
-  education: EducationEntry[];
-  certifications: Certification[];
-  languages: Language[];
   updatedAt?: string;
 }
 

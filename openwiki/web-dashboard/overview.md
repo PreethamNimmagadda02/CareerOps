@@ -382,7 +382,7 @@ Manage title-filter keywords:
 - **Delete** keyword
 - **Real-time sync** with Postgres
 
-### Profile View (`profile-view.tsx`)
+### Profile View (`profile-view.tsx`) – [Documentation](./profile-view.md)
 
 User profile management:
 - **Resume upload** (to MinIO S3)

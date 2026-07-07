@@ -44,9 +44,6 @@ function makeCV(over: Partial<CV> = {}): CV {
         highlights: ["Shipped"],
       },
     ],
-    education: [],
-    certifications: [],
-    languages: [],
     ...over,
   };
 }

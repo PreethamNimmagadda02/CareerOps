@@ -83,33 +83,6 @@ export function cvToMarkdown(cv: CV, candidateName?: string): string {
     lines.push("---", "");
   }
 
-  if (cv.education?.length) {
-    lines.push("## Education", "");
-    for (const edu of cv.education) {
-      lines.push(`### ${edu.institution}`);
-      const degreeLabel = edu.field ? `${edu.degree} (${edu.field})` : edu.degree;
-      lines.push(`**${degreeLabel}** | ${edu.location}`);
-      lines.push(`*${edu.period}*`);
-      lines.push("");
-    }
-    lines.push("---", "");
-  }
-
-  if (cv.certifications?.length) {
-    lines.push("## Certifications", "");
-    for (const cert of cv.certifications) {
-      const extra = [cert.issuer, cert.date].filter(Boolean).join(" · ");
-      lines.push(`* ${cert.name}${extra ? ` — ${extra}` : ""}`);
-    }
-    lines.push("", "---", "");
-  }
-
-  if (cv.languages?.length) {
-    lines.push("## Languages", "");
-    for (const lang of cv.languages) lines.push(`* **${lang.name}:** ${lang.proficiency}`);
-    lines.push("");
-  }
-
   return lines.join("\n");
 }
 

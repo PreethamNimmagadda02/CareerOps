@@ -9,6 +9,17 @@ import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
   const { data: session, status } = useSession();
+  const [profileName, setProfileName] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+    let cancelled = false;
+    fetch("/api/profile", { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled && d?.user?.name) setProfileName(d.user.name as string); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [status, session?.user]);
 
   if (status === "loading") {
     return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />;
@@ -16,8 +27,10 @@ export function UserMenu() {
 
   if (!session?.user) return null;
 
-  const { name, email, image } = session.user;
-  const label = name || email || "Account";
+  const { image, email } = session.user;
+  // Prefer the fresh name from Postgres (kept in sync with profile edits),
+  // falling back to the session-cached name, then email.
+  const label = profileName || session.user.name || email || "Account";
 
   return (
     <div className="flex items-center gap-2">

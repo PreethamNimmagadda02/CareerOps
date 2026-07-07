@@ -14,6 +14,10 @@ import path from "node:path";
 
 import { callLLM, resolveProvider } from "../../src/lib/llm";
 import { loadEnv } from "../../src/lib/env";
+import type { MatchingPrefs } from "../../src/lib/profile-store";
+import { deriveMatchingDefaults } from "./matching-defaults";
+
+export { deriveMatchingDefaults };
 
 // ── Env ─────────────────────────────────────────────────────────────────────
 
@@ -70,21 +74,34 @@ export interface ExtractedProfile {
   };
   compensation: { target_range: string; currency: string; minimum: string; location_flexibility: string };
   location: { country: string; city: string; timezone: string; visa_status: string; onsite_availability: string };
+  /**
+   * Not produced by the LLM (omitted from SCHEMA_HINT) — filled in
+   * deterministically by `deriveMatchingDefaults()` at the end of
+   * `structureResume()`. See that function for why.
+   */
+  matching?: MatchingPrefs;
 }
 
 export interface ExtractedCV {
   summary: string;
   skills: Array<{ category: string; items: string[] }>;
   experience: Array<{ company: string; role: string; location: string; period: string; highlights: string[] }>;
-  education: Array<{ institution: string; degree: string; field: string; location: string; period: string }>;
-  certifications: Array<{ name: string; issuer: string; date: string }>;
-  languages: Array<{ name: string; proficiency: string }>;
 }
 
 export interface ExtractionResult {
   profile: ExtractedProfile;
   cv: ExtractedCV;
 }
+
+// `Profile.matching` (src/lib/profile-store.ts) drives the scan matchers and
+// is required before a scan can run — `validateMatchingReadiness` blocks it
+// until there is at least one role indicator AND one location indicator.
+// Rather than asking the LLM to invent keyword lists — unreliable and hard to
+// validate — defaults are derived deterministically in `./matching-defaults`
+// (shared with the manual "Job Matching" form) from fields the LLM already
+// extracts reliably (target_roles, candidate/location). See that module for
+// details; `deriveMatchingDefaults` is re-exported above for callers of this
+// module (and existing tests).
 
 const SCHEMA_HINT = `{
   "profile": {
@@ -97,10 +114,7 @@ const SCHEMA_HINT = `{
   "cv": {
     "summary": "",
     "skills": [{ "category": "", "items": [] }],
-    "experience": [{ "company": "", "role": "", "location": "", "period": "", "highlights": [] }],
-    "education": [{ "institution": "", "degree": "", "field": "", "location": "", "period": "" }],
-    "certifications": [{ "name": "", "issuer": "", "date": "" }],
-    "languages": [{ "name": "", "proficiency": "" }]
+    "experience": [{ "company": "", "role": "", "location": "", "period": "", "highlights": [] }]
   }
 }`;
 
@@ -129,7 +143,7 @@ export async function structureResume(resumeText: string): Promise<ExtractionRes
     );
   }
 
-  const text = resumeText.slice(0, 16000); // keep the prompt within context limits
+  const text = resumeText.slice(0, 20000); // keep the prompt within context limits
 
   const prompt = [
     "You are a precise résumé parser. Extract structured data from the résumé below",
@@ -147,6 +161,12 @@ export async function structureResume(resumeText: string): Promise<ExtractionRes
     '- "superpowers": 3-6 short strength phrases inferred from the résumé.',
     '- "skills": group related skills under sensible categories.',
     '- "highlights": the bullet points under each role, verbatim where possible.',
+    '- "target_roles.primary": 2-4 concise job titles that best match the candidate\'s',
+    "  demonstrated experience — from their most recent role(s), a stated objective, or a",
+    "  theme repeated across roles. Always fill this when the résumé shows any work history.",
+    '- "target_roles.archetypes": 1-3 entries built from target_roles.primary / experience,',
+    '  each with a "level" inferred from years of experience (e.g. "Entry-Level", "Mid",',
+    '  "Senior", "Staff+") and "fit" set to "primary" for the closest match.',
     '- archetype "fit" must be one of: primary, secondary, adjacent.',
     "",
     "RÉSUMÉ:",
@@ -170,8 +190,12 @@ export async function structureResume(resumeText: string): Promise<ExtractionRes
   }
 
   const obj = (parsed ?? {}) as Partial<ExtractionResult>;
+  const profile = (obj.profile ?? {}) as ExtractedProfile;
   return {
-    profile: (obj.profile ?? {}) as ExtractedProfile,
+    // Deterministic job-matching defaults always win over anything the model
+    // may have guessed for `matching` (it isn't asked for one — see
+    // SCHEMA_HINT — but this keeps the contract airtight either way).
+    profile: { ...profile, matching: deriveMatchingDefaults(profile) },
     cv: (obj.cv ?? {}) as ExtractedCV,
   };
 }

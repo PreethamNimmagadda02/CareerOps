@@ -16,9 +16,6 @@ const sampleCV: CV = {
   summary: "Engineer",
   skills: [{ category: "Lang", items: ["TS"] }],
   experience: [],
-  education: [],
-  certifications: [],
-  languages: [],
 };
 
 const sampleProfile: Profile = {

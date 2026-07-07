@@ -233,21 +233,8 @@ function parseCvMarkdown(md: string): CV {
     });
 
   const experience = parseExperience(sectionLines("Experience"));
-  const education  = parseEducation(sectionLines("Education"));
 
-  const certifications = sectionLines("Certifications")
-    .filter((l) => l.trim().startsWith("*"))
-    .map((l) => ({ name: l.replace(/^\*\s*/, "").trim() }));
-
-  const languages = sectionLines("Languages")
-    .filter((l) => l.trim().startsWith("*"))
-    .map((l) => {
-      const content = l.replace(/^\*\s*/, "").replace(/\*\*/g, "");
-      const parts = content.split(":");
-      return { name: parts[0]?.trim() ?? "", proficiency: parts[1]?.trim() ?? "" };
-    });
-
-  return { summary, skills, experience, education, certifications, languages };
+  return { summary, skills, experience };
 }
 
 function parseExperience(lines: string[]) {
@@ -267,25 +254,6 @@ function parseExperience(lines: string[]) {
       }
       entries.push({ company, role, location, period, highlights });
       i = j;
-    } else { i++; }
-  }
-  return entries;
-}
-
-function parseEducation(lines: string[]) {
-  const entries: { institution: string; degree: string; field: string; location: string; period: string }[] = [];
-  let i = 0;
-  while (i < lines.length) {
-    if (lines[i].startsWith("### ")) {
-      const institution = lines[i].replace("### ", "").trim();
-      const degreeRaw   = (lines[i + 1] ?? "").replace(/^\*\*/, "").split("**")[0].trim();
-      const [degree, field] = degreeRaw.includes("(")
-        ? [degreeRaw.split("(")[0].trim(), degreeRaw.match(/\(([^)]+)\)/)?.[1] ?? ""]
-        : [degreeRaw, ""];
-      const location = (lines[i + 1] ?? "").split("|")[1]?.trim() ?? "";
-      const period   = (lines[i + 2] ?? "").replace(/^\*/, "").replace(/\*$/, "").trim();
-      entries.push({ institution, degree, field, location, period });
-      i += 3;
     } else { i++; }
   }
   return entries;

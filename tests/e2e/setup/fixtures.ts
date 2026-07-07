@@ -21,9 +21,6 @@ export function makeCV(over: Partial<CV> = {}): CV {
         highlights: ["Shipped X", "Scaled Y"],
       },
     ],
-    education: [],
-    certifications: [],
-    languages: [],
     ...over,
   };
 }
