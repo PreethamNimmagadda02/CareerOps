@@ -10,6 +10,8 @@ import {
   Layers,
   RefreshCw,
   Loader2,
+  Search,
+  X,
 } from "lucide-react";
 
 import { ApplicationInsights } from "@/components/application-detail";
@@ -76,6 +78,7 @@ function DashboardInner() {
   const [tab, setTab] = React.useState<TabKey>("all");
   const [sort, setSort] = React.useState<SortMode>("score");
   const [grouped, setGrouped] = React.useState(true);
+  const [search, setSearch] = React.useState("");
   const [openReport, setOpenReport] = React.useState<{ num: string; title: string } | null>(null);
   const [savingNum, setSavingNum] = React.useState<string | null>(null);
   const [keywordsOpen, setKeywordsOpen] = React.useState(false);
@@ -134,7 +137,16 @@ function DashboardInner() {
   }, [apps]);
 
   const filtered = React.useMemo(() => {
-    const list = apps.filter((a) => inTab(a, tab));
+    const q = search.trim().toLowerCase();
+    const list = apps.filter((a) => {
+      if (!inTab(a, tab)) return false;
+      if (!q) return true;
+      return (
+        a.company.toLowerCase().includes(q) ||
+        a.role.toLowerCase().includes(q) ||
+        (a.status ?? "").toLowerCase().includes(q)
+      );
+    });
 
     const byMode = (a: Application, b: Application) => {
       switch (sort) {
@@ -157,7 +169,7 @@ function DashboardInner() {
       }
       return byMode(a, b);
     });
-  }, [apps, tab, sort, grouped]);
+  }, [apps, tab, sort, grouped, search]);
 
   const changeStatus = React.useCallback(
     async (app: Application, newStatus: string) => {
@@ -247,41 +259,67 @@ function DashboardInner() {
           <MetricsCards metrics={metrics} />
 
           {/* Controls */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div
-              className="flex flex-wrap gap-1 rounded-lg border border-border/70 bg-card/60 p-1"
-              role="tablist"
-              aria-label="Filter applications"
-            >
-              {TABS.map((t) => (
+          <div className="flex flex-col gap-3">
+            {/* Search bar */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                id="app-search"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by company, role, or status…"
+                aria-label="Search applications"
+                className="h-9 w-full rounded-lg border border-border/70 bg-card/60 pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              {search && (
                 <button
-                  key={t.key}
-                  role="tab"
-                  aria-selected={tab === t.key}
-                  onClick={() => setTab(t.key)}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                    tab === t.key
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                  )}
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded text-muted-foreground hover:text-foreground"
                 >
-                  {t.label}{" "}
-                  <span className="text-xs tabular-nums opacity-70">{tabCounts[t.key]}</span>
+                  <X className="h-3.5 w-3.5" />
                 </button>
-              ))}
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={cycleSort}>
-                <ArrowUpDown className="h-4 w-4" /> Sort: {sort}
-              </Button>
-              <Button
-                variant={grouped ? "default" : "outline"}
-                size="sm"
-                onClick={() => setGrouped((g) => !g)}
+
+            {/* Tab filters + sort/group */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div
+                className="flex flex-wrap gap-1 rounded-lg border border-border/70 bg-card/60 p-1"
+                role="tablist"
+                aria-label="Filter applications"
               >
-                <Layers className="h-4 w-4" /> Group
-              </Button>
+                {TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    role="tab"
+                    aria-selected={tab === t.key}
+                    onClick={() => setTab(t.key)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                      tab === t.key
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    )}
+                  >
+                    {t.label}{" "}
+                    <span className="text-xs tabular-nums opacity-70">{tabCounts[t.key]}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={cycleSort}>
+                  <ArrowUpDown className="h-4 w-4" /> Sort: {sort}
+                </Button>
+                <Button
+                  variant={grouped ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setGrouped((g) => !g)}
+                >
+                  <Layers className="h-4 w-4" /> Group
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -313,7 +351,9 @@ function DashboardInner() {
                   {filtered.length === 0 && (
                     <tr>
                       <td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
-                        No applications match this filter.
+                        {search.trim()
+                          ? `No applications match "${search.trim()}".`
+                          : "No applications match this filter."}
                       </td>
                     </tr>
                   )}
