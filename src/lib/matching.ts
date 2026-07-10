@@ -53,6 +53,7 @@ export function normalizeMatchingPrefs(prefs: Partial<MatchingPrefs> | undefined
     seniority_exclusions: prefs?.seniority_exclusions ?? [],
     preferred_locations: prefs?.preferred_locations ?? [],
     remote_ok: prefs?.remote_ok ?? true,
+  visa_status: prefs?.visa_status,
     excluded_locations: prefs?.excluded_locations ?? [],
   };
 }
@@ -107,7 +108,11 @@ export function locationMatch(
   const preferred = keywordRegex(prefs.preferred_locations)?.test(text) ?? false;
   const remote = REMOTE_RE.test(text);
   const excluded = keywordRegex(prefs.excluded_locations)?.test(text) ?? false;
-  const eligible = preferred || (prefs.remote_ok && remote && !excluded);
+  // If the role is remote, ensure the user's visa status permits working for foreign companies.
+  const visaStatus = (prefs as any).visa_status?.toLowerCase() ?? "";
+  const visaRestricts = /sponsor|visa|work permit/.test(visaStatus);
+  const remoteEligible = prefs.remote_ok && remote && !excluded && !visaRestricts;
+  const eligible = preferred || remoteEligible;
   return { eligible, preferred, remote };
 }
 

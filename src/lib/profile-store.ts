@@ -75,6 +75,8 @@ export interface LocationPrefs {
  * lists mean "exclude nothing".
  */
 export interface MatchingPrefs {
+  /** User's visa status (e.g., "citizen", "needs sponsorship"). */
+  visa_status?: string;
   /** Discipline keywords that mark a title as in-scope (e.g. "software", "backend", "ml"). */
   role_domains: string[];
   /** Role nouns combined with the domains (e.g. "engineer", "developer", "architect"). */
