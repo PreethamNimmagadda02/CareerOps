@@ -10,7 +10,7 @@ const nextConfig = {
   outputFileTracingRoot: join(__dirname, ".."),
   // Keep these node-oriented libs out of the webpack bundle — they're loaded at
   // runtime by the resume-extraction route handler.
-  serverExternalPackages: ["unpdf", "mammoth", "openai"],
+  serverExternalPackages: ["unpdf", "mammoth"],
   experimental: {
     serverActions: {
       bodySizeLimit: "11mb", // cover resume uploads up to 10 MB

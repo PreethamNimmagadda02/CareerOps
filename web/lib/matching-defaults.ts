@@ -76,6 +76,8 @@ export function buildMatchingPrefs(input: {
   locations: string[];
   /** Whether remote roles are acceptable. */
   remoteOk: boolean;
+  /** Countries the candidate is eligible to work in without a visa (optional). */
+  eligibleLocations?: string[];
 }): MatchingPrefs {
   const cleanTitles = uniqueLower(input.titles);
   const domains = new Set<string>();
@@ -96,7 +98,7 @@ export function buildMatchingPrefs(input: {
     seniority_exclusions: cleanAvoid,
     preferred_locations: uniqueLower(input.locations),
     remote_ok: input.remoteOk,
-    excluded_locations: [],
+    eligible_locations: uniqueLower(input.eligibleLocations ?? []),
   };
 }
 

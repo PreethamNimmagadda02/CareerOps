@@ -22,7 +22,7 @@
     "scan": "tsx src/cli/scan.ts --compact --concurrency 12",
     "scan:fallback": "tsx src/cli/scan.ts --compact --fallback --concurrency 12 --browser-concurrency 8",
     "evaluate": "tsx src/cli/evaluate.ts --limit 5 --concurrency 8",
-    "evaluate:all": "tsx src/cli/evaluate.ts --limit 50 --concurrency 8",
+    "evaluate:all": "tsx src/cli/evaluate.ts --limit 99999 --concurrency 8",
     "evaluate:dry": "tsx src/cli/evaluate.ts --limit 5 --dry-run --concurrency 8",
     "pdf": "tsx src/cli/pdf.ts",
     "tracker": "tsx src/cli/tracker.ts",

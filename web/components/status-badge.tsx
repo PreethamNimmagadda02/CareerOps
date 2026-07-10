@@ -26,14 +26,6 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function scoreColor(score: number | null): string {
-  if (score === null) return "text-muted-foreground";
-  if (score >= 4.0) return "text-ctp-green font-bold";
-  if (score >= 3.8) return "text-ctp-yellow";
-  if (score >= 3.0) return "text-foreground";
-  return "text-ctp-red";
-}
-
 /** Verdict chip styles — the evaluation's bottom line, scannable at a glance. */
 const RECOMMENDATION_STYLES: Record<string, { label: string; className: string }> = {
   APPLY_NOW: {

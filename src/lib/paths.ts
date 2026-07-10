@@ -19,7 +19,7 @@ function findProjectRoot(): string {
   return process.cwd();
 }
 
-export const PROJECT_ROOT = findProjectRoot();
+const PROJECT_ROOT = findProjectRoot();
 
 const p = (...segments: string[]): string => path.join(PROJECT_ROOT, ...segments);
 

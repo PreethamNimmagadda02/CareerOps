@@ -26,7 +26,7 @@ const PREFS: MatchingPrefs = normalizeMatchingPrefs({
   seniority_exclusions: ["senior", "staff", "principal", "lead", "manager", "director", "head"],
   preferred_locations: ["india", "bengaluru", "bangalore", "hyderabad", "mumbai"],
   remote_ok: true,
-  excluded_locations: ["us", "usa", "united states", "uk", "london", "san francisco", "ca"],
+  eligible_locations: ["india"],
 });
 
 describe("titleMatches", () => {
@@ -90,6 +90,29 @@ describe("locationMatch", () => {
 
   it("accepts remote that also lists a preferred location", () => {
     expect(locationMatch("Remote (US / India)", PREFS).eligible).toBe(true);
+  });
+
+  it("accepts worldwide remote regardless of visa status", () => {
+    expect(locationMatch("Remote", PREFS).eligible).toBe(true);
+    expect(locationMatch("Remote, Worldwide", PREFS).eligible).toBe(true);
+    expect(locationMatch("Remote - Anywhere", PREFS).eligible).toBe(true);
+  });
+
+  it("rejects country-restricted remote when the user isn't eligible for that country", () => {
+    expect(locationMatch("Remote (US)", PREFS).eligible).toBe(false);
+    expect(locationMatch("Remote - US only", PREFS).eligible).toBe(false);
+    expect(locationMatch("US Remote", PREFS).eligible).toBe(false);
+  });
+
+  it("accepts country-restricted remote when the user is eligible for that country", () => {
+    expect(locationMatch("Remote (India)", PREFS).eligible).toBe(true);
+    expect(locationMatch("Remote - India only", PREFS).eligible).toBe(true);
+  });
+
+  it("accepts country-restricted remote via eligible_locations even without a matching preferred location", () => {
+    const usEligible: MatchingPrefs = { ...PREFS, eligible_locations: ["united states"] };
+    expect(locationMatch("Remote (United States)", usEligible).eligible).toBe(true);
+    expect(locationMatch("Remote (Germany)", usEligible).eligible).toBe(false);
   });
 });
 

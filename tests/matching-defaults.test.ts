@@ -38,7 +38,7 @@ describe("buildMatchingPrefs", () => {
     expect(m.seniority_exclusions).toEqual([]);
   });
 
-  it("never populates strong_titles or excluded_locations", () => {
+  it("never populates strong_titles, and defaults eligible_locations to an empty list", () => {
     const m = buildMatchingPrefs({
       titles: ["Backend Engineer"],
       avoid: ["senior"],
@@ -46,7 +46,17 @@ describe("buildMatchingPrefs", () => {
       remoteOk: true,
     });
     expect(m.strong_titles).toEqual([]);
-    expect(m.excluded_locations).toEqual([]);
+    expect(m.eligible_locations).toEqual([]);
+  });
+
+  it("lowercases, trims, and dedupes eligible_locations", () => {
+    const m = buildMatchingPrefs({
+      titles: ["Backend Engineer"],
+      locations: ["India"],
+      remoteOk: true,
+      eligibleLocations: ["India", " india", "UNITED STATES"],
+    });
+    expect(m.eligible_locations).toEqual(["india", "united states"]);
   });
 
   it("lowercases, trims, and dedupes titles, avoid, and locations", () => {
@@ -83,7 +93,7 @@ describe("buildMatchingPrefs", () => {
       seniority_exclusions: [],
       preferred_locations: [],
       remote_ok: true,
-      excluded_locations: [],
+      eligible_locations: [],
     });
   });
 });

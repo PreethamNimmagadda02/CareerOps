@@ -172,7 +172,7 @@ function buildProfileFromYml(raw: string): Profile {
       seniority_exclusions: listAfter("seniority_exclusions"),
       preferred_locations: listAfter("preferred_locations"),
       remote_ok: val("remote_ok") !== "false",
-      excluded_locations: listAfter("excluded_locations"),
+      eligible_locations: listAfter("eligible_locations"),
     },
   };
 }

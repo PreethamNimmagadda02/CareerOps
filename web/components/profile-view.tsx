@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   AlertCircle,
   ArrowLeft,
-  BookOpen,
   Briefcase,
   Check,
   Download,
@@ -45,7 +44,7 @@ interface MatchingData {
   seniority_exclusions?: string[];
   preferred_locations?: string[];
   remote_ok?: boolean;
-  excluded_locations?: string[];
+  eligible_locations?: string[];
 }
 
 interface ProfileData {
@@ -80,7 +79,10 @@ function hasRoleIndicator(m: MatchingData | undefined): boolean {
 }
 
 function hasLocationIndicator(m: MatchingData | undefined): boolean {
-  return Boolean(m?.preferred_locations?.length || m?.remote_ok);
+  return Boolean(
+    m?.preferred_locations?.length ||
+    m?.remote_ok
+  );
 }
 
 interface ChecklistItem {
@@ -595,8 +597,6 @@ export function ProfileView() {
   const [errors, setErrors] = React.useState<Partial<Record<SectionKey, string | null>>>({});
 
   // ── draft states ───────────────────────────────────────────────────────────
-  // account
-  const [draftName, setDraftName] = React.useState("");
   // personal
   const [draftFullName, setDraftFullName] = React.useState("");
   const [draftPhone, setDraftPhone] = React.useState("");
@@ -620,8 +620,8 @@ export function ProfileView() {
   const [draftVisaStatus, setDraftVisaStatus] = React.useState("");
   // matching (drives the job-scan matchers — expanded via buildMatchingPrefs)
   const [draftTitles, setDraftTitles] = React.useState<string[]>([]);
-  const [draftAvoid, setDraftAvoid] = React.useState<string[]>([]);
   const [draftPrefLocations, setDraftPrefLocations] = React.useState<string[]>([]);
+  const [draftEligibleLocations, setDraftEligibleLocations] = React.useState<string[]>([]);
   const [draftRemoteOk, setDraftRemoteOk] = React.useState(true);
   // cv
   const [draftExperience, setDraftExperience] = React.useState<Experience[]>([]);
@@ -692,7 +692,6 @@ export function ProfileView() {
   // ── section start helpers (populate drafts) ────────────────────────────────
 
   function startAccount() {
-    setDraftName(user?.name ?? "");
     startEdit("account");
   }
   function startPersonal() {
@@ -726,8 +725,8 @@ export function ProfileView() {
   function startMatching() {
     const m = profile?.matching ?? {};
     setDraftTitles(m.include_titles ?? []);
-    // Merge the two legacy exclusion lists so nothing already saved is lost.
-    setDraftAvoid([...new Set([...(m.exclude_titles ?? []), ...(m.seniority_exclusions ?? [])])]);
+    // Load eligible locations if present (new field).
+    setDraftEligibleLocations(m.eligible_locations ?? []);
     setDraftPrefLocations(m.preferred_locations ?? []);
     setDraftRemoteOk(m.remote_ok ?? true);
     startEdit("matching");
@@ -817,7 +816,7 @@ export function ProfileView() {
           <button key={s.id} type="button" onClick={() => setActiveSection(s.id)}
             aria-current={activeSection === s.id ? "true" : undefined}
             className={cn(
-              "shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              "flex-1 flex justify-center shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors",
               activeSection === s.id
                 ? "bg-primary text-primary-foreground shadow-md"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -984,9 +983,9 @@ export function ProfileView() {
             profile: {
               matching: buildMatchingPrefs({
                 titles: draftTitles,
-                avoid: draftAvoid,
                 locations: draftPrefLocations,
                 remoteOk: draftRemoteOk,
+                eligibleLocations: draftEligibleLocations,
               }),
             },
           })}
@@ -1004,7 +1003,7 @@ export function ProfileView() {
               <p className="mb-2 text-xs font-semibold text-muted-foreground">Roles</p>
               <div className="space-y-3">
                 <ChipsField label="Job titles you want" values={isEditing("matching") ? draftTitles : (p.matching?.include_titles ?? [])} editing={isEditing("matching")} onChange={setDraftTitles} placeholder="Start typing a title…" autocomplete="job-titles" />
-                <ChipsField label="Avoid these roles (optional)" values={isEditing("matching") ? draftAvoid : ([...new Set([...(p.matching?.exclude_titles ?? []), ...(p.matching?.seniority_exclusions ?? [])])])} editing={isEditing("matching")} onChange={setDraftAvoid} placeholder="Start typing a title…" helpText="optional" autocomplete="job-titles" />
+
               </div>
             </div>
 
@@ -1013,6 +1012,7 @@ export function ProfileView() {
               <p className="mb-2 text-xs font-semibold text-muted-foreground">Location</p>
               <div className="space-y-3">
                 <ChipsField label="Preferred locations" values={isEditing("matching") ? draftPrefLocations : (p.matching?.preferred_locations ?? [])} editing={isEditing("matching")} onChange={setDraftPrefLocations} placeholder="Start typing a city…" autocomplete="locations" />
+                <ChipsField label="Eligible work locations (optional)" values={isEditing("matching") ? draftEligibleLocations : (p.matching?.eligible_locations ?? [])} editing={isEditing("matching")} onChange={setDraftEligibleLocations} placeholder="Start typing a country…" autocomplete="locations" />
 
                 {/* Remote toggle — styled as a toggle chip */}
                 <div>

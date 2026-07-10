@@ -51,7 +51,7 @@ function toFilename(reportRelPath: string): string {
 }
 
 /** Extract summary from raw markdown text. */
-export function parseReportSummary(text: string): ReportSummary {
+function parseReportSummary(text: string): ReportSummary {
   const head = text.slice(0, 4000);
   const title = head.match(reTitle);
   let comp = tableField(head, "Comp");
@@ -121,8 +121,6 @@ export async function readReportByNumber(
       return name.startsWith(`${padded}-`) && name.endsWith(".md");
     });
     if (!key) return null;
-
-    const filename = key.slice(prefix.length);
 
     const getRes = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
     const markdown = await getRes.Body?.transformToString("utf-8");

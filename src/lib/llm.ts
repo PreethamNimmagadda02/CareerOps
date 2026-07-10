@@ -6,7 +6,7 @@ import type { ProviderConfig } from "../types.js";
 import { paths } from "./paths.js";
 
 /** Built-in providers, always available without extra config. */
-export const BUILTIN_PROVIDERS: Record<string, ProviderConfig> = {
+const BUILTIN_PROVIDERS: Record<string, ProviderConfig> = {
   zen: {
     baseURL: "https://opencode.ai/zen/v1",
     defaultModel: "deepseek-v4-flash-free",
@@ -21,7 +21,7 @@ export const BUILTIN_PROVIDERS: Record<string, ProviderConfig> = {
 
 /** Read and parse `~/.config/opencode/opencode.jsonc`, stripping comments. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function loadOpencodeConfig(configPath: string = paths.opencodeConfig): Record<string, any> {
+function loadOpencodeConfig(configPath: string = paths.opencodeConfig): Record<string, any> {
   if (!existsSync(configPath)) return {};
   try {
     const raw = readFileSync(configPath, "utf8")

@@ -23,14 +23,3 @@ export function loadEnv(envPath: string = paths.env): void {
   }
 }
 
-/** Return an env var or throw a descriptive error if missing/empty. */
-export function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(
-      `Missing required environment variable "${name}". ` +
-        `Set it in your shell or in the project .env file (see .env.example).`,
-    );
-  }
-  return value;
-}

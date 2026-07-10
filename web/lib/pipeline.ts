@@ -18,7 +18,7 @@ const ALLOWED: Record<PipelineCommand, { cmd: string; args: string[] }> = {
     ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "5", "--concurrency", "12"] }
     : { cmd: "npm", args: ["run", "evaluate"] },
   "evaluate:all": isProd
-    ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "100", "--concurrency", "12"] }
+    ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "99999", "--concurrency", "12"] }
     : { cmd: "npm", args: ["run", "evaluate:all"] },
   "evaluate:dry": isProd
     ? { cmd: "node", args: ["dist/cli/evaluate.js", "--limit", "5", "--dry-run", "--concurrency", "12"] }

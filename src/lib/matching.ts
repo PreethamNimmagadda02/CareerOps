@@ -38,6 +38,54 @@ function keywordRegex(words: string[] | undefined): RegExp | null {
 /** Generic remote-work markers — not candidate-specific. */
 const REMOTE_RE = /\b(remote|remote-first|work from home|wfh|distributed)\b/i;
 
+/** Markers that explicitly call out a remote role as having no geographic restriction. */
+const WORLDWIDE_RE = /\b(worldwide|anywhere|global|international)\b/i;
+
+/**
+ * Split a raw qualifier fragment ("US / India", "US only", "EMEA") into
+ * cleaned, lowercase country/region tokens.
+ */
+function splitQualifier(raw: string): string[] {
+  return raw
+    .replace(/\bonly\b/gi, "")
+    .split(/[/,&]|\band\b/i)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Determine whether a remote-labeled location string restricts the role to
+ * specific countries/regions (e.g. "Remote (US / India)", "Remote - US only",
+ * "US Remote"), and if so, extract those tokens.
+ *
+ * Returns `null` if the string isn't remote at all, `[]` if it's remote with
+ * no restriction (worldwide — e.g. bare "Remote" or "Remote, Worldwide"), or
+ * a non-empty array of country/region tokens the role is restricted to.
+ */
+function remoteRestriction(text: string): string[] | null {
+  if (!REMOTE_RE.test(text)) return null;
+  if (WORLDWIDE_RE.test(text)) return [];
+
+  // "Remote (US / India)" — qualifier in parentheses.
+  const paren = text.match(/\(([^)]+)\)/);
+  if (paren) return splitQualifier(paren[1]);
+
+  // "Remote - US only" / "Remote, US" / "Remote: US"
+  const after = text.match(/\bremote\b[\s-]*[,:-]\s*([a-z][a-z\s/&]*)/i);
+  if (after) return splitQualifier(after[1]);
+
+  // "US Remote" — qualifier precedes "remote".
+  const before = text.match(/^([a-z][a-z\s/&]*?)\s+remote\b/i);
+  if (before) return splitQualifier(before[1]);
+
+  // "Remote US" / "Remote India" — qualifier follows with no delimiter.
+  const direct = text.match(/\bremote\b\s+([a-z][a-z\s/&]*)/i);
+  if (direct) return splitQualifier(direct[1]);
+
+  // Bare "Remote" with no qualifier at all — worldwide.
+  return [];
+}
+
 /**
  * Fill in defaults for a possibly partial `matching` record so the matchers
  * can rely on every field being present. Empty include-lists mean "no
@@ -53,8 +101,8 @@ export function normalizeMatchingPrefs(prefs: Partial<MatchingPrefs> | undefined
     seniority_exclusions: prefs?.seniority_exclusions ?? [],
     preferred_locations: prefs?.preferred_locations ?? [],
     remote_ok: prefs?.remote_ok ?? true,
-  visa_status: prefs?.visa_status,
-    excluded_locations: prefs?.excluded_locations ?? [],
+    visa_status: prefs?.visa_status,
+    eligible_locations: prefs?.eligible_locations ?? [],
   };
 }
 
@@ -97,8 +145,16 @@ export function engineeringMatch(title: string, prefs: MatchingPrefs): Engineeri
 
 /**
  * Determine location eligibility from a location string, based on the user's
- * preferred locations, remote preference, and excluded (foreign-restricted)
- * locations.
+ * preferred locations, remote preference, and (for country-restricted remote
+ * roles) the countries the user is eligible to work in without a visa.
+ *
+ * Remote roles come in two flavors:
+ *   - Worldwide remote (e.g. "Remote", "Remote, Worldwide") — always eligible
+ *     when the user allows remote roles, since no work visa is required.
+ *   - Country-restricted remote (e.g. "Remote (US)", "Remote - India only")
+ *     — only eligible when one of the restricted countries is one of the
+ *     user's preferred or eligible-to-work-in locations, since otherwise the
+ *     user would need a work visa for that country.
  */
 export function locationMatch(
   location: string | undefined,
@@ -107,11 +163,20 @@ export function locationMatch(
   const text = String(location || "");
   const preferred = keywordRegex(prefs.preferred_locations)?.test(text) ?? false;
   const remote = REMOTE_RE.test(text);
-  const excluded = keywordRegex(prefs.excluded_locations)?.test(text) ?? false;
-  // If the role is remote, ensure the user's visa status permits working for foreign companies.
-  const visaStatus = (prefs as any).visa_status?.toLowerCase() ?? "";
-  const visaRestricts = /sponsor|visa|work permit/.test(visaStatus);
-  const remoteEligible = prefs.remote_ok && remote && !excluded && !visaRestricts;
+
+  const restriction = remoteRestriction(text);
+  const restrictedCountries = restriction ?? [];
+  const eligibleRe = keywordRegex([
+    ...(prefs.preferred_locations ?? []),
+    ...(prefs.eligible_locations ?? []),
+  ]);
+  // Worldwide remote (no restriction) needs no visa; country-restricted
+  // remote only counts if the user can legally work in one of those countries.
+  const restrictionOk =
+    restrictedCountries.length === 0 ||
+    restrictedCountries.some((c) => eligibleRe?.test(c) ?? false);
+
+  const remoteEligible = prefs.remote_ok && remote && restrictionOk;
   const eligible = preferred || remoteEligible;
   return { eligible, preferred, remote };
 }
@@ -127,8 +192,7 @@ export function isHighSignal(job: Job, prefs: MatchingPrefs): boolean {
 
   const weakTitle = keywordRegex(prefs.exclude_titles)?.test(job.title) ?? false;
 
-  const loc = locationMatch(job.location, prefs);
-  const friendlyLocation = loc.preferred || (prefs.remote_ok && loc.remote);
+  const friendlyLocation = locationMatch(job.location, prefs).eligible;
 
   const tooSenior = keywordRegex(prefs.seniority_exclusions)?.test(job.title) ?? false;
 

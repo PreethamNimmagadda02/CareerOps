@@ -93,8 +93,8 @@ export interface MatchingPrefs {
   preferred_locations: string[];
   /** Whether remote roles are acceptable. */
   remote_ok: boolean;
-  /** Location keywords that make a remote role ineligible (e.g. foreign-restricted regions). */
-  excluded_locations: string[];
+  /** Countries where the candidate is eligible to work (optional). */
+  eligible_locations?: string[];
 }
 
 export interface Profile {

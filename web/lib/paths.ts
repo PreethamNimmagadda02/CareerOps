@@ -23,7 +23,7 @@ function findRepoRoot(): string {
   return path.resolve(process.cwd(), "..");
 }
 
-export const REPO_ROOT = findRepoRoot();
+const REPO_ROOT = findRepoRoot();
 
 const p = (...segments: string[]): string => path.join(REPO_ROOT, ...segments);
 

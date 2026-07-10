@@ -165,7 +165,7 @@ export function profileToYaml(profile: Profile): string {
     list("seniority_exclusions", m.seniority_exclusions);
     list("preferred_locations", m.preferred_locations);
     lines.push(`  remote_ok: ${m.remote_ok !== false}`);
-    list("excluded_locations", m.excluded_locations);
+    list("eligible_locations", m.eligible_locations);
   }
 
   return lines.join("\n");

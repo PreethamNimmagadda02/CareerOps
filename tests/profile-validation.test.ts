@@ -146,7 +146,7 @@ const MATCHING_OK: MatchingPrefs = {
   seniority_exclusions: [],
   preferred_locations: ["berlin"],
   remote_ok: true,
-  excluded_locations: [],
+  eligible_locations: [],
 };
 
 describe("validateMatchingReadiness", () => {
@@ -225,7 +225,7 @@ describe("validateMatchingReadiness", () => {
           seniority_exclusions: [],
           preferred_locations: [],
           remote_ok: false,
-          excluded_locations: [],
+          eligible_locations: [],
         },
       }),
     );

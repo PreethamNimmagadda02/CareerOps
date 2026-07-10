@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { db } from "../../../../src/lib/db";
-import { ddb, TABLE_PROFILE, TABLE_CV } from "../../../../src/lib/dynamo";
+import { ddb } from "../../../../src/lib/dynamo";
 import { ListTablesCommand } from "@aws-sdk/client-dynamodb";
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { resolveConfig as resolveMinioConfig } from "../../../../src/lib/minio";

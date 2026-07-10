@@ -53,8 +53,3 @@ export async function resolveOwnerUserId(): Promise<string> {
       "or CAREER_OPS_USER_ID in your environment so scanned/evaluated jobs are attributed to a user.",
   );
 }
-
-/** Test/inline override + cache reset. */
-export function _setOwnerCache(id: string | undefined): void {
-  cached = id;
-}

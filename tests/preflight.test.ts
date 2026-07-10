@@ -40,7 +40,7 @@ const fullProfile: Profile = {
     seniority_exclusions: [],
     preferred_locations: ["berlin"],
     remote_ok: true,
-    excluded_locations: [],
+    eligible_locations: [],
   },
 };
 

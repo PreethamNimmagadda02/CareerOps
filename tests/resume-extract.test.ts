@@ -160,7 +160,7 @@ describe("deriveMatchingDefaults", () => {
     expect(m.exclude_titles).toEqual([]);
     expect(m.strong_titles).toEqual([]);
     expect(m.seniority_exclusions).toEqual([]);
-    expect(m.excluded_locations).toEqual([]);
+    expect(m.eligible_locations).toEqual([]);
   });
 
   it("returns a fully-formed object with empty lists when there is no signal at all", () => {
@@ -174,7 +174,7 @@ describe("deriveMatchingDefaults", () => {
       seniority_exclusions: [],
       preferred_locations: [],
       remote_ok: true,
-      excluded_locations: [],
+      eligible_locations: [],
     });
   });
 });
