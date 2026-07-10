@@ -56,6 +56,9 @@ function inTab(app: Application, key: TabKey): boolean {
     if (app.recommendation) return app.recommendation === "APPLY_NOW";
     return (app.score ?? 0) >= 4;
   }
+  if (key === "evaluated") {
+    return norm === "evaluated" && (app.score !== null || app.recommendation !== null);
+  }
   return norm === key;
 }
 
