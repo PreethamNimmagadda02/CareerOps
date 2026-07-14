@@ -19,16 +19,23 @@ const NAV = [
  */
 export function SiteHeader() {
   const pathname = usePathname();
+  // During onboarding the command center is gated (until the first evaluation
+  // completes), so we hide primary nav — no dead links that just bounce back.
+  const onboarding = pathname === "/onboarding";
 
   return (
     <header className="glass sticky top-0 z-30 border-b border-border/70">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex items-center gap-6">
-          <Link href="/" className="transition-opacity hover:opacity-85" aria-label="CareerOps home">
+          <Link
+            href={onboarding ? "/onboarding" : "/"}
+            className="transition-opacity hover:opacity-85"
+            aria-label="CareerOps home"
+          >
             <Wordmark size="sm" />
           </Link>
 
-          <nav className="flex items-center gap-1" aria-label="Primary">
+          <nav className={cn("items-center gap-1", onboarding ? "hidden" : "flex")} aria-label="Primary">
             {NAV.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
               return (

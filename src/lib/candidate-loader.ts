@@ -83,6 +83,48 @@ export function cvToMarkdown(cv: CV, candidateName?: string): string {
     lines.push("---", "");
   }
 
+  if (cv.projects?.length) {
+    lines.push("## Projects", "");
+    for (const proj of cv.projects) {
+      const heading = proj.url ? `### ${proj.name} (${proj.url})` : `### ${proj.name}`;
+      lines.push(heading);
+      if (proj.description) lines.push(proj.description);
+      for (const h of proj.highlights ?? []) lines.push(`* ${h}`);
+      lines.push("");
+    }
+    lines.push("---", "");
+  }
+
+  if (cv.education?.length) {
+    lines.push("## Education", "");
+    for (const edu of cv.education) {
+      const degree = [edu.degree, edu.field].filter(Boolean).join(", ");
+      lines.push(`### ${edu.institution}`);
+      if (degree || edu.period) lines.push([degree, edu.period].filter(Boolean).join(" | "));
+      if (edu.details) lines.push(edu.details);
+      lines.push("");
+    }
+    lines.push("---", "");
+  }
+
+  if (cv.certifications?.length) {
+    lines.push("## Certifications", "");
+    for (const cert of cv.certifications) {
+      const meta = [cert.issuer, cert.year].filter(Boolean).join(", ");
+      lines.push(meta ? `* **${cert.name}** — ${meta}` : `* **${cert.name}**`);
+    }
+    lines.push("", "---", "");
+  }
+
+  if (cv.languages?.length) {
+    lines.push("## Languages", "");
+    const parts = cv.languages.map((l) =>
+      l.proficiency ? `${l.language} (${l.proficiency})` : l.language,
+    );
+    lines.push(parts.join(", "));
+    lines.push("", "---", "");
+  }
+
   return lines.join("\n");
 }
 

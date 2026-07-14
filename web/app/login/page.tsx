@@ -1,27 +1,13 @@
-import {
-  CheckCircle2,
-  FileUp,
-  MousePointerClick,
-  Radar,
-  Sparkles,
-  Zap,
-} from "lucide-react";
+import { CheckCircle2, FileUp, MousePointerClick, Radar, Zap } from "lucide-react";
 
 import { enabledProviders } from "@/auth.config";
 import { LoginForm } from "@/components/login-form";
 import { BRAND, Logo, Wordmark } from "@/components/brand";
-import { ScoreBadge, StatusBadge } from "@/components/status-badge";
+import { LandingPreview } from "@/components/landing-preview";
 
 export const metadata = {
   title: "Sign in",
 };
-
-/** Decorative pipeline rows for the product preview — value shown, not told. */
-const PREVIEW_ROWS = [
-  { company: "Northwind Labs", role: "Senior Software Engineer", score: 4.8, status: "interview" },
-  { company: "Acme Cloud", role: "Staff Platform Engineer", score: 4.5, status: "applied" },
-  { company: "Lumen AI", role: "Backend Engineer, Infra", score: 4.2, status: "evaluated" },
-] as const;
 
 const STEPS = [
   { icon: FileUp, title: "Upload your CV", text: "Your profile fills itself in." },
@@ -69,60 +55,9 @@ export default async function LoginPage({
             <SignInCard providers={enabledProviders} callbackUrl={callbackUrl || "/"} />
           </div>
 
-          {/* Live product preview — the fastest way to "get it". */}
-          <div
-            aria-hidden="true"
-            className="relative max-w-xl animate-fade-in-up [animation-delay:150ms]"
-          >
-            {/* Floating "new match" chip */}
-            <div className="absolute -top-4 right-2 z-10 animate-float rounded-full border border-border bg-card/90 px-3 py-1.5 shadow-xl backdrop-blur sm:right-6">
-              <div className="flex items-center gap-2 text-xs">
-                <Sparkles className="h-3.5 w-3.5 text-ctp-green" />
-                <span className="font-medium">New match</span>
-                <span className="text-muted-foreground">Staff Engineer</span>
-                <ScoreBadge score={4.7} />
-              </div>
-            </div>
-
-            <div className="brand-glow overflow-hidden rounded-2xl border border-border bg-card/80 shadow-2xl backdrop-blur">
-              {/* Preview title bar */}
-              <div className="flex items-center justify-between border-b border-border/80 px-4 py-2.5">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute h-2 w-2 animate-pulse-dot rounded-full bg-ctp-green" />
-                  </span>
-                  Your pipeline
-                </div>
-                <span className="text-xs text-muted-foreground">live</span>
-              </div>
-
-              {/* Scanning strip */}
-              <div className="border-b border-border/60 px-4 py-2.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-ctp-sky">
-                    <Radar className="h-3.5 w-3.5" /> Scanning Greenhouse · Ashby · Lever
-                  </span>
-                  <span className="tabular-nums text-muted-foreground">24 matches</span>
-                </div>
-                <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-full animate-shimmer bg-[linear-gradient(90deg,transparent,hsl(var(--brand-from)/0.9),hsl(var(--brand-to)/0.9),transparent)] bg-[length:200%_100%]" />
-                </div>
-              </div>
-
-              {/* Scored roles */}
-              <ul className="divide-y divide-border/60">
-                {PREVIEW_ROWS.map((r) => (
-                  <li key={r.company} className="flex items-center gap-3 px-4 py-3">
-                    <ScoreBadge score={r.score} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{r.company}</p>
-                      <p className="truncate text-xs text-muted-foreground">{r.role}</p>
-                    </div>
-                    <StatusBadge status={r.status} />
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Live product demo — self-running & pointer-reactive. */}
+          <div className="animate-fade-in-up [animation-delay:150ms]">
+            <LandingPreview />
           </div>
 
           {/* How it works — three beats, one glance. */}
@@ -131,13 +66,13 @@ export default async function LoginPage({
               {STEPS.map(({ icon: Icon, title, text }, i) => (
                 <li
                   key={title}
-                  className="rounded-xl border border-border/70 bg-card/50 p-3.5 backdrop-blur"
+                  className="group rounded-xl border border-border/70 bg-card/50 p-3.5 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-lg"
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="brand-gradient flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-bold text-white">
+                    <span className="brand-gradient flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-bold text-white transition-transform duration-200 group-hover:scale-110">
                       {i + 1}
                     </span>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <Icon className="h-4 w-4 text-muted-foreground transition-colors duration-200 group-hover:text-primary" />
                   </div>
                   <p className="font-display text-sm font-semibold">{title}</p>
                   <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{text}</p>

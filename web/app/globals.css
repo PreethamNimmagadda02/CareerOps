@@ -4,72 +4,75 @@
 
 @layer base {
   :root {
-    /* Light mode variables */
-    --background: 0 0% 100%;
-    --foreground: 229 27% 7%;
+    /* CarrerOps "command center" — light.
+       Cool teal-slate neutrals (biased toward the signal-teal accent, not a
+       neutral grey) on near-white, with a single bold signal-teal primary. */
+    --background: 180 20% 99%;
+    --foreground: 200 28% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 229 27% 7%;
-    --primary: 252 86% 54%;
+    --card-foreground: 200 28% 10%;
+    --primary: 174 84% 32%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 229 18% 94%;
-    --secondary-foreground: 229 27% 10%;
-    --muted: 229 18% 94%;
-    --muted-foreground: 227 16% 46%;
-    --accent: 229 18% 94%;
-    --accent-foreground: 229 27% 10%;
+    --secondary: 185 16% 94%;
+    --secondary-foreground: 200 28% 12%;
+    --muted: 185 16% 94%;
+    --muted-foreground: 197 13% 42%;
+    --accent: 185 16% 93%;
+    --accent-foreground: 200 28% 12%;
     --destructive: 350 84% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 229 16% 90%;
-    --input: 229 16% 90%;
-    --ring: 252 86% 54%;
+    --border: 186 16% 89%;
+    --input: 186 16% 89%;
+    --ring: 174 84% 32%;
     --radius: 0.75rem;
 
-    /* Brand identity gradient */
-    --brand-from: 172 72% 42%;
-    --brand-to: 256 90% 60%;
+    /* Brand identity gradient: signal teal → cyan. */
+    --brand-from: 174 80% 40%;
+    --brand-to: 190 82% 44%;
 
-    /* Semantic accent palette */
-    --ctp-green: 152 62% 42%;
-    --ctp-yellow: 40 92% 42%;
+    /* Semantic accent palette (verdicts, scores, console) — kept distinct
+       from the teal accent so state reads on its own. */
+    --ctp-green: 152 62% 40%;
+    --ctp-yellow: 40 92% 40%;
     --ctp-red: 350 84% 50%;
-    --ctp-blue: 217 92% 52%;
-    --ctp-sky: 190 82% 42%;
-    --ctp-mauve: 265 88% 58%;
+    --ctp-blue: 217 82% 52%;
+    --ctp-sky: 190 82% 40%;
+    --ctp-mauve: 265 78% 56%;
   }
 
   .dark {
-    /* CareerOps 2.0 — "modern command center" dark theme.
-       Deep indigo-tinted near-black surfaces, a violet primary, and the
-       signature teal→violet brand gradient. */
-    --background: 229 27% 7%;
-    --foreground: 222 32% 92%;
-    --card: 229 24% 10%;
-    --card-foreground: 222 32% 92%;
-    --primary: 252 86% 74%;
-    --primary-foreground: 229 27% 8%;
-    --secondary: 229 18% 16%;
-    --secondary-foreground: 222 32% 92%;
-    --muted: 229 18% 14%;
-    --muted-foreground: 227 16% 66%;
-    --accent: 229 18% 18%;
-    --accent-foreground: 222 32% 92%;
+    /* CarrerOps "command center" — dark.
+       Deep teal-charcoal surfaces (hue-shifted toward the accent, not indigo),
+       a luminous signal-teal primary, and a teal→cyan brand gradient. */
+    --background: 200 28% 6%;
+    --foreground: 168 22% 92%;
+    --card: 200 24% 10%;
+    --card-foreground: 168 22% 92%;
+    --primary: 173 79% 47%;
+    --primary-foreground: 174 80% 7%;
+    --secondary: 200 18% 16%;
+    --secondary-foreground: 168 22% 92%;
+    --muted: 200 18% 13%;
+    --muted-foreground: 185 12% 64%;
+    --accent: 200 16% 18%;
+    --accent-foreground: 168 22% 92%;
     --destructive: 350 84% 68%;
-    --destructive-foreground: 229 27% 8%;
-    --border: 229 16% 18%;
-    --input: 229 16% 20%;
-    --ring: 252 86% 74%;
+    --destructive-foreground: 200 28% 7%;
+    --border: 200 16% 17%;
+    --input: 200 16% 20%;
+    --ring: 173 79% 47%;
 
-    /* Brand identity gradient: signal teal → electric violet. */
-    --brand-from: 172 72% 52%;
-    --brand-to: 256 90% 74%;
+    /* Brand identity gradient: signal teal → cyan. */
+    --brand-from: 173 78% 46%;
+    --brand-to: 189 80% 46%;
 
-    /* Semantic accent palette (statuses, scores, console). */
+    /* Semantic accent palette (verdicts, scores, console). */
     --ctp-green: 152 62% 62%;
     --ctp-yellow: 40 92% 66%;
     --ctp-red: 350 84% 70%;
-    --ctp-blue: 217 92% 72%;
-    --ctp-sky: 190 82% 62%;
-    --ctp-mauve: 265 88% 78%;
+    --ctp-blue: 217 88% 72%;
+    --ctp-sky: 190 82% 60%;
+    --ctp-mauve: 265 84% 78%;
   }
 }
 

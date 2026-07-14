@@ -108,6 +108,41 @@ const config: Config = {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
           "50%": { opacity: "0.5", transform: "scale(0.8)" },
         },
+        sweep: {
+          to: { transform: "rotate(360deg)" },
+        },
+        "confetti-fall": {
+          "0%": { opacity: "0", transform: "translate3d(0,0,0) rotate(0deg)" },
+          "8%": { opacity: "1" },
+          "100%": {
+            opacity: "0",
+            transform:
+              "translate3d(var(--cx,0), var(--cy,120px), 0) rotate(var(--cr,540deg))",
+          },
+        },
+        "blip-in": {
+          "0%": { opacity: "0", transform: "scale(0)" },
+          "45%": { opacity: "1", transform: "scale(1.25)" },
+          "100%": { opacity: "0.9", transform: "scale(1)" },
+        },
+        "count-flash": {
+          "0%": { color: "hsl(var(--primary))", transform: "translateY(-2px) scale(1.12)" },
+          "100%": { color: "inherit", transform: "translateY(0) scale(1)" },
+        },
+        "ticker-in": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "ring-pulse": {
+          "0%": { opacity: "0.7", transform: "scale(0.85)" },
+          "70%": { opacity: "0", transform: "scale(1.6)" },
+          "100%": { opacity: "0", transform: "scale(1.6)" },
+        },
+        attention: {
+          "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.5)" },
+          "70%": { boxShadow: "0 0 0 8px hsl(var(--primary) / 0)" },
+          "100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -120,6 +155,13 @@ const config: Config = {
         shimmer: "shimmer 2s linear infinite",
         float: "float 5s ease-in-out infinite",
         "pulse-dot": "pulse-dot 1.6s ease-in-out infinite",
+        sweep: "sweep 2.4s linear infinite",
+        "confetti-fall": "confetti-fall 2.6s cubic-bezier(0.2,0.6,0.35,1) forwards",
+        "blip-in": "blip-in 0.5s cubic-bezier(0.21,1.02,0.73,1) both",
+        "count-flash": "count-flash 0.6s ease-out",
+        "ticker-in": "ticker-in 0.35s cubic-bezier(0.21,1.02,0.73,1) both",
+        "ring-pulse": "ring-pulse 1.8s ease-out infinite",
+        attention: "attention 1.8s cubic-bezier(0.4,0,0.6,1) infinite",
       },
     },
   },

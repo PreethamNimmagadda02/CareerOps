@@ -1,5 +1,5 @@
 import { db } from "../../src/lib/db";
-import { AppStatus, Prisma } from "@prisma/client";
+import { AppStatus } from "@prisma/client";
 import type { Metrics, TabCounts } from "./types";
 
 /**
@@ -36,10 +36,13 @@ export interface DashboardMetrics {
 // The client (`web/lib/tracker.ts`'s `readApplications`) resolves a row's
 // display score as `scoreNumeric ?? parseFloat(legacy "score" string match)`
 // — rows written by scripts/backfill-scores.ts or `updateTracker` without
-// insights only ever get the legacy string set. Mirror that exact fallback
-// here so tab badge counts (SQL) can't diverge from the actual filtered rows
-// the dashboard renders (client `inTab`, web/components/dashboard.tsx).
-const EFFECTIVE_SCORE_SQL = Prisma.sql`COALESCE("scoreNumeric", (substring(score from '(\d+\.?\d*)/5'))::float)`;
+// insights only ever get the legacy string set. The COALESCE below mirrors that
+// exact fallback so tab badge counts (SQL) can't diverge from the actual
+// filtered rows the dashboard renders (client `inTab`, dashboard.tsx). It is
+// inlined into each query rather than shared via a `Prisma.sql` fragment: a
+// nested fragment is bound as a parameter (not composed) under this client, so
+// interpolating one raises `22P02`. The `\\d` escapes must be doubled to
+// survive the JS template literal and reach Postgres as a real regex.
 
 export async function readDashboardMetrics(userId: string): Promise<DashboardMetrics> {
   const [byStatusGroups, scoreAgg, pdfCount, applyCountRows, evaluatedTabCountRows] =
@@ -64,14 +67,16 @@ export async function readDashboardMetrics(userId: string): Promise<DashboardMet
         WHERE "userId" = ${userId} AND status <> 'SKIP'::"AppStatus"
           AND (
             recommendation = 'APPLY_NOW'
-            OR (recommendation IS NULL AND ${EFFECTIVE_SCORE_SQL} >= 4)
+            OR (recommendation IS NULL
+                AND COALESCE("scoreNumeric", (substring(score from '(\\d+\\.?\\d*)/5'))::float) >= 4)
           )
       `,
       // "Evaluated" tab: an Evaluated row that actually has a score or verdict.
       db.$queryRaw<Array<{ count: bigint }>>`
         SELECT count(*) AS count FROM "Application"
         WHERE "userId" = ${userId} AND status = 'Evaluated'::"AppStatus"
-          AND (${EFFECTIVE_SCORE_SQL} IS NOT NULL OR recommendation IS NOT NULL)
+          AND (COALESCE("scoreNumeric", (substring(score from '(\\d+\\.?\\d*)/5'))::float) IS NOT NULL
+               OR recommendation IS NOT NULL)
       `,
     ]);
   const applyCount = Number(applyCountRows[0]?.count ?? 0n);

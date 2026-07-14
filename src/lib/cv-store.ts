@@ -27,10 +27,44 @@ export interface SkillGroup {
   items: string[];
 }
 
+export interface EducationEntry {
+  institution: string;
+  degree: string;
+  field: string;
+  period: string;
+  details: string;
+}
+
+export interface Certification {
+  name: string;
+  issuer: string;
+  year: string;
+}
+
+export interface ProjectEntry {
+  name: string;
+  description: string;
+  url: string;
+  highlights: string[];
+}
+
+export interface LanguageEntry {
+  language: string;
+  proficiency: string;
+}
+
 export interface CV {
   summary: string;
   skills: SkillGroup[];
   experience: ExperienceEntry[];
+  /** Degrees / schooling. Optional for backward compatibility with older records. */
+  education?: EducationEntry[];
+  /** Professional certifications and licenses. */
+  certifications?: Certification[];
+  /** Notable side / open-source / portfolio projects. */
+  projects?: ProjectEntry[];
+  /** Spoken / written languages with a proficiency label. */
+  languages?: LanguageEntry[];
   updatedAt?: string;
 }
 

@@ -1,6 +1,7 @@
-import { AlertTriangle, Banknote, Globe2, Quote, Tag } from "lucide-react";
+import { Banknote, Globe2, Quote, Tag } from "lucide-react";
 
 import { RecommendationBadge } from "@/components/status-badge";
+import { GapQuest } from "@/components/gap-quest";
 import type { Application, ScoreDimensionView } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -96,22 +97,8 @@ export function ApplicationInsights({ app }: { app: Application }) {
           </div>
         )}
 
-        {/* Blocking gaps */}
-        {hasGaps && (
-          <div>
-            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ctp-yellow">
-              <AlertTriangle className="h-3.5 w-3.5" /> Gaps to address
-            </p>
-            <ul className="space-y-1">
-              {app.gaps!.map((gap, i) => (
-                <li key={i} className="flex gap-2 text-sm text-muted-foreground">
-                  <span className="mt-[0.55rem] h-1 w-1 shrink-0 rounded-full bg-ctp-yellow/70" />
-                  {gap}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {/* Blocking gaps — an interactive quest (Commitment + Zeigarnik) */}
+        {hasGaps && <GapQuest gaps={app.gaps!} currentScore={app.score} />}
 
         {/* Meta chips */}
         <div className="flex flex-wrap gap-1.5">

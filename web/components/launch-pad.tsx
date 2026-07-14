@@ -11,6 +11,8 @@ import {
   ListChecks,
   Loader2,
   Lock,
+  MapPin,
+  PartyPopper,
   Pencil,
   Radar,
   RotateCw,
@@ -21,6 +23,7 @@ import {
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
 import type { OnboardingState, OnboardingStep } from "@/lib/types";
 import type { PipelineCommand } from "@/lib/pipeline";
@@ -239,8 +242,45 @@ function StepAction({
   );
 }
 
+// The highest score we've already celebrated for this user, persisted so the
+// reveal fires once per new personal best (a re-scan that surfaces a stronger
+// role re-triggers it) rather than on every dashboard load.
+const REVEAL_KEY = "careerops:reveal-topscore";
+
+/** Ease-out count-up from 0 → target over `duration` ms. The reward animation. */
+function useCountUp(target: number | null, duration = 800): number {
+  const [value, setValue] = React.useState(0);
+  React.useEffect(() => {
+    if (target == null) return;
+    let raf = 0;
+    let start: number | null = null;
+    const tick = (t: number) => {
+      if (start == null) start = t;
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      setValue(target * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else setValue(target);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
 export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun }: LaunchPadProps) {
   const [open, setOpen] = React.useState(false);
+  // Read synchronously on the client (LaunchPad only renders after the
+  // dashboard's client-side onboarding fetch, so `window` is always defined
+  // here — the guard just keeps any SSR path safe).
+  const [seenScore, setSeenScore] = React.useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = window.localStorage.getItem(REVEAL_KEY);
+    return raw == null ? null : Number(raw);
+  });
+  // Hooks must run unconditionally, so drive the count-up before any early
+  // return; it's only rendered in the reveal branch below.
+  const revealScore = useCountUp(onboarding?.topScore ?? null);
 
   if (!onboarding) {
     if (!loading) return null;
@@ -259,10 +299,100 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
   const steps = buildSteps(onboarding, running);
   const doneCount = steps.filter((s) => s.done).length;
   const busyAny = running !== null;
-  const collapsed = onboarding.complete && !open;
+  const strong = onboarding.evaluate.strong;
+  // A strong match we haven't celebrated yet — fires once per new personal best.
+  const hasNewBest =
+    onboarding.topScore != null && (seenScore == null || onboarding.topScore > seenScore);
 
-  // ── Steady state: everything's set up → slim status strip. ──
-  if (collapsed) {
+  const dismissReveal = () => {
+    if (onboarding.topScore != null && typeof window !== "undefined") {
+      window.localStorage.setItem(REVEAL_KEY, String(onboarding.topScore));
+    }
+    setSeenScore(onboarding.topScore);
+  };
+
+  // ── Complete + collapsed: reframe / reveal / steady state (in priority order). ──
+  if (onboarding.complete && !open) {
+    // R5 — Weak-scan reframe: setup is done, but nothing cleared the bar.
+    // For a career-switcher, "0 matches" reads as "I'm unqualified" — so frame
+    // the empty result as the product doing its job (screening out noise), and
+    // always offer a way to widen the net rather than a dead end.
+    if (strong === 0) {
+      return (
+        <Card className="animate-fade-in-up p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ctp-yellow/20">
+                <Radar className="h-5 w-5 text-ctp-yellow" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Nothing cleared your bar yet — and that&apos;s the point.</p>
+                <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
+                  We screened {onboarding.scan.count} role{onboarding.scan.count === 1 ? "" : "s"}; none were
+                  strong matches. We&apos;d rather show you zero great roles than a pile of mediocre ones —
+                  widen the net and we&apos;ll keep looking.
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setOpen(true)} title="Show setup steps">
+              <ChevronDown className="h-4 w-4" /> Steps
+            </Button>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Link href="/profile" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
+              <MapPin className="h-3.5 w-3.5" /> Widen locations
+            </Link>
+            <Button variant="outline" size="sm" onClick={onOpenKeywords}>
+              <Tags className="h-3.5 w-3.5" /> Adjust keywords
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
+              {runningStep(running) === "scan" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RotateCw className="h-3.5 w-3.5" />
+              )}
+              Scan again
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
+    // R4 — Reveal payoff: end the activation flow on a peak, not a to-do list.
+    // The score counts up from 0 as the dopamine hit. (A real social-proof line
+    // — "beats X% of applicants for roles like this" — belongs here too, but is
+    // gated on a benchmark data source that doesn't exist yet; omitted rather
+    // than faked.)
+    if (hasNewBest) {
+      const top = onboarding.topScore as number;
+      return (
+        <Card className="animate-fade-in-up overflow-hidden p-5">
+          <Confetti fire count={70} />
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="brand-gradient flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl text-white">
+              <span className="text-xl font-bold tabular-nums leading-none">{revealScore.toFixed(1)}</span>
+              <span className="text-[10px] font-medium opacity-80">/ 5</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <PartyPopper className="h-4 w-4 text-primary" />
+                <p className="font-display text-sm font-semibold">
+                  We found {strong} role{strong === 1 ? "" : "s"} that fit you.
+                </p>
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Your top match scores {top.toFixed(1)}/5. Take a look — the rest are in your pipeline below.
+              </p>
+            </div>
+            <Button size="sm" onClick={dismissReveal} className="shrink-0">
+              See my matches <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
+    // Steady state: everything's set up → slim status strip.
     return (
       <Card className="flex animate-fade-in-up flex-wrap items-center justify-between gap-3 p-4">
         <div className="flex items-center gap-3">

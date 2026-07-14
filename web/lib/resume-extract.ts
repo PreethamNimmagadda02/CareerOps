@@ -86,6 +86,10 @@ export interface ExtractedCV {
   summary: string;
   skills: Array<{ category: string; items: string[] }>;
   experience: Array<{ company: string; role: string; location: string; period: string; highlights: string[] }>;
+  education: Array<{ institution: string; degree: string; field: string; period: string; details: string }>;
+  certifications: Array<{ name: string; issuer: string; year: string }>;
+  projects: Array<{ name: string; description: string; url: string; highlights: string[] }>;
+  languages: Array<{ language: string; proficiency: string }>;
 }
 
 export interface ExtractionResult {
@@ -114,7 +118,11 @@ const SCHEMA_HINT = `{
   "cv": {
     "summary": "",
     "skills": [{ "category": "", "items": [] }],
-    "experience": [{ "company": "", "role": "", "location": "", "period": "", "highlights": [] }]
+    "experience": [{ "company": "", "role": "", "location": "", "period": "", "highlights": [] }],
+    "education": [{ "institution": "", "degree": "", "field": "", "period": "", "details": "" }],
+    "certifications": [{ "name": "", "issuer": "", "year": "" }],
+    "projects": [{ "name": "", "description": "", "url": "", "highlights": [] }],
+    "languages": [{ "language": "", "proficiency": "" }]
   }
 }`;
 
@@ -153,21 +161,39 @@ export async function structureResume(resumeText: string): Promise<ExtractionRes
     "",
     "Rules:",
     "- Output ONLY the JSON object. No markdown, no commentary.",
-    "- Use information that is explicitly present in the résumé.",
+    "- Return EVERY key shown in the shape, even when its value is empty.",
+    "- Use only information explicitly present in the résumé; never fabricate.",
     '- For any field you cannot determine, use an empty string "" or an empty array [].',
     "- Do NOT invent compensation, visa status, or timezone if they are not stated.",
-    '- "exit_story" / cv "summary": use the résumé\'s professional-summary/objective text.',
-    '- "headline": a one-line title (e.g. job title + specialty).',
+    "- Keep dates/periods exactly as written in the résumé (e.g. \"Jan 2021 – Present\").",
+    "- Do not duplicate the same entry across sections; each role/school/skill appears once.",
+    "",
+    "Contact & links:",
+    '- "email"/"phone": copy verbatim. "linkedin"/"github"/"portfolio_url": full URLs if present.',
+    "",
+    "Narrative:",
+    '- "exit_story" / cv "summary": the résumé\'s professional-summary/objective text (may be identical).',
+    '- "headline": a one-line title (job title + specialty).',
     '- "superpowers": 3-6 short strength phrases inferred from the résumé.',
-    '- "skills": group related skills under sensible categories.',
-    '- "highlights": the bullet points under each role, verbatim where possible.',
+    '- "proof_points": standout achievements with a concrete metric where available.',
+    "",
+    "Roles:",
     '- "target_roles.primary": 2-4 concise job titles that best match the candidate\'s',
     "  demonstrated experience — from their most recent role(s), a stated objective, or a",
     "  theme repeated across roles. Always fill this when the résumé shows any work history.",
     '- "target_roles.archetypes": 1-3 entries built from target_roles.primary / experience,',
     '  each with a "level" inferred from years of experience (e.g. "Entry-Level", "Mid",',
     '  "Senior", "Staff+") and "fit" set to "primary" for the closest match.',
-    '- archetype "fit" must be one of: primary, secondary, adjacent.',
+    '- archetype "fit" MUST be exactly one of: primary, secondary, adjacent.',
+    "",
+    "CV sections:",
+    '- "skills": group related skills under sensible categories (e.g. "Languages", "Cloud").',
+    '- "experience.highlights": the bullet points under each role, verbatim where possible.',
+    '- "education": every degree/diploma with institution, degree, field of study, and period.',
+    '- "certifications": professional certifications/licenses with issuer and year when stated.',
+    '- "projects": notable personal, side, or open-source projects with a short description.',
+    '- "languages": spoken/written languages with a proficiency label',
+    '  (e.g. "Native", "Fluent", "Professional", "Conversational") when stated.',
     "",
     "RÉSUMÉ:",
     text,
@@ -189,14 +215,256 @@ export async function structureResume(resumeText: string): Promise<ExtractionRes
     throw new Error("The model did not return valid JSON. Try again.");
   }
 
-  const obj = (parsed ?? {}) as Partial<ExtractionResult>;
-  const profile = (obj.profile ?? {}) as ExtractedProfile;
+  // Coerce the model's output into the exact schema — see normalizeExtraction.
+  return normalizeExtraction(parsed);
+}
+
+// ── Normalization ─────────────────────────────────────────────────────────────
+//
+// LLMs are only *mostly* consistent: a field the schema declares as an array
+// occasionally comes back as a string (or vice-versa), casing drifts, the same
+// skill is listed twice, an enum lands on a synonym, and whitespace is noisy.
+// Casting the raw JSON with `as ExtractedCV` hides all of that and lets it flow
+// into storage and the scan matchers. This layer instead rebuilds the object
+// field-by-field so the output ALWAYS matches the declared shape and types,
+// deterministically — the single biggest lever on extraction consistency.
+
+const FIT_VALUES = new Set(["primary", "secondary", "adjacent"]);
+
+/** Trim + collapse internal whitespace on a single-line string. */
+function cleanStr(v: unknown): string {
+  return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : "";
+}
+
+/** Trim while preserving paragraph breaks — for summaries / descriptions. */
+function cleanMultiline(v: unknown): string {
+  if (typeof v !== "string") return "";
+  return v
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .trim();
+}
+
+function rec(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+}
+
+function asArray(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : [];
+}
+
+/** Case-insensitive dedupe that preserves the first-seen casing/order. */
+function dedupe(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const it of items) {
+    const key = it.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(it);
+    }
+  }
+  return out;
+}
+
+/**
+ * Coerce anything into a clean string[]: accepts an array (of strings or
+ * objects with a name/label), a single string, or a comma/•/newline-separated
+ * string. Trims, drops blanks, dedupes, and caps length.
+ */
+function cleanStrArray(v: unknown, cap = 30): string[] {
+  let raw: unknown[];
+  if (Array.isArray(v)) raw = v;
+  else if (typeof v === "string" && v.trim())
+    raw = v.split(/[,\u2022\n;]+/); // comma / bullet / newline / semicolon
+  else raw = [];
+
+  const cleaned = raw
+    .map((item) => {
+      if (typeof item === "string") return cleanStr(item);
+      const o = rec(item);
+      return cleanStr(o.name ?? o.label ?? o.value ?? "");
+    })
+    .filter(Boolean);
+  return dedupe(cleaned).slice(0, cap);
+}
+
+function cleanEmail(v: unknown): string {
+  const s = cleanStr(v).toLowerCase();
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : "";
+}
+
+/** Normalize a link: add https:// to bare domains, leave handles untouched. */
+function cleanUrl(v: unknown): string {
+  const s = cleanStr(v).replace(/^@/, "");
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(s)) return `https://${s}`;
+  return s;
+}
+
+function cleanFit(v: unknown): "primary" | "secondary" | "adjacent" {
+  const s = cleanStr(v).toLowerCase();
+  return (FIT_VALUES.has(s) ? s : "primary") as "primary" | "secondary" | "adjacent";
+}
+
+export function normalizeProfile(raw: unknown): ExtractedProfile {
+  const p = rec(raw);
+  const c = rec(p.candidate);
+  const tr = rec(p.target_roles);
+  const nar = rec(p.narrative);
+  const comp = rec(p.compensation);
+  const loc = rec(p.location);
+
   return {
-    // Deterministic job-matching defaults always win over anything the model
-    // may have guessed for `matching` (it isn't asked for one — see
-    // SCHEMA_HINT — but this keeps the contract airtight either way).
+    candidate: {
+      full_name: cleanStr(c.full_name),
+      email: cleanEmail(c.email),
+      phone: cleanStr(c.phone),
+      location: cleanStr(c.location),
+      linkedin: cleanUrl(c.linkedin),
+      portfolio_url: cleanUrl(c.portfolio_url),
+      github: cleanUrl(c.github),
+      twitter: cleanUrl(c.twitter),
+    },
+    target_roles: {
+      primary: cleanStrArray(tr.primary, 6),
+      archetypes: asArray(tr.archetypes)
+        .map((a) => {
+          const o = rec(a);
+          return { name: cleanStr(o.name), level: cleanStr(o.level), fit: cleanFit(o.fit) };
+        })
+        .filter((a) => a.name)
+        .slice(0, 5),
+    },
+    narrative: {
+      headline: cleanStr(nar.headline),
+      exit_story: cleanMultiline(nar.exit_story),
+      superpowers: cleanStrArray(nar.superpowers, 8),
+      proof_points: asArray(nar.proof_points)
+        .map((pp) => {
+          const o = rec(pp);
+          return {
+            name: cleanStr(o.name),
+            url: cleanUrl(o.url),
+            hero_metric: cleanStr(o.hero_metric ?? o.metric),
+          };
+        })
+        .filter((pp) => pp.name || pp.hero_metric)
+        .slice(0, 6),
+    },
+    compensation: {
+      target_range: cleanStr(comp.target_range),
+      currency: cleanStr(comp.currency),
+      minimum: cleanStr(comp.minimum),
+      location_flexibility: cleanStr(comp.location_flexibility),
+    },
+    location: {
+      country: cleanStr(loc.country),
+      city: cleanStr(loc.city),
+      timezone: cleanStr(loc.timezone),
+      visa_status: cleanStr(loc.visa_status),
+      onsite_availability: cleanStr(loc.onsite_availability),
+    },
+  };
+}
+
+export function normalizeCv(raw: unknown): ExtractedCV {
+  const cv = rec(raw);
+
+  // Skills may arrive grouped ([{category, items}]) or as a flat string list;
+  // fold a flat list into a single sensible group so nothing is dropped.
+  const rawSkills = asArray(cv.skills);
+  const allStrings = rawSkills.length > 0 && rawSkills.every((s) => typeof s === "string");
+  const skills = allStrings
+    ? [{ category: "Skills", items: cleanStrArray(rawSkills, 60) }]
+    : rawSkills
+        .map((s) => {
+          const o = rec(s);
+          return { category: cleanStr(o.category ?? o.name), items: cleanStrArray(o.items, 40) };
+        })
+        .filter((s) => s.category || s.items.length)
+        .slice(0, 20);
+
+  return {
+    summary: cleanMultiline(cv.summary),
+    skills,
+    experience: asArray(cv.experience)
+      .map((e) => {
+        const o = rec(e);
+        return {
+          company: cleanStr(o.company),
+          role: cleanStr(o.role ?? o.title),
+          location: cleanStr(o.location),
+          period: cleanStr(o.period ?? o.dates),
+          highlights: cleanStrArray(o.highlights ?? o.bullets, 20),
+        };
+      })
+      .filter((e) => e.company || e.role)
+      .slice(0, 25),
+    education: asArray(cv.education)
+      .map((e) => {
+        const o = rec(e);
+        return {
+          institution: cleanStr(o.institution ?? o.school),
+          degree: cleanStr(o.degree),
+          field: cleanStr(o.field ?? o.field_of_study),
+          period: cleanStr(o.period ?? o.dates ?? o.year),
+          details: cleanMultiline(o.details),
+        };
+      })
+      .filter((e) => e.institution || e.degree)
+      .slice(0, 12),
+    certifications: asArray(cv.certifications)
+      .map((x) => {
+        const o = rec(x);
+        return {
+          name: cleanStr(o.name ?? o.title),
+          issuer: cleanStr(o.issuer ?? o.authority),
+          year: cleanStr(o.year ?? o.date),
+        };
+      })
+      .filter((x) => x.name)
+      .slice(0, 20),
+    projects: asArray(cv.projects)
+      .map((x) => {
+        const o = rec(x);
+        return {
+          name: cleanStr(o.name ?? o.title),
+          description: cleanMultiline(o.description),
+          url: cleanUrl(o.url ?? o.link),
+          highlights: cleanStrArray(o.highlights ?? o.bullets, 12),
+        };
+      })
+      .filter((x) => x.name)
+      .slice(0, 15),
+    languages: asArray(cv.languages)
+      .map((x) => {
+        if (typeof x === "string") return { language: cleanStr(x), proficiency: "" };
+        const o = rec(x);
+        return {
+          language: cleanStr(o.language ?? o.name),
+          proficiency: cleanStr(o.proficiency ?? o.level),
+        };
+      })
+      .filter((x) => x.language)
+      .slice(0, 15),
+  };
+}
+
+/**
+ * Turn the loosely-parsed LLM JSON into a fully-formed, type-correct
+ * `ExtractionResult`. The deterministic job-matching defaults always win over
+ * anything the model may have guessed for `matching` (it isn't asked for one —
+ * see SCHEMA_HINT — but this keeps the contract airtight either way).
+ */
+export function normalizeExtraction(raw: unknown): ExtractionResult {
+  const obj = rec(raw);
+  const profile = normalizeProfile(obj.profile);
+  return {
     profile: { ...profile, matching: deriveMatchingDefaults(profile) },
-    cv: (obj.cv ?? {}) as ExtractedCV,
+    cv: normalizeCv(obj.cv),
   };
 }
 

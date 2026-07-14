@@ -77,8 +77,16 @@ export interface OnboardingState {
   keywords: { done: boolean; count: number };
   /** At least one role has been discovered (count = total roles). */
   scan: { done: boolean; count: number };
-  /** At least one role has been scored (count = evaluated roles). */
-  evaluate: { done: boolean; count: number };
+  /**
+   * At least one role has been scored. `count` = evaluated roles; `strong` =
+   * roles that cleared the bar (APPLY_NOW / APPLY_WITH_TWEAKS, or an unscored
+   * verdict with an effective score ≥ 4). `strong` drives the LaunchPad's
+   * reveal-vs-reframe branch: a completed scan with `strong === 0` is a
+   * weak-scan day, not a success.
+   */
+  evaluate: { done: boolean; count: number; strong: number };
+  /** Highest effective score across all evaluated roles, or null when none. */
+  topScore: number | null;
   /** The first incomplete step, or "done" when fully set up. */
   nextStep: OnboardingStep | "done";
   /** True when every step is complete. */
