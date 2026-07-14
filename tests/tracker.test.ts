@@ -1,11 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import {
-  reportFilename,
-  updateTracker,
-  writeReport,
-  nextReportNumber,
-} from "../src/lib/tracker.js";
+import { reportFilename, updateTracker, writeReport } from "../src/lib/tracker.js";
 import { db } from "../src/lib/db.js";
 
 vi.mock("../src/lib/db.js", () => ({
@@ -13,7 +8,6 @@ vi.mock("../src/lib/db.js", () => ({
     application: {
       update: vi.fn(),
       updateMany: vi.fn(),
-      findMany: vi.fn(),
     },
   },
 }));
@@ -32,22 +26,11 @@ describe("reportFilename", () => {
   });
 });
 
-describe("nextReportNumber", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it("returns 1 when no reports exist", async () => {
-    vi.mocked(db.application.findMany).mockResolvedValue([]);
-    expect(await nextReportNumber()).toBe(1);
-  });
-
-  it("returns max report number + 1 for both filename and legacy link forms", async () => {
-    vi.mocked(db.application.findMany).mockResolvedValue([
-      { reportName: "003-acme-2026-06-16.md" } as any,
-      { reportName: "[007](reports/007-globex.md)" } as any,
-    ]);
-    expect(await nextReportNumber()).toBe(8);
-  });
-});
+// `nextReportNumber` is now a per-user atomic `UPDATE … RETURNING` against the
+// User.reportSeq column. Its correctness (uniqueness + contiguity under
+// concurrency, cross-tenant independence) is inherently a real-database
+// property and can't be meaningfully asserted with a mock — it's covered in
+// tests/e2e/postgres-tracker.e2e.ts against the live Postgres stack.
 
 describe("updateTracker", () => {
   beforeEach(() => {

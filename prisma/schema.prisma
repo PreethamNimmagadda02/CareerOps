@@ -23,10 +23,17 @@ model User {
   resumeKey       String?
   resumeUpdatedAt DateTime?
 
+  /// Per-user monotonic report counter. Allocated atomically via
+  /// `UPDATE … SET reportSeq = reportSeq + 1 RETURNING reportSeq` so report
+  /// numbers are unique + gap-tolerant per tenant without a global table scan.
+  /// See `nextReportNumber()` in src/lib/tracker.ts.
+  reportSeq       Int       @default(0)
+
   accounts       Account[]
   sessions       Session[]
   applications   Application[]
   filterKeywords FilterKeyword[]
+  jobs           Job[]
 }
 
 model Account {
@@ -136,4 +143,77 @@ model FilterKeyword {
 
   @@unique([userId, kind, value])
   @@index([userId])
+}
+
+/// A discovered job posting — GLOBAL, shared across all users. The scheduled
+/// shared scan fetches every portal ONCE and upserts postings here; each user's
+/// "scan" then just matches this corpus against their own preferences (cheap,
+/// no scraping) instead of re-fetching all ~685 boards per user. `active` is
+/// flipped false for postings not seen in the latest scan (i.e. filled/removed).
+model Posting {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  url         String    @unique
+  company     String
+  title       String
+  location    String    @default("")
+  source      String    @default("")
+  active      Boolean   @default(true)
+  /// Cached job-description text, fetched once globally so per-user evaluation
+  /// doesn't re-scrape the same posting N times.
+  jd          String?   @db.Text
+  jdFetchedAt DateTime?
+
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Per-user matching queries the active corpus.
+  @@index([active])
+  @@index([company])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pipeline job queue
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum JobStatus {
+  Queued
+  Running
+  Succeeded
+  Failed
+  Canceled
+}
+
+/// A queued pipeline run (scan / evaluate). The web tier enqueues one of these
+/// and returns immediately; a separate worker process claims it (via
+/// `FOR UPDATE SKIP LOCKED`), runs the heavy Playwright/LLM work off the web
+/// nodes, and streams progress back into `log`. The dashboard polls the row for
+/// status + output instead of holding an 800s HTTP stream.
+model Job {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String
+  /// PipelineCommand: scan | scan:fallback | evaluate | evaluate:all | evaluate:dry
+  command   String
+  status    JobStatus @default(Queued)
+  /// Rolling captured stdout/stderr (bounded by the worker before each flush).
+  log       String    @default("") @db.Text
+  exitCode  Int?
+  error     String?
+  attempts  Int       @default(0)
+  /// Set by a cancel request; the worker kills the child at the next heartbeat.
+  cancelRequested Boolean @default(false)
+
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  updatedAt   DateTime  @updatedAt
+  /// Liveness timestamp bumped by the running worker; stale rows are reclaimed.
+  heartbeatAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Worker claim scans Queued jobs oldest-first; dashboard lists a user's jobs.
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { cacheGetJSON, cacheSetJSON } from "@/lib/kv";
+
 export const runtime = "nodejs";
 
 /**
@@ -30,7 +32,8 @@ export const runtime = "nodejs";
  */
 
 const UA = "CareerOps/1.0 (job-search dashboard; contact@careerops.dev)";
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const CACHE_TTL_SEC = 6 * 60 * 60; // 6 hours
+const CACHE_KEY = "job-titles:v1";
 
 const WWR_CATEGORIES = [
   "remote-full-stack-programming-jobs",
@@ -45,7 +48,10 @@ const WWR_CATEGORIES = [
   "remote-sales-and-marketing-jobs",
 ];
 
-let cache: { titles: string[]; fetchedAt: number } | null = null;
+// Per-process guard to coalesce concurrent upstream fetches on a single node.
+// The fetched result itself is stored in the shared KV cache (Redis when
+// configured) so the expensive multi-feed fetch is reused across every
+// instance, not just within one process.
 let inFlight: Promise<string[]> | null = null;
 
 function decodeEntities(s: string): string {
@@ -132,20 +138,20 @@ async function fetchTitles(): Promise<string[]> {
 }
 
 async function getTitles(): Promise<string[]> {
-  const now = Date.now();
-  if (cache && now - cache.fetchedAt < CACHE_TTL_MS) return cache.titles;
+  // Shared cache first (Redis across instances, in-memory otherwise).
+  const cached = await cacheGetJSON<string[]>(CACHE_KEY);
+  if (cached && cached.length) return cached;
 
-  // Coalesce concurrent requests into a single upstream fetch.
+  // Coalesce concurrent requests on this node into a single upstream fetch.
   if (!inFlight) {
     inFlight = fetchTitles()
-      .then((titles) => {
-        cache = { titles, fetchedAt: Date.now() };
+      .then(async (titles) => {
+        if (titles.length) await cacheSetJSON(CACHE_KEY, titles, CACHE_TTL_SEC);
         return titles;
       })
       .catch((err) => {
         console.warn("[job-titles] fetch failed:", (err as Error).message);
-        // Fall back to a stale cache if we have one; otherwise empty.
-        return cache?.titles ?? [];
+        return [] as string[];
       })
       .finally(() => {
         inFlight = null;

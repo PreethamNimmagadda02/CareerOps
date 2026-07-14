@@ -1,7 +1,12 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 
 import { db } from "../../src/lib/db.js";
-import { addApplication, getApplications, patchApplication } from "../../src/lib/tracker.js";
+import {
+  addApplication,
+  getApplications,
+  nextReportNumber,
+  patchApplication,
+} from "../../src/lib/tracker.js";
 import { AppStatus } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
@@ -90,5 +95,49 @@ describe("Postgres application tracker (live)", () => {
 
     expect(mine.every((a) => a.company !== "Umbrella")).toBe(true);
     expect(theirs.some((a) => a.company === "Umbrella")).toBe(true);
+  });
+
+  describe("nextReportNumber — per-user atomic counter", () => {
+    it("hands out unique, contiguous numbers under concurrency for one user", async () => {
+      const u = await db.user.create({
+        data: { email: `e2e-seq-${randomUUID()}@test.local`, name: "e2e-seq" },
+      });
+      try {
+        // 25 allocations fired concurrently: the atomic UPDATE … RETURNING must
+        // give every caller a distinct value with no gaps and no duplicates.
+        const nums = await Promise.all(
+          Array.from({ length: 25 }, () => nextReportNumber(u.id)),
+        );
+        const sorted = [...nums].sort((a, b) => a - b);
+        expect(new Set(nums).size).toBe(25); // all unique
+        expect(sorted).toEqual(Array.from({ length: 25 }, (_, i) => i + 1)); // 1..25
+      } finally {
+        await db.user.deleteMany({ where: { id: u.id } });
+      }
+    });
+
+    it("numbers each user independently (no cross-tenant collision)", async () => {
+      const [a, b] = await Promise.all([
+        db.user.create({ data: { email: `e2e-seq-a-${randomUUID()}@test.local` } }),
+        db.user.create({ data: { email: `e2e-seq-b-${randomUUID()}@test.local` } }),
+      ]);
+      try {
+        // Interleave allocations across both users; each sequence starts at 1.
+        const [a1, b1, a2, b2] = await Promise.all([
+          nextReportNumber(a.id),
+          nextReportNumber(b.id),
+          nextReportNumber(a.id),
+          nextReportNumber(b.id),
+        ]);
+        expect([a1, a2].sort()).toEqual([1, 2]);
+        expect([b1, b2].sort()).toEqual([1, 2]);
+      } finally {
+        await db.user.deleteMany({ where: { id: { in: [a.id, b.id] } } });
+      }
+    });
+
+    it("throws a clear error for an unknown user id", async () => {
+      await expect(nextReportNumber("does-not-exist")).rejects.toThrow(/no User row/);
+    });
   });
 });

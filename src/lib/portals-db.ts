@@ -38,6 +38,15 @@ export async function loadConfigFromDb(userId: string): Promise<PortalsConfig> {
   };
 }
 
+/**
+ * Load just the global portal set (no user needed). Used by the shared scan,
+ * which scans every portal once for all users rather than per-user.
+ */
+export async function loadPortals(): Promise<Company[]> {
+  const portals = await db.portal.findMany({ orderBy: { id: "asc" } });
+  return portals.map(rowToCompany);
+}
+
 /** Total number of portals in Postgres (global). */
 export async function portalCount(): Promise<number> {
   return db.portal.count();

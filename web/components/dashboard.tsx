@@ -26,9 +26,8 @@ import { ReportModal } from "@/components/report-modal";
 import { RecommendationBadge, ScoreBadge } from "@/components/status-badge";
 import { StatusSelect } from "@/components/status-menu";
 import { useToast } from "@/components/ui/toast";
-import { computeMetrics } from "@/lib/metrics";
 import { normalizeStatus, statusLabel, statusPriority } from "@/lib/status";
-import type { Application, OnboardingState } from "@/lib/types";
+import type { Application, Metrics, OnboardingState, TabCounts } from "@/lib/types";
 import type { PipelineCommand } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +70,10 @@ function DashboardInner() {
   const toast = useToast();
 
   const [apps, setApps] = React.useState<Application[]>([]);
+  const [nextCursor, setNextCursor] = React.useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [metrics, setMetrics] = React.useState<Metrics | null>(null);
+  const [tabCounts, setTabCounts] = React.useState<TabCounts | null>(null);
   const [onboarding, setOnboarding] = React.useState<OnboardingState | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -83,17 +86,34 @@ function DashboardInner() {
   const [keywordsOpen, setKeywordsOpen] = React.useState(false);
   const [expandedNum, setExpandedNum] = React.useState<string | null>(null);
 
+  // Metrics + tab counts are aggregated server-side (SQL), so they stay correct
+  // and cheap regardless of how many application rows are actually loaded below.
+  const refreshMetrics = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/metrics", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setMetrics(data.metrics as Metrics);
+      setTabCounts(data.tabCounts as TabCounts);
+    } catch {
+      /* non-fatal — the table still renders without the metric cards */
+    }
+  }, []);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [appsRes, onbRes] = await Promise.all([
+        // First page only — subsequent pages load on demand via "Load more".
         fetch("/api/applications", { cache: "no-store" }),
         fetch("/api/onboarding", { cache: "no-store" }),
+        refreshMetrics(),
       ]);
       const appsData = await appsRes.json();
       if (!appsRes.ok) throw new Error(appsData.error || "Failed to load");
       setApps(appsData.applications as Application[]);
+      setNextCursor((appsData.nextCursor as string | null) ?? null);
       if (onbRes.ok) {
         const onbData = await onbRes.json();
         setOnboarding(onbData.onboarding as OnboardingState);
@@ -103,7 +123,25 @@ function DashboardInner() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshMetrics]);
+
+  const loadMore = React.useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/applications?cursor=${encodeURIComponent(nextCursor)}`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load more");
+      setApps((prev) => [...prev, ...(data.applications as Application[])]);
+      setNextCursor((data.nextCursor as string | null) ?? null);
+    } catch (err) {
+      toast.error("Couldn't load more", (err as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore, toast]);
 
   React.useEffect(() => {
     void load();
@@ -121,19 +159,6 @@ function DashboardInner() {
     (command: PipelineCommand) => run(command, { onDone: load }),
     [run, load],
   );
-
-  const metrics = React.useMemo(() => computeMetrics(apps), [apps]);
-
-  // Single O(n) pass for every tab count (previously 6 filters per render).
-  const tabCounts = React.useMemo(() => {
-    const counts = Object.fromEntries(TABS.map((t) => [t.key, 0])) as Record<TabKey, number>;
-    for (const app of apps) {
-      for (const t of TABS) {
-        if (inTab(app, t.key)) counts[t.key]++;
-      }
-    }
-    return counts;
-  }, [apps]);
 
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -196,13 +221,16 @@ function DashboardInner() {
           "Status updated",
           `${app.company} → ${statusLabel(normalizeStatus(newStatus))}`,
         );
+        // A status change shifts the funnel — refresh the SQL-aggregated
+        // metrics + tab counts so the cards and tab badges stay accurate.
+        void refreshMetrics();
       } catch (err) {
         toast.error("Couldn't update status", (err as Error).message);
       } finally {
         setSavingNum(null);
       }
     },
-    [toast],
+    [toast, refreshMetrics],
   );
 
   const openReportFor = React.useCallback(
@@ -255,7 +283,7 @@ function DashboardInner() {
 
       {hasApps ? (
         <>
-          <MetricsCards metrics={metrics} />
+          {metrics && <MetricsCards metrics={metrics} />}
 
           {/* Controls */}
           <div className="flex flex-col gap-3">
@@ -303,7 +331,9 @@ function DashboardInner() {
                     )}
                   >
                     {t.label}{" "}
-                    <span className="text-xs tabular-nums opacity-70">{tabCounts[t.key]}</span>
+                    <span className="text-xs tabular-nums opacity-70">
+                      {tabCounts ? tabCounts[t.key] : ""}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -360,6 +390,22 @@ function DashboardInner() {
               </table>
             </div>
           </div>
+
+          {/* Pagination — the list is fetched a page at a time so a large
+              account never loads its whole history at once. Search/sort above
+              operate on the rows loaded so far. */}
+          {nextCursor && !search.trim() && (
+            <div className="flex justify-center">
+              <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                Load more
+              </Button>
+            </div>
+          )}
         </>
       ) : (
         !loading && <EmptyRoles onboarding={onboarding} onRun={launchRun} running={running} />

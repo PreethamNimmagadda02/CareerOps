@@ -113,14 +113,21 @@ export async function readReportByNumber(
     const listRes = await client.send(
       new ListObjectsV2Command({ Bucket: BUCKET, Prefix: prefix }),
     );
-    const keys = (listRes.Contents ?? []).map((obj) => obj.Key ?? "").filter(Boolean);
-
-    // Find the key matching the report-number prefix within this user's folder.
-    const key = keys.find((k) => {
-      const name = k.slice(prefix.length); // strip user prefix → just the filename
+    const matches = (listRes.Contents ?? []).filter((obj) => {
+      if (!obj.Key) return false;
+      const name = obj.Key.slice(prefix.length);
       return name.startsWith(`${padded}-`) && name.endsWith(".md");
     });
-    if (!key) return null;
+
+    if (matches.length === 0) return null;
+
+    matches.sort((a, b) => {
+      const timeA = a.LastModified?.getTime() ?? 0;
+      const timeB = b.LastModified?.getTime() ?? 0;
+      return timeB - timeA;
+    });
+
+    const key = matches[0].Key!;
 
     const getRes = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
     const markdown = await getRes.Body?.transformToString("utf-8");

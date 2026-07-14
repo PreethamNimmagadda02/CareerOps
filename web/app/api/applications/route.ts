@@ -8,13 +8,21 @@ import { AppStatus } from "@prisma/client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const userId = await requireUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const applications = await readApplications(userId);
-    return NextResponse.json({ applications });
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get("limit");
+    const cursor = searchParams.get("cursor");
+    const limit = limitParam ? Number(limitParam) : undefined;
+
+    const { applications, nextCursor } = await readApplications(userId, {
+      limit: Number.isFinite(limit) ? limit : undefined,
+      cursor,
+    });
+    return NextResponse.json({ applications, nextCursor });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

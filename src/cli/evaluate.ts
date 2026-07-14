@@ -115,7 +115,6 @@ async function main(): Promise<void> {
   const results = { evaluated: 0, skipped: 0, errors: 0 };
 
   const sem = createSemaphore(concurrency);
-  let trackerLock: Promise<void> = Promise.resolve();
 
   try {
     await Promise.all(
@@ -169,42 +168,42 @@ async function main(): Promise<void> {
             log.info(`${tag} 🎯 Verdict: ${insights.recommendation.replace(/_/g, " ")}`);
           }
 
-          trackerLock = trackerLock.then(async () => {
-            const reportNum = await nextReportNumber();
-            const filename = await writeReport({
-              userId,
-              num: reportNum,
-              company: job.company,
-              role: job.role,
-              url: url as string,
-              evaluation,
-              providerLabel,
-            });
-            log.info(`${tag} ☁️  Uploaded → ${filename}`);
-
-            const updated = await updateTracker(
-              job.num,
-              userId,
-              score || "N/A",
-              reportNum,
-              job.company,
-              date,
-              insights,
-            );
-            if (updated) {
-              log.info(
-                `${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`,
-              );
-            }
+          // Report-number allocation is now atomic per-user (a single
+          // `UPDATE … RETURNING` inside nextReportNumber), so concurrent tasks
+          // can each grab a distinct number without the old in-process
+          // `trackerLock` serialization. writeReport / updateTracker below
+          // target distinct rows/objects, so they're safe to run in parallel.
+          const reportNum = await nextReportNumber(userId);
+          const filename = await writeReport({
+            userId,
+            num: reportNum,
+            company: job.company,
+            role: job.role,
+            url: url as string,
+            evaluation,
+            providerLabel,
           });
-          await trackerLock;
+          log.info(`${tag} ☁️  Uploaded → ${filename}`);
+
+          const updated = await updateTracker(
+            job.num,
+            userId,
+            score || "N/A",
+            reportNum,
+            job.company,
+            date,
+            insights,
+          );
+          if (updated) {
+            log.info(
+              `${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`,
+            );
+          }
 
           results.evaluated += 1;
         }),
       ),
     );
-
-    await trackerLock;
   } finally {
     await browser.close();
   }

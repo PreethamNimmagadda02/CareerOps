@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { readReportByNumber } from "@/lib/reports";
 import { requireUserId } from "@/lib/session";
-import { readApplications } from "@/lib/tracker";
+import { findAppIdByReportNumber } from "@/lib/tracker";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,9 +19,8 @@ export async function GET(
 
     // Ownership check: only return a report the signed-in user actually has an
     // application for. This prevents enumerating other users' reports by number.
-    const wanted = parseInt(num, 10);
-    const apps = await readApplications(userId, false);
-    const owns = apps.some((a) => a.reportNumber !== null && parseInt(a.reportNumber, 10) === wanted);
+    // Targeted indexed lookup — no longer loads the user's whole application set.
+    const owns = (await findAppIdByReportNumber(userId, parseInt(num, 10))) !== null;
     if (!owns) {
       return NextResponse.json({ error: `Report ${num} not found` }, { status: 404 });
     }

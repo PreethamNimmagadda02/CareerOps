@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -19,6 +20,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: minio
+    restart: unless-stopped
     ports:
       - "9000:9000" # S3 API
       - "9001:9001" # Web UI (http://localhost:9001)
@@ -56,12 +58,28 @@ services:
   dynamodb:
     image: amazon/dynamodb-local:latest
     container_name: dynamodb
+    restart: unless-stopped
     ports:
       - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
     user: root
     volumes:
       - dynamodb_data:/home/dynamodblocal/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
 
   dynamo-init:
     build:
@@ -87,17 +105,38 @@ services:
       - ./.env:/app/.env
     restart: "no"
 
+  # One-shot schema migration — runs `prisma migrate deploy` against the DB
+  # before anything that reads/writes the schema starts. Without this, a fresh
+  # deploy boots the app/worker straight into a schema missing this release's
+  # tables (e.g. Job, Posting).
+  migrate:
+    build:
+      context: .
+      target: init
+    container_name: migrate
+    command: ["run", "db:migrate:deploy"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+    restart: "no"
+
   app:
     build:
       context: .
       target: runtime
     container_name: app
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       # Use the docker-compose service name `db` instead of localhost
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       - NODE_ENV=production
+      # Shared KV (rate limits + caches). Enables running >1 app instance;
+      # omit to fall back to per-process in-memory state (single node).
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       # Auth.js (NextAuth) — required for the multi-user dashboard.
       - AUTH_SECRET=${AUTH_SECRET}
       - AUTH_URL=${AUTH_URL:-http://localhost:3000}
@@ -124,6 +163,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       minio-init:
         condition: service_completed_successfully
       dynamo-init:
@@ -136,7 +179,84 @@ services:
       # Mount the local `.env` if API keys are needed inside the container
       - ./.env:/app/.env
 
+  # Shared portal scanner — runs the global scan on an interval, filling the
+  # `Posting` corpus ONCE for all users (seeds immediately on startup, then
+  # every SCAN_INTERVAL_SECONDS). In AWS this maps to an EventBridge schedule
+  # firing an ECS task running `career-ops-scan-portals`.
+  scan-scheduler:
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        while true; do
+          echo "[scan-scheduler] starting global scan $(date -u)";
+          node dist/cli/scan-portals.js --fallback --concurrency 12 --browser-concurrency 8 || echo "[scan-scheduler] scan failed";
+          echo "[scan-scheduler] sleeping ${SCAN_INTERVAL_SECONDS:-21600}s";
+          sleep ${SCAN_INTERVAL_SECONDS:-21600};
+        done
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      - NODE_ENV=production
+      - SCAN_INTERVAL_SECONDS=${SCAN_INTERVAL_SECONDS:-21600}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./.env:/app/.env
+
+  # Pipeline worker — consumes the Postgres job queue and runs the heavy
+  # per-user match + evaluate work OFF the web tier. Scale horizontally with
+  # `docker compose up -d --scale worker=N`; each replica claims jobs
+  # independently via FOR UPDATE SKIP LOCKED.
+  worker:
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    # Override the image's default web CMD (entrypoint is `npm`).
+    command: ["run", "worker:prod"]
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      - NODE_ENV=production
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-2}
+      # MinIO S3 — internal Docker network URL (used for SDK calls)
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      # DynamoDB Local — internal Docker network URL
+      - DYNAMODB_ENDPOINT=http://dynamodb:8000
+      - DYNAMODB_REGION=${DYNAMODB_REGION:-us-east-1}
+      - DYNAMODB_TABLE_CV=${DYNAMODB_TABLE_CV:-CVs}
+      - DYNAMODB_TABLE_PROFILE=${DYNAMODB_TABLE_PROFILE:-Profiles}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-local}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-local}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+      dynamo-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./cv.md:/app/cv.md
+      # LLM provider keys (NVIDIA_API_KEY, etc.) are read from the mounted .env.
+      - ./.env:/app/.env
+
 volumes:
   pgdata:
   minio_data:
   dynamodb_data:
+  redis_data:

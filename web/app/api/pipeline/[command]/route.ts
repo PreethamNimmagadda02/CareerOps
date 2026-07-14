@@ -1,14 +1,18 @@
-import { runPipeline, type PipelineCommand } from "@/lib/pipeline";
+import { enqueueJob, latestActiveJobForUser } from "../../../../../src/lib/jobs";
+import { isPipelineCommand } from "../../../../../src/lib/pipeline-commands";
+import { rateLimitCooldown } from "@/lib/kv";
 import { preflightPipeline } from "@/lib/preflight";
 import { requireUserId } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// Pipelines (scan/evaluate) can run for a while.
-export const maxDuration = 800;
 
-const VALID: PipelineCommand[] = ["scan", "scan:fallback", "evaluate", "evaluate:all", "evaluate:dry"];
-
+/**
+ * Enqueue a pipeline run. The heavy Playwright/LLM work no longer runs in this
+ * request (or on the web node at all) — a worker process claims the job from
+ * the queue and executes it, streaming progress into the job row. The client
+ * polls `GET /api/pipeline/jobs/:id` for status + output.
+ */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ command: string }> },
@@ -16,45 +20,39 @@ export async function POST(
   const userId = await requireUserId();
   if (!userId) return new Response("Unauthorized\n", { status: 401 });
 
-  // Simple in‑memory rate limit – one pipeline start per 10 seconds per user.
-  // Suitable for this single‑user deployment; for multi‑node setups replace with a
-  // distributed store (Redis, DynamoDB TTL, etc.).
-  const RATE_LIMIT_MS = 10_000; // 10 seconds
-  const now = Date.now();
-  if ((globalThis as any).__lastPipelineRun?.[userId] && now - (globalThis as any).__lastPipelineRun[userId] < RATE_LIMIT_MS) {
-    return new Response(
-      "Too many requests – please wait before starting another pipeline.\n",
-      { status: 429, headers: { "Retry-After": `${Math.ceil((RATE_LIMIT_MS - (now - (globalThis as any).__lastPipelineRun[userId])) / 1000)}` } },
+  const { command } = await params;
+  if (!isPipelineCommand(command)) {
+    return Response.json({ error: `Invalid pipeline command: ${command}` }, { status: 400 });
+  }
+
+  // Rate limit — one pipeline start per 10 seconds per user. Redis-backed when
+  // REDIS_URL is set so the limit holds across every web instance.
+  const RATE_LIMIT_MS = 10_000;
+  const { limited, retryAfterMs } = await rateLimitCooldown(`pipeline:${userId}`, RATE_LIMIT_MS);
+  if (limited) {
+    return Response.json(
+      { error: "Too many requests – please wait before starting another pipeline." },
+      { status: 429, headers: { "Retry-After": `${Math.ceil(retryAfterMs / 1000)}` } },
     );
   }
-  // Record the timestamp for this request.
-  (globalThis as any).__lastPipelineRun = (globalThis as any).__lastPipelineRun || {};
-  (globalThis as any).__lastPipelineRun[userId] = now;
 
-  const { command } = await params;
-  if (!VALID.includes(command as PipelineCommand)) {
-    return new Response(`Invalid pipeline command: ${command}\n`, { status: 400 });
-  }
-
-  // Pre-flight: refuse to start scans without keywords or evaluations without a
-  // complete profile, so we never spawn a process that's guaranteed to fail.
-  const blocked = await preflightPipeline(command as PipelineCommand, userId);
+  // Pre-flight: refuse to enqueue scans without keywords or evaluations without
+  // a complete profile, so we never queue a run that's guaranteed to fail.
+  const blocked = await preflightPipeline(command, userId);
   if (blocked) {
-    return new Response(`${blocked}\n`, {
-      status: 422,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
+    return Response.json({ error: blocked }, { status: 422 });
   }
 
-  const stream = runPipeline(command as PipelineCommand, userId);
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      "X-Accel-Buffering": "no",
-      // Chrome buffers `text/plain` streamed responses while it MIME-sniffs the
-      // first bytes. `nosniff` disables that sniffing so lines render live.
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+  // Single-flight: a user can only have one active (Queued/Running) job at a
+  // time. Without this, a double-click or a slow round trip (the client-side
+  // guard only engages after this request resolves) can queue duplicate,
+  // expensive scan/evaluate runs. Reuse the existing job instead of erroring
+  // so a retried click just reattaches to what's already in flight.
+  const active = await latestActiveJobForUser(userId);
+  if (active) {
+    return Response.json({ jobId: active.id, status: active.status }, { status: 202 });
+  }
+
+  const job = await enqueueJob(userId, command);
+  return Response.json({ jobId: job.id, status: job.status }, { status: 202 });
 }

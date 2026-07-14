@@ -35,7 +35,7 @@ RUN npm run build
 
 # Build Next.js web app
 COPY web/package.json web/package-lock.json ./web/
-RUN cd web && npm ci --ignore-scripts
+RUN cd web && npm ci --ignore-scripts && rm -rf node_modules/@prisma/client node_modules/.prisma
 COPY web ./web
 RUN cd web && npm run build
 
@@ -50,7 +50,7 @@ COPY prisma ./prisma
 RUN npx prisma generate
 
 COPY web/package.json web/package-lock.json ./web/
-RUN cd web && npm ci --ignore-scripts
+RUN cd web && npm ci --ignore-scripts && rm -rf node_modules/@prisma/client node_modules/.prisma
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/playwright:v1.59.1-noble AS runtime

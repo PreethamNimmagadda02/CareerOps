@@ -58,7 +58,43 @@ export function resolveProvider(providerArg: string): ProviderConfig {
   );
 }
 
-/** Send a single-turn chat completion and return the message content. */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Transient failures worth retrying: rate limits, timeouts, 5xx, network. */
+function isRetryable(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (status === 408 || status === 409 || status === 429) return true;
+  if (typeof status === "number" && status >= 500) return true;
+  // Network-level errors from the SDK / undici (no HTTP status).
+  const name = (err as { name?: string })?.name ?? "";
+  const code = (err as { code?: string })?.code ?? "";
+  if (/APIConnection|Timeout/i.test(name)) return true;
+  if (/ECONNRESET|ETIMEDOUT|ECONNREFUSED|EPIPE|EAI_AGAIN/.test(code)) return true;
+  return false;
+}
+
+/** Honor a provider `Retry-After` (seconds or HTTP-date) when present. */
+function retryAfterMs(err: unknown): number | null {
+  const headers = (err as { headers?: Record<string, string> })?.headers;
+  const raw = headers?.["retry-after"];
+  if (!raw) return null;
+  const secs = Number(raw);
+  if (Number.isFinite(secs)) return secs * 1000;
+  const date = Date.parse(raw);
+  return Number.isFinite(date) ? Math.max(0, date - Date.now()) : null;
+}
+
+/**
+ * Send a single-turn chat completion and return the message content.
+ *
+ * Retries transient failures (429 rate limits, 5xx, timeouts, connection
+ * resets) with exponential backoff + jitter, honoring a `Retry-After` header
+ * when the provider sends one. This matters at scale: many workers share one
+ * provider quota, so rate limits are the common case, not the exception.
+ * Tunable via CAREER_OPS_LLM_MAX_RETRIES / CAREER_OPS_LLM_TIMEOUT_MS.
+ */
 export async function callLLM(opts: {
   prompt: string;
   apiKey: string;
@@ -67,12 +103,28 @@ export async function callLLM(opts: {
   temperature?: number;
   maxTokens?: number;
 }): Promise<string> {
-  const client = new OpenAI({ apiKey: opts.apiKey, baseURL: opts.baseURL });
-  const resp = await client.chat.completions.create({
-    model: opts.model,
-    messages: [{ role: "user", content: opts.prompt }],
-    temperature: opts.temperature ?? 0.3,
-    max_tokens: opts.maxTokens ?? 4096,
-  });
-  return resp.choices[0]?.message?.content || "";
+  const maxRetries = Number(process.env.CAREER_OPS_LLM_MAX_RETRIES ?? 4);
+  const timeout = Number(process.env.CAREER_OPS_LLM_TIMEOUT_MS ?? 60_000);
+  // We manage retries ourselves (maxRetries: 0) so backoff is explicit + logged.
+  const client = new OpenAI({ apiKey: opts.apiKey, baseURL: opts.baseURL, maxRetries: 0, timeout });
+
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const resp = await client.chat.completions.create({
+        model: opts.model,
+        messages: [{ role: "user", content: opts.prompt }],
+        temperature: opts.temperature ?? 0.3,
+        max_tokens: opts.maxTokens ?? 4096,
+      });
+      return resp.choices[0]?.message?.content || "";
+    } catch (err) {
+      lastErr = err;
+      if (attempt === maxRetries || !isRetryable(err)) break;
+      // Prefer the server's Retry-After; else exponential backoff (cap 30s) + jitter.
+      const backoff = retryAfterMs(err) ?? Math.min(30_000, 500 * 2 ** attempt);
+      await sleep(backoff + Math.floor(Math.random() * 250));
+    }
+  }
+  throw lastErr;
 }

@@ -53,6 +53,16 @@ export interface Metrics {
   scored: number;
 }
 
+/** Counts backing the dashboard's filter tabs, computed server-side in SQL. */
+export interface TabCounts {
+  all: number;
+  apply: number;
+  evaluated: number;
+  applied: number;
+  interview: number;
+  skip: number;
+}
+
 /** The four sequential gates a user clears to activate the pipeline. */
 export type OnboardingStep = "profile" | "keywords" | "scan" | "evaluate";
 

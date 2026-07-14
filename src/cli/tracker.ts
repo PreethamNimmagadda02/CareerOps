@@ -123,9 +123,12 @@ async function cmdSave(args: Args, userId: string): Promise<void> {
     process.exit(1);
   }
 
+  // Only allocate from the counter when no explicit number is given —
+  // nextReportNumber now increments the per-user counter as a side effect, so
+  // calling it just to supply a default would burn a sequence number.
   const reportNum = args.has("--report-num")
-    ? args.number("--report-num", await nextReportNumber())
-    : await nextReportNumber();
+    ? args.number("--report-num", 0)
+    : await nextReportNumber(userId);
 
   const filename = await writeReport({
     userId,

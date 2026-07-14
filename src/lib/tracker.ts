@@ -100,23 +100,29 @@ export async function patchApplication(
 }
 
 /**
- * Compute the next sequential report number by inspecting stored report links
- * in the database. This replaces the old local-directory scan now that reports
- * are stored in MinIO.
+ * Allocate the next sequential report number for a single user.
+ *
+ * This is a per-tenant, atomic counter: a single `UPDATE … RETURNING` bumps
+ * `User.reportSeq` and hands back the new value in one round-trip. Two
+ * concurrent evaluations — even across separate worker processes — can never
+ * receive the same number, and the query touches exactly one row (no scan).
+ *
+ * (The previous implementation scanned every `Application` row of *every* user
+ * and computed the max in JS, which was both O(all-apps) and racy across
+ * tenants — two users could be handed the same number.)
  */
-export async function nextReportNumber(): Promise<number> {
-  const apps = await db.application.findMany({ select: { reportName: true } });
-  let max = 0;
-  for (const app of apps) {
-    // Accepts both the current filename form ("001-acme-….md") and the legacy
-    // markdown-link form ("[001](reports/…)") so old rows still count.
-    const match = app.reportName?.match(/^\[?(\d+)/);
-    if (match) {
-      const n = parseInt(match[1] as string, 10);
-      if (n > max) max = n;
-    }
+export async function nextReportNumber(userId: string): Promise<number> {
+  const rows = await db.$queryRaw<Array<{ reportSeq: number }>>`
+    UPDATE "User"
+    SET "reportSeq" = "reportSeq" + 1
+    WHERE id = ${userId}
+    RETURNING "reportSeq"
+  `;
+  const next = rows[0]?.reportSeq;
+  if (next == null) {
+    throw new Error(`nextReportNumber: no User row for id=${userId}`);
   }
-  return max + 1;
+  return next;
 }
 
 /** Build the canonical report filename for a given number/company/date. */

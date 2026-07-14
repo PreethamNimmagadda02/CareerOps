@@ -8,6 +8,7 @@
   },
   "bin": {
     "career-ops-scan": "dist/cli/scan.js",
+    "career-ops-scan-portals": "dist/cli/scan-portals.js",
     "career-ops-evaluate": "dist/cli/evaluate.js",
     "career-ops-pdf": "dist/cli/pdf.js",
     "career-ops-tracker": "dist/cli/tracker.js",
@@ -19,6 +20,10 @@
     "templates"
   ],
   "scripts": {
+    "worker": "tsx src/worker/index.ts",
+    "worker:prod": "node dist/worker/index.js",
+    "scan:portals": "tsx src/cli/scan-portals.ts --fallback --concurrency 12 --browser-concurrency 8",
+    "scan:portals:prod": "node dist/cli/scan-portals.js --fallback --concurrency 12 --browser-concurrency 8",
     "scan": "tsx src/cli/scan.ts --compact --concurrency 12",
     "scan:fallback": "tsx src/cli/scan.ts --compact --fallback --concurrency 12 --browser-concurrency 8",
     "evaluate": "tsx src/cli/evaluate.ts --limit 5 --concurrency 8",
@@ -31,6 +36,7 @@
     "clean": "rm -rf dist coverage",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "postinstall": "prisma generate",
+    "db:migrate:deploy": "prisma migrate deploy",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.{json,js,ts}\"",

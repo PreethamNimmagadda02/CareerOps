@@ -9,8 +9,9 @@ const nextConfig = {
   // The repo root (parent of web/) is where route handlers read data/ and reports/.
   outputFileTracingRoot: join(__dirname, ".."),
   // Keep these node-oriented libs out of the webpack bundle — they're loaded at
-  // runtime by the resume-extraction route handler.
-  serverExternalPackages: ["unpdf", "mammoth"],
+  // runtime by route handlers (resume extraction, and ioredis for the shared
+  // KV layer, which uses Node `net`/`tls` and must not be bundled).
+  serverExternalPackages: ["unpdf", "mammoth", "ioredis"],
   experimental: {
     serverActions: {
       bodySizeLimit: "11mb", // cover resume uploads up to 10 MB
