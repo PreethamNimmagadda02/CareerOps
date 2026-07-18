@@ -203,12 +203,12 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const value = React.useMemo<PipelineContextValue>(() => {
     const tel = parseScanTelemetry(log);
     const percent =
-      tel.progressTotal && tel.progressDone !== null
+      running !== null && tel.progressTotal && tel.progressDone !== null
         ? Math.round((tel.progressDone / tel.progressTotal) * 100)
         : null;
     const progressLabel =
-      tel.progressTotal && tel.progressDone !== null
-        ? running?.startsWith("evaluate")
+      running !== null && tel.progressTotal && tel.progressDone !== null
+        ? running.startsWith("evaluate")
           ? `${tel.progressDone} of ${tel.progressTotal} roles evaluated`
           : `${tel.progressDone} of ${tel.progressTotal} URLs checked`
         : null;
