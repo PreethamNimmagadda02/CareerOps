@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { useToast } from "@/components/ui/toast";
+import { parseScanTelemetry } from "@/lib/scan-telemetry";
 import type { PipelineCommand } from "@/lib/pipeline";
 
 interface RunOptions {
@@ -22,6 +23,13 @@ interface PipelineContextValue {
   /** Re-open the docked console — retained for API compatibility; no-op now. */
   openConsole: () => void;
   hasLog: boolean;
+  /** 0–100, derived from the run's last `Progress: n/total` log line — null
+   * until that line has appeared (e.g. during scan's instant matching
+   * phase, or when there's nothing to process). */
+  percent: number | null;
+  /** Human-readable counter to pair with `percent`, e.g. "23 of 40 roles
+   * evaluated". Null under the same conditions as `percent`. */
+  progressLabel: string | null;
 }
 
 const PipelineContext = React.createContext<PipelineContextValue | null>(null);
@@ -192,10 +200,29 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     };
   }, [attach]);
 
-  const value = React.useMemo<PipelineContextValue>(
-    () => ({ running, log, run, cancel, openConsole: () => {}, hasLog: log.length > 0 }),
-    [running, log, run, cancel],
-  );
+  const value = React.useMemo<PipelineContextValue>(() => {
+    const tel = parseScanTelemetry(log);
+    const percent =
+      tel.progressTotal && tel.progressDone !== null
+        ? Math.round((tel.progressDone / tel.progressTotal) * 100)
+        : null;
+    const progressLabel =
+      tel.progressTotal && tel.progressDone !== null
+        ? running?.startsWith("evaluate")
+          ? `${tel.progressDone} of ${tel.progressTotal} roles evaluated`
+          : `${tel.progressDone} of ${tel.progressTotal} URLs checked`
+        : null;
+    return {
+      running,
+      log,
+      run,
+      cancel,
+      openConsole: () => {},
+      hasLog: log.length > 0,
+      percent,
+      progressLabel,
+    };
+  }, [running, log, run, cancel]);
 
   return <PipelineContext.Provider value={value}>{children}</PipelineContext.Provider>;
 }
