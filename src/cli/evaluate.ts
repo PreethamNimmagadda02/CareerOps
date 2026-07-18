@@ -113,6 +113,7 @@ async function main(): Promise<void> {
   const browser = await chromium.launch({ headless: true });
   const date = today();
   const results = { evaluated: 0, skipped: 0, errors: 0 };
+  let completed = 0;
 
   const sem = createSemaphore(concurrency);
 
@@ -120,96 +121,101 @@ async function main(): Promise<void> {
     await Promise.all(
       targets.map((job) =>
         sem(async () => {
-          const tag = `[#${job.num}]`;
-          log.rule();
-          log.info(`${tag} ${job.company} — ${job.role}`);
-
-          const url = job.url;
-
-          if (!url) {
-            log.warn(`${tag} ⚠️  No URL in scan results — skipping. Re-run scan or use --job N.`);
-            results.skipped += 1;
-            return;
-          }
-          log.info(`${tag} 🔗 ${url}`);
-
-          log.info(`${tag} 📄 Fetching JD...`);
-          const jdText = await fetchJD(browser, url);
-          log.info(`${tag} 📄 ${isJdOk(jdText) ? "✓" : "⚠️  partial"} (${jdText.length} chars)`);
-
-          if (dryRun) {
-            log.info(`${tag} 🧪 Dry-run: skipping AI call.`);
-            results.skipped += 1;
-            return;
-          }
-
-          log.info(`${tag} 🤖 Evaluating via ${providerLabel}...`);
-          let evaluation = "";
           try {
-            const prompt = buildPrompt({
-              cv,
-              profileYml,
-              jdText,
-              company: job.company,
-              role: job.role,
-            });
-            evaluation = await callLLM({ prompt, apiKey, baseURL: provider.baseURL, model });
-            log.info(`${tag} 🤖 ✓`);
-          } catch (err) {
-            log.info(`${tag} ❌ ${(err as Error).message}`);
-            results.errors += 1;
-            return;
-          }
+            const tag = `[#${job.num}]`;
+            log.rule();
+            log.info(`${tag} ${job.company} — ${job.role}`);
 
-          const insights = parseEvaluation(evaluation);
-          const score = insights.score;
-          log.info(`${tag} 📊 Score: ${score ? score + "/5" : "could not parse — check report"}`);
-          if (insights.recommendation) {
-            log.info(`${tag} 🎯 Verdict: ${insights.recommendation.replace(/_/g, " ")}`);
-          }
+            const url = job.url;
 
-          // Report-number allocation is now atomic per-user (a single
-          // `UPDATE … RETURNING` inside nextReportNumber), so concurrent tasks
-          // can each grab a distinct number without the old in-process
-          // `trackerLock` serialization. writeReport / updateTracker below
-          // target distinct rows/objects, so they're safe to run in parallel.
-          //
-          // Guarded like the LLM call above: a DB or MinIO hiccup on ONE job
-          // must not reject the shared `Promise.all` and take down every
-          // other job still mid-flight — it should just count as an error and
-          // let the batch keep going.
-          try {
-            const reportNum = await nextReportNumber(userId);
-            const filename = await writeReport({
-              userId,
-              num: reportNum,
-              company: job.company,
-              role: job.role,
-              url: url as string,
-              evaluation,
-              providerLabel,
-            });
-            log.info(`${tag} ☁️  Uploaded → ${filename}`);
+            if (!url) {
+              log.warn(`${tag} ⚠️  No URL in scan results — skipping. Re-run scan or use --job N.`);
+              results.skipped += 1;
+              return;
+            }
+            log.info(`${tag} 🔗 ${url}`);
 
-            const updated = await updateTracker(
-              job.num,
-              userId,
-              score || "N/A",
-              reportNum,
-              job.company,
-              date,
-              insights,
-            );
-            if (updated) {
-              log.info(
-                `${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`,
-              );
+            log.info(`${tag} 📄 Fetching JD...`);
+            const jdText = await fetchJD(browser, url);
+            log.info(`${tag} 📄 ${isJdOk(jdText) ? "✓" : "⚠️  partial"} (${jdText.length} chars)`);
+
+            if (dryRun) {
+              log.info(`${tag} 🧪 Dry-run: skipping AI call.`);
+              results.skipped += 1;
+              return;
             }
 
-            results.evaluated += 1;
-          } catch (err) {
-            log.info(`${tag} ❌ Failed to save report/tracker: ${(err as Error).message}`);
-            results.errors += 1;
+            log.info(`${tag} 🤖 Evaluating via ${providerLabel}...`);
+            let evaluation = "";
+            try {
+              const prompt = buildPrompt({
+                cv,
+                profileYml,
+                jdText,
+                company: job.company,
+                role: job.role,
+              });
+              evaluation = await callLLM({ prompt, apiKey, baseURL: provider.baseURL, model });
+              log.info(`${tag} 🤖 ✓`);
+            } catch (err) {
+              log.info(`${tag} ❌ ${(err as Error).message}`);
+              results.errors += 1;
+              return;
+            }
+
+            const insights = parseEvaluation(evaluation);
+            const score = insights.score;
+            log.info(`${tag} 📊 Score: ${score ? score + "/5" : "could not parse — check report"}`);
+            if (insights.recommendation) {
+              log.info(`${tag} 🎯 Verdict: ${insights.recommendation.replace(/_/g, " ")}`);
+            }
+
+            // Report-number allocation is now atomic per-user (a single
+            // `UPDATE … RETURNING` inside nextReportNumber), so concurrent tasks
+            // can each grab a distinct number without the old in-process
+            // `trackerLock` serialization. writeReport / updateTracker below
+            // target distinct rows/objects, so they're safe to run in parallel.
+            //
+            // Guarded like the LLM call above: a DB or MinIO hiccup on ONE job
+            // must not reject the shared `Promise.all` and take down every
+            // other job still mid-flight — it should just count as an error and
+            // let the batch keep going.
+            try {
+              const reportNum = await nextReportNumber(userId);
+              const filename = await writeReport({
+                userId,
+                num: reportNum,
+                company: job.company,
+                role: job.role,
+                url: url as string,
+                evaluation,
+                providerLabel,
+              });
+              log.info(`${tag} ☁️  Uploaded → ${filename}`);
+
+              const updated = await updateTracker(
+                job.num,
+                userId,
+                score || "N/A",
+                reportNum,
+                job.company,
+                date,
+                insights,
+              );
+              if (updated) {
+                log.info(
+                  `${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`,
+                );
+              }
+
+              results.evaluated += 1;
+            } catch (err) {
+              log.info(`${tag} ❌ Failed to save report/tracker: ${(err as Error).message}`);
+              results.errors += 1;
+            }
+          } finally {
+            completed += 1;
+            log.info(`📊 Progress: ${completed}/${targets.length} roles evaluated`);
           }
         }),
       ),
