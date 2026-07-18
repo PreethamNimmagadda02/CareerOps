@@ -4,11 +4,16 @@
  * numbers the onboarding scan screen renders live.
  *
  * We only ever surface counts the CLIs actually print, so the telemetry never
- * shows a fabricated figure. Lines matched (from src/cli/scan.ts, evaluate.ts):
+ * shows a fabricated figure. Lines matched (from src/cli/scan.ts, evaluate.ts,
+ * url-validator.ts):
  *   📚 Matching against {n} active postings ...
  *   📊 {total} postings → {relevant} relevant, {shortlist} high-signal (...)
  *   📊 Score: {n}/5
  *   📊 {evaluated} evaluated  {skipped} skipped  {errors} errors
+ *   📊 Progress: {done}/{total} {unit} — e.g. "postings scanned", "URLs
+ *     checked", "roles evaluated". A run can emit more than one such phase in
+ *     sequence (e.g. scan's corpus sweep, then its URL-validation pass); the
+ *     last one printed is always the current phase.
  */
 export interface ScanTelemetry {
   /** Active postings in the corpus the scan matched against. */
@@ -26,14 +31,21 @@ export interface ScanTelemetry {
   /** Final evaluated count from the summary line, once printed. */
   evaluated: number | null;
   /**
-   * Items completed so far in the run's slow per-item phase (scan's URL
-   * validation, or evaluate's per-job loop), from the last `Progress:
-   * n/total` line. Null before any such line has appeared (e.g. during
-   * scan's instant matching phase, or when there's nothing to process).
+   * Items completed so far in the run's current per-item phase (scan's
+   * corpus sweep, its URL-validation pass, or evaluate's per-job loop), from
+   * the last `Progress: n/total unit` line. Null before any such line has
+   * appeared (e.g. when there's nothing to process).
    */
   progressDone: number | null;
   /** The denominator for `progressDone`. Null under the same conditions. */
   progressTotal: number | null;
+  /**
+   * The trailing unit phrase from that same line (e.g. "postings scanned",
+   * "URLs checked", "roles evaluated") — lets the UI label the count without
+   * hardcoding it against the command name, since one run can move through
+   * more than one phase. Null under the same conditions as `progressDone`.
+   */
+  progressUnit: string | null;
 }
 
 export function parseScanTelemetry(log: string): ScanTelemetry {
@@ -47,6 +59,7 @@ export function parseScanTelemetry(log: string): ScanTelemetry {
     evaluated: null,
     progressDone: null,
     progressTotal: null,
+    progressUnit: null,
   };
   if (!log) return t;
 
@@ -70,11 +83,12 @@ export function parseScanTelemetry(log: string): ScanTelemetry {
   const summary = log.match(/(\d+)\s+evaluated\s+(\d+)\s+skipped\s+(\d+)\s+errors/);
   if (summary) t.evaluated = Number(summary[1]);
 
-  const progressMatches = [...log.matchAll(/Progress:\s*(\d+)\/(\d+)/g)];
+  const progressMatches = [...log.matchAll(/Progress:\s*(\d+)\/(\d+)\s+([^\n]+)/g)];
   if (progressMatches.length) {
     const last = progressMatches[progressMatches.length - 1];
     t.progressDone = Number(last[1]);
     t.progressTotal = Number(last[2]);
+    t.progressUnit = last[3].trim();
   }
 
   return t;

@@ -207,10 +207,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         ? Math.round((tel.progressDone / tel.progressTotal) * 100)
         : null;
     const progressLabel =
-      running !== null && tel.progressTotal !== null && tel.progressDone !== null
-        ? running.startsWith("evaluate")
-          ? `${tel.progressDone} of ${tel.progressTotal} roles evaluated`
-          : `${tel.progressDone} of ${tel.progressTotal} URLs checked`
+      running !== null &&
+      tel.progressTotal !== null &&
+      tel.progressDone !== null &&
+      tel.progressUnit !== null
+        ? `${tel.progressDone} of ${tel.progressTotal} ${tel.progressUnit}`
         : null;
     return {
       running,

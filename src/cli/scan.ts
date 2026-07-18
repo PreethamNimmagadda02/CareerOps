@@ -100,7 +100,22 @@ async function main(): Promise<void> {
   const skipped = { title: 0, nonEngineering: 0, location: 0, duplicate: 0 };
   const seenInRun = new Set<string>();
 
+  // Corpus matching itself is a fast in-memory sweep (well under a second even
+  // at tens of thousands of postings), but the client still needs a genuine
+  // "how much of the corpus have we compared against" signal rather than only
+  // seeing the much smaller post-match shortlist. Log every ~1/50th of the
+  // corpus (plus the final item) so the progress bar reflects real sweep
+  // progress without writing one log line per posting.
+  const total = jobs.length;
+  const logEvery = Math.max(1, Math.ceil(total / 50));
+  let scanned = 0;
+
   for (const job of jobs) {
+    scanned++;
+    if (scanned % logEvery === 0 || scanned === total) {
+      log.info(`   📊 Progress: ${scanned}/${total} postings scanned`);
+    }
+
     const match = titleMatches(job.title || "", config.positive, config.negative);
     if (!match.relevant) {
       skipped.title += 1;
