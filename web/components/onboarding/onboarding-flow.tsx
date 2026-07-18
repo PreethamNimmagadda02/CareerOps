@@ -284,11 +284,6 @@ export function OnboardingFlow({
   const [scanStage, setScanStage] = React.useState<ScanStage>(() =>
     activeCommand == null ? "idle" : activeCommand.startsWith("evaluate") ? "scoring" : "scanning",
   );
-  // Persisted roles-found count. The pipeline log is reset when the evaluate
-  // run starts, so the live scan telemetry disappears during scoring — we keep
-  // the number here (seeded from server state, only ever revised upward) so it
-  // stays visible for the rest of the flow.
-  const [rolesFound, setRolesFound] = React.useState<number>(initial.scan.count ?? 0);
   // The concrete roles the scan discovered (role + company) for the live feed.
   const [foundRoles, setFoundRoles] = React.useState<FoundRole[]>([]);
   const fileInput = React.useRef<HTMLInputElement>(null);
@@ -505,14 +500,6 @@ export function OnboardingFlow({
           ? 2
           : 1;
 
-  // "Roles found" = roles that survived keyword matching (relevant), NOT the
-  // total postings considered. Kept monotonic across the scan → evaluate
-  // handoff (where the live log/telemetry resets) so it never flickers to 0.
-  React.useEffect(() => {
-    const live = Math.max(tel.relevant ?? 0, onboarding.scan.count ?? 0, foundRoles.length);
-    setRolesFound((prev) => (live > prev ? live : prev));
-  }, [tel.relevant, onboarding.scan.count, foundRoles.length]);
-
   // Pull the concrete matched roles (role + company) for the live feed, polling
   // while the scan/scoring runs and fetching once when done.
   React.useEffect(() => {
@@ -554,7 +541,10 @@ export function OnboardingFlow({
   // from the scan step on; "Scored" joins once evaluation starts; "Top score"
   // appears at the end — so by "done" all three read together.
   const scanCounters = [
-    { label: "Roles found", value: rolesFound as number | null },
+    // Matches the live-activity feed exactly — both read off the same
+    // `foundRoles` list, so "Roles found" never disagrees with what's shown
+    // scrolling underneath it.
+    { label: "Roles found", value: foundRoles.length as number | null },
     {
       label: "Scored",
       value: scanStage === "scoring" || scanStage === "done" ? tel.scored : null,
