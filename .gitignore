@@ -47,3 +47,6 @@ coverage/
 .env
 /src/generated/prisma
 data/scan-results.json
+
+# repowise API keys (local)
+.repowise/.env
