@@ -20,6 +20,8 @@ export async function validateJobUrls(jobs: RelevantJob[], concurrency: number =
   
   let validCount = 0;
   let invalidCount = 0;
+  let done = 0;
+  const total = jobs.length;
   
   try {
     const results = await mapLimit(jobs, concurrency, async (job) => {
@@ -66,7 +68,10 @@ export async function validateJobUrls(jobs: RelevantJob[], concurrency: number =
         invalidCount++;
         log.info(`   ❌ Invalid URL stripped: ${job.company} - ${job.title} (${reason})`);
       }
-      
+
+      done++;
+      log.info(`   📊 Progress: ${done}/${total} URLs checked`);
+
       return { job, isValid };
     });
     
