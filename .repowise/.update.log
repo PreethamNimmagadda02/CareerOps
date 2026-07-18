@@ -188,3 +188,149 @@ Warning: there are non-text parts in the response: ['thought_signature'], return
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
+
+--- post-commit hook fired at Sat Jul 18 23:02:33 IST 2026 for HEAD 0768a4b83fe84d54934b0dec515bc6c8aafd58e2 ---
+repowise update · CarrerOps
+89e753ed..0768a4b8
+5 changed · 5 modified
+    modified  .claude/CLAUDE.md
+    modified  .repowise/.update.log
+    modified  .repowise/knowledge-graph.json
+    modified  .repowise/state.json
+    modified  .repowise/wiki.db
+2026-07-18 23:02:34 [info     ] FileTraverser initialised      extra_exclude_patterns=0 include_nested_repos=False max_file_size_kb=500 repo_root=/Users/preethamnimmagadda/Desktop/CarrerOps submodules_skipped=0
+2026-07-18 23:02:34 [info     ] parse_cache_used               hits=208 misses=1
+2026-07-18 23:02:34 [info     ] tsconfig_resolver_ready        configs=2
+2026-07-18 23:02:34 [info     ] import_resolution_per_language seconds={'json': 0.0, 'markdown': 0.0, 'dockerfile': 0.0, 'yaml': 0.0, 'javascript': 0.0, 'typescript': 0.02, 'toml': 0.0, 'sql': 0.0}
+2026-07-18 23:02:34 [info     ] type_use edges emitted         per_language={'typescript': 49}
+2026-07-18 23:02:34 [info     ] Heritage edges resolved        total=1
+2026-07-18 23:02:34 [info     ] Call edges resolved            total=625
+2026-07-18 23:02:34 [info     ] Graph built                    edge_types={'defines': 831, 'imports': 496, 'calls': 625, 'extends': 1, 'has_method': 6} edges=1959 file_nodes=259 symbol_nodes=831
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=pytest_conftest
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=php
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=python_dynamic_import
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=xaml
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=django_settings
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=dotnet
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=scala
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=ruby
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=jvm
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=swift
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=spring
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=luau
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=cpp
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=go
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=c
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=rust
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=1 extractor=node_package
+2026-07-18 23:02:34 [debug    ] dynamic_hints                  count=0 extractor=alpine
+Dynamic hint edges added: 1
+2026-07-18 23:02:34 [debug    ] repo_commit_index_built        commits_parsed=68 files_with_history=5 indexable_files=5
+2026-07-18 23:02:34 [debug    ] co_change_computed             commit_limit=2000 commits=68 files_with_entropy=154 files_with_partners=73 min_count=2 pairs_above_threshold=396 pairs_considered=5195 tracked_files=209
+2026-07-18 23:02:34 [info     ] Co-change edges added          count=155
+2026-07-18 23:02:34 [info     ] betweenness_reused_from_cache  kind=file nodes=260
+2026-07-18 23:02:34 [info     ] betweenness_reused_from_cache  kind=symbol nodes=831
+2026-07-18 23:02:35 [info     ] symbol_communities_detected    communities=449 connected=409 total_symbols=831
+2026-07-18 23:02:35 [info     ] file_communities_detected      algorithm=louvain communities=85 prod_files=244 test_files=16 total_files=260
+2026-07-18 23:02:35 [info     ] execution_flows_traced         candidates_scored=98 deduplicated=0 traced=40
+Pages to regenerate: 5
+2026-07-18 23:02:35 [debug    ] duplication_incremental_splice changed=1 deleted=0 pairs=1989 touched_buckets=0
+Health analysis (partial): 5 files, 0 findings
+Knowledge graph refreshed: 9 layers, 12 tour steps
+2026-07-18 23:02:35 [info     ] decision_extractor.scanning_inline_markers total_files=5
+2026-07-18 23:02:35 [info     ] session_mining.done            pending_backlog=0 promoted=0 staged=0 structured=0
+2026-07-18 23:02:35 [info     ] kg_context_loaded              layers=9 nodes=209
+2026-07-18 23:02:35 [info     ] page_selection.complete        budget=1 counts={'api_contract': 0, 'symbol_spotlight': 0, 'file_page': 0, 'scc_page': 0, 'module_page': 0, 'repo_overview': 1, 'architecture_diagram': 1, 'infra_page': 0} coverage_pct=0.2
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=99827534-6d84-4ee4-8f43-0c0e8384b926
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=85c79259-8968-4ddc-be7c-8a0e5fe72809
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=e13d97c2-b933-43ed-842b-39b1eeea4063
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=385ef4fc-d9e9-4044-956f-b8b18dc4ca02
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=8e57cc65-cca4-4e00-8f1e-0fee08a36744
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=1f83fa62-4f4e-4c63-ade7-aa130374a69a
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=4bc81a8e-37b0-4cfa-ba12-8078671f9bce
+2026-07-18 23:02:37 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=f7dcde79-283f-446a-acc8-2dd7a388b3c8
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:02:40 [debug    ] gemini.generate.done           input_tokens=523 output_tokens=631 request_id=e13d97c2-b933-43ed-842b-39b1eeea4063
+2026-07-18 23:02:40 [debug    ] cost_tracker.record            cost_usd=0.00022852499999999998 file_path=None input_tokens=523 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=631
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:02 [debug    ] gemini.generate.done           input_tokens=622 output_tokens=710 request_id=f7dcde79-283f-446a-acc8-2dd7a388b3c8
+2026-07-18 23:04:02 [debug    ] cost_tracker.record            cost_usd=0.00025965 file_path=None input_tokens=622 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=710
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:03 [debug    ] gemini.generate.done           input_tokens=635 output_tokens=690 request_id=385ef4fc-d9e9-4044-956f-b8b18dc4ca02
+2026-07-18 23:04:03 [debug    ] cost_tracker.record            cost_usd=0.000254625 file_path=None input_tokens=635 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=690
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:03 [debug    ] gemini.generate.done           input_tokens=709 output_tokens=516 request_id=85c79259-8968-4ddc-be7c-8a0e5fe72809
+2026-07-18 23:04:03 [debug    ] cost_tracker.record            cost_usd=0.00020797499999999997 file_path=None input_tokens=709 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=516
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:03 [debug    ] gemini.generate.done           input_tokens=694 output_tokens=642 request_id=4bc81a8e-37b0-4cfa-ba12-8078671f9bce
+2026-07-18 23:04:03 [debug    ] cost_tracker.record            cost_usd=0.00024464999999999996 file_path=None input_tokens=694 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=642
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:03 [debug    ] gemini.generate.done           input_tokens=567 output_tokens=638 request_id=8e57cc65-cca4-4e00-8f1e-0fee08a36744
+2026-07-18 23:04:03 [debug    ] cost_tracker.record            cost_usd=0.000233925 file_path=None input_tokens=567 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=638
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:04 [debug    ] gemini.generate.done           input_tokens=506 output_tokens=658 request_id=99827534-6d84-4ee4-8f43-0c0e8384b926
+2026-07-18 23:04:04 [debug    ] cost_tracker.record            cost_usd=0.00023535 file_path=None input_tokens=506 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=658
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:04 [debug    ] gemini.generate.done           input_tokens=707 output_tokens=734 request_id=1f83fa62-4f4e-4c63-ade7-aa130374a69a
+2026-07-18 23:04:04 [debug    ] cost_tracker.record            cost_usd=0.000273225 file_path=None input_tokens=707 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=734
+2026-07-18 23:04:06 [debug    ] page_cache.persistent_hit      page_type=repo_overview target_path=CarrerOps
+2026-07-18 23:04:06 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=b57b8d17-c919-4acc-a4fc-b3a07d6e1fd5
+2026-07-18 23:04:06 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=d1116c6a-749c-4c51-a5cc-b80c711461c7
+2026-07-18 23:04:06 [debug    ] onboarding.gate_skipped        slot=getting_started
+2026-07-18 23:04:06 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=4acb44cd-ec6c-4dfc-b4a5-25b809d4f51e
+2026-07-18 23:04:06 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=70739fbe-c98f-4d0e-8729-b7a0c9dcc7ac
+2026-07-18 23:04:06 [debug    ] gemini.generate.start          max_tokens=20000 model=gemini-3.1-flash-lite-preview request_id=4bdc0175-94f0-474a-8410-a037f1d8e6ab
+2026-07-18 23:04:06 [debug    ] onboarding.gate_skipped        slot=development_guide
+2026-07-18 23:04:06 [debug    ] onboarding.gate_skipped        slot=active_landscape
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:09 [debug    ] gemini.generate.done           input_tokens=1284 output_tokens=419 request_id=4bdc0175-94f0-474a-8410-a037f1d8e6ab
+2026-07-18 23:04:09 [debug    ] cost_tracker.record            cost_usd=0.000222 file_path=None input_tokens=1284 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=419
+2026-07-18 23:04:09 [info     ] onboarding.grounding_stripped  count=1 slot=how_it_works tokens=['OnboardingPage']
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:09 [debug    ] gemini.generate.done           input_tokens=1333 output_tokens=739 request_id=b57b8d17-c919-4acc-a4fc-b3a07d6e1fd5
+2026-07-18 23:04:09 [debug    ] cost_tracker.record            cost_usd=0.00032167499999999994 file_path=None input_tokens=1333 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=739
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:09 [debug    ] gemini.generate.done           input_tokens=832 output_tokens=727 request_id=4acb44cd-ec6c-4dfc-b4a5-25b809d4f51e
+2026-07-18 23:04:09 [debug    ] cost_tracker.record            cost_usd=0.0002805 file_path=None input_tokens=832 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=727
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:09 [debug    ] gemini.generate.done           input_tokens=782 output_tokens=578 request_id=70739fbe-c98f-4d0e-8729-b7a0c9dcc7ac
+2026-07-18 23:04:09 [debug    ] cost_tracker.record            cost_usd=0.00023205 file_path=None input_tokens=782 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=578
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:11 [debug    ] gemini.generate.done           input_tokens=1352 output_tokens=921 request_id=d1116c6a-749c-4c51-a5cc-b80c711461c7
+2026-07-18 23:04:11 [debug    ] cost_tracker.record            cost_usd=0.00037769999999999997 file_path=None input_tokens=1352 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=921
+2026-07-18 23:04:12 [info     ] mermaid_safety.applied         pages_changed=1
+2026-07-18 23:04:12 [info     ] wiki_links.resolved            pages=14 pages_with_backlinks=1 total_forward_links=71
+2026-07-18 23:04:12 [info     ] related_pages.attached         pages_with_related=0 total_entries=0
+2026-07-18 23:04:12 [info     ] kg_enrichment.tour_wiki_links  steps_with_links=0 total_steps=12
+2026-07-18 23:04:12 [info     ] Generation complete            model=gemini-3.1-flash-lite-preview provider=gemini total_pages=14
+  Generating pages... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14/10 0:01:33 $0.003
+2026-07-18 23:04:12 [debug    ] gemini.generate.start          max_tokens=2048 model=gemini-3.1-flash-lite-preview request_id=None
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:14 [debug    ] gemini.generate.done           input_tokens=690 output_tokens=267 request_id=None
+2026-07-18 23:04:14 [debug    ] cost_tracker.record            cost_usd=0.00013185 file_path=None input_tokens=690 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=267
+2026-07-18 23:04:14 [debug    ] gemini.generate.start          max_tokens=2048 model=gemini-3.1-flash-lite-preview request_id=None
+Warning: there are non-text parts in the response: ['thought_signature'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+2026-07-18 23:04:15 [debug    ] gemini.generate.done           input_tokens=734 output_tokens=207 request_id=None
+2026-07-18 23:04:15 [debug    ] cost_tracker.record            cost_usd=0.00011714999999999999 file_path=None input_tokens=734 model=gemini-3.1-flash-lite-preview operation=doc_generation output_tokens=207
+2026-07-18 23:04:15 [info     ] kg_reviewer_summary            counts={'summary_restates_filename': 61, 'tour_reasons_distinct': 1} critical=0 low_signal_summaries_tagged=61 ok=True warning=62
+2026-07-18 23:04:15 [info     ] related_pages.attached         pages_with_related=79 total_entries=268
+2026-07-18 23:04:15 [debug    ] repo_commit_index_built        commits_parsed=1 files_with_history=0 indexable_files=0
+  ✓ VS Code MCP configured 
+(/Users/preethamnimmagadda/Desktop/CarrerOps/.vscode/mcp.json)
+  ✓ VS Code extension recommended 
+(/Users/preethamnimmagadda/Desktop/CarrerOps/.vscode/extensions.json)
+
+╭────────────────────── {^ ^}  repowise update complete ───────────────────────╮
+│                                                                              │
+│   Pages updated           14                                                 │
+│   Total tokens            21,047                                             │
+│   Provider                gemini / gemini-3.1-flash-lite-preview             │
+│   Cost                    $0.004                                             │
+│   Elapsed                 1m 41s                                             │
+│                                                                              │
+│   What's next:                                                               │
+│   repowise serve               browse the updated wiki at localhost:3000     │
+│   repowise search <query>      search the wiki                               │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
