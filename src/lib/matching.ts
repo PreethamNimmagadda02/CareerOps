@@ -74,8 +74,9 @@ function remoteRestriction(text: string): string[] | null {
   const after = text.match(/\bremote\b[\s-]*[,:-]\s*([a-z][a-z\s/&]*)/i);
   if (after) return splitQualifier(after[1]);
 
-  // "US Remote" — qualifier precedes "remote".
-  const before = text.match(/^([a-z][a-z\s/&]*?)\s+remote\b/i);
+  // "US Remote" / "US - Remote" / "US-Remote" — qualifier precedes "remote",
+  // separated by whitespace, a dash, or both.
+  const before = text.match(/^([a-z][a-z\s/&]*?)\s*-?\s*remote\b/i);
   if (before) return splitQualifier(before[1]);
 
   // "Remote US" / "Remote India" — qualifier follows with no delimiter.

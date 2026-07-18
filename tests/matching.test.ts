@@ -104,9 +104,18 @@ describe("locationMatch", () => {
     expect(locationMatch("US Remote", PREFS).eligible).toBe(false);
   });
 
+  it("rejects '<country> - Remote' / '<country>-Remote' dash formats when not eligible", () => {
+    expect(locationMatch("US - Remote", PREFS).eligible).toBe(false);
+    expect(locationMatch("US-Remote", PREFS).eligible).toBe(false);
+    expect(locationMatch("Germany - Remote", PREFS).eligible).toBe(false);
+    expect(locationMatch("China - Remote", PREFS).eligible).toBe(false);
+  });
+
   it("accepts country-restricted remote when the user is eligible for that country", () => {
     expect(locationMatch("Remote (India)", PREFS).eligible).toBe(true);
     expect(locationMatch("Remote - India only", PREFS).eligible).toBe(true);
+    expect(locationMatch("India - Remote", PREFS).eligible).toBe(true);
+    expect(locationMatch("India-Remote", PREFS).eligible).toBe(true);
   });
 
   it("accepts country-restricted remote via eligible_locations even without a matching preferred location", () => {
