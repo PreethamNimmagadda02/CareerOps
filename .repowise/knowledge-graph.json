@@ -3,7 +3,7 @@
   "project": {
     "name": "CarrerOps",
     "is_monorepo": false,
-    "total_files": 207,
+    "total_files": 209,
     "entry_points": [],
     "tech_stack": [
       {
@@ -46,6 +46,20 @@
       "summary": ""
     },
     {
+      "id": "file:.claude/CLAUDE.md",
+      "type": "document",
+      "filePath": ".claude/CLAUDE.md",
+      "language": "markdown",
+      "symbolCount": 0,
+      "lineCount": 199,
+      "complexity": "moderate",
+      "pagerank": 0.002304,
+      "communityId": 9,
+      "tags": [],
+      "summary": "Repository instructions and context for AI coding agents.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
       "id": "file:.claude/launch.json",
       "type": "config",
       "filePath": ".claude/launch.json",
@@ -53,8 +67,8 @@
       "symbolCount": 0,
       "lineCount": 12,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 9,
+      "pagerank": 0.002304,
+      "communityId": 10,
       "tags": [
         "config",
         "low_signal_summary"
@@ -69,8 +83,8 @@
       "symbolCount": 0,
       "lineCount": 75,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 10,
+      "pagerank": 0.002304,
+      "communityId": 11,
       "tags": [
         "low_signal_summary"
       ],
@@ -84,8 +98,8 @@
       "symbolCount": 0,
       "lineCount": 46,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 11,
+      "pagerank": 0.002304,
+      "communityId": 12,
       "tags": [
         "low_signal_summary"
       ],
@@ -99,8 +113,8 @@
       "symbolCount": 0,
       "lineCount": 54,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 12,
+      "pagerank": 0.002304,
+      "communityId": 13,
       "tags": [
         "low_signal_summary"
       ],
@@ -114,8 +128,8 @@
       "symbolCount": 0,
       "lineCount": 65,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 13,
+      "pagerank": 0.002304,
+      "communityId": 14,
       "tags": [
         "low_signal_summary"
       ],
@@ -129,8 +143,8 @@
       "symbolCount": 0,
       "lineCount": 55,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 14,
+      "pagerank": 0.002304,
+      "communityId": 15,
       "tags": [
         "low_signal_summary"
       ],
@@ -144,8 +158,8 @@
       "symbolCount": 0,
       "lineCount": 33,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 15,
+      "pagerank": 0.002304,
+      "communityId": 16,
       "tags": [
         "low_signal_summary"
       ],
@@ -159,8 +173,8 @@
       "symbolCount": 0,
       "lineCount": 50,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 16,
+      "pagerank": 0.002304,
+      "communityId": 17,
       "tags": [
         "low_signal_summary"
       ],
@@ -174,8 +188,8 @@
       "symbolCount": 0,
       "lineCount": 102,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 17,
+      "pagerank": 0.002304,
+      "communityId": 18,
       "tags": [
         "low_signal_summary"
       ],
@@ -189,8 +203,8 @@
       "symbolCount": 0,
       "lineCount": 6,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 18,
+      "pagerank": 0.002304,
+      "communityId": 19,
       "tags": [
         "config",
         "low_signal_summary"
@@ -205,8 +219,8 @@
       "symbolCount": 0,
       "lineCount": 35,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 19,
+      "pagerank": 0.002304,
+      "communityId": 20,
       "tags": [
         "low_signal_summary"
       ],
@@ -220,8 +234,8 @@
       "symbolCount": 0,
       "lineCount": 45,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 20,
+      "pagerank": 0.002304,
+      "communityId": 21,
       "tags": [
         "low_signal_summary"
       ],
@@ -235,8 +249,8 @@
       "symbolCount": 0,
       "lineCount": 19,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 21,
+      "pagerank": 0.002304,
+      "communityId": 22,
       "tags": [
         "low_signal_summary"
       ],
@@ -250,8 +264,8 @@
       "symbolCount": 0,
       "lineCount": 27,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 22,
+      "pagerank": 0.002304,
+      "communityId": 23,
       "tags": [
         "low_signal_summary"
       ],
@@ -265,8 +279,8 @@
       "symbolCount": 0,
       "lineCount": 21,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 23,
+      "pagerank": 0.002304,
+      "communityId": 24,
       "tags": [
         "low_signal_summary"
       ],
@@ -280,8 +294,8 @@
       "symbolCount": 0,
       "lineCount": 25,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 24,
+      "pagerank": 0.002304,
+      "communityId": 25,
       "tags": [
         "low_signal_summary"
       ],
@@ -295,8 +309,8 @@
       "symbolCount": 0,
       "lineCount": 32,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 25,
+      "pagerank": 0.002304,
+      "communityId": 26,
       "tags": [
         "low_signal_summary"
       ],
@@ -310,8 +324,8 @@
       "symbolCount": 0,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 26,
+      "pagerank": 0.002304,
+      "communityId": 27,
       "tags": [
         "low_signal_summary"
       ],
@@ -325,8 +339,8 @@
       "symbolCount": 0,
       "lineCount": 23,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 27,
+      "pagerank": 0.002304,
+      "communityId": 28,
       "tags": [
         "low_signal_summary"
       ],
@@ -340,8 +354,8 @@
       "symbolCount": 0,
       "lineCount": 70,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 28,
+      "pagerank": 0.002304,
+      "communityId": 29,
       "tags": [
         "low_signal_summary"
       ],
@@ -355,13 +369,29 @@
       "symbolCount": 0,
       "lineCount": 36,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 29,
+      "pagerank": 0.002304,
+      "communityId": 30,
       "tags": [
         "config",
         "ci"
       ],
       "summary": "GitHub Actions CI/CD workflow definition."
+    },
+    {
+      "id": "file:.mcp.json",
+      "type": "config",
+      "filePath": ".mcp.json",
+      "language": "json",
+      "symbolCount": 0,
+      "lineCount": 8,
+      "complexity": "simple",
+      "pagerank": 0.002304,
+      "communityId": 31,
+      "tags": [
+        "config",
+        "low_signal_summary"
+      ],
+      "summary": "Configuration file: .mcp.json."
     },
     {
       "id": "file:.prettierrc.json",
@@ -371,8 +401,8 @@
       "symbolCount": 0,
       "lineCount": 3,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 30,
+      "pagerank": 0.002304,
+      "communityId": 32,
       "tags": [
         "config",
         "low_signal_summary"
@@ -387,12 +417,28 @@
       "symbolCount": 0,
       "lineCount": 11,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 31,
+      "pagerank": 0.002304,
+      "communityId": 33,
       "tags": [
         "low_signal_summary"
       ],
       "summary": "Documentation: AGENTS.md."
+    },
+    {
+      "id": "file:Dockerfile",
+      "type": "service",
+      "filePath": "Dockerfile",
+      "language": "dockerfile",
+      "symbolCount": 5,
+      "lineCount": 85,
+      "complexity": "moderate",
+      "pagerank": 0.002304,
+      "communityId": 34,
+      "tags": [
+        "config",
+        "infra"
+      ],
+      "summary": "Container image build definition."
     },
     {
       "id": "file:README.md",
@@ -402,8 +448,8 @@
       "symbolCount": 0,
       "lineCount": 195,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 33,
+      "pagerank": 0.002304,
+      "communityId": 35,
       "tags": [],
       "summary": "Project overview and entry point for new readers."
     },
@@ -415,8 +461,8 @@
       "symbolCount": 0,
       "lineCount": 33,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 34,
+      "pagerank": 0.002304,
+      "communityId": 36,
       "tags": [
         "config",
         "infra",
@@ -432,8 +478,8 @@
       "symbolCount": 0,
       "lineCount": 234,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 35,
+      "pagerank": 0.002304,
+      "communityId": 37,
       "tags": [
         "config",
         "infra"
@@ -448,8 +494,8 @@
       "symbolCount": 0,
       "lineCount": 155,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 36,
+      "pagerank": 0.002304,
+      "communityId": 38,
       "tags": [
         "low_signal_summary"
       ],
@@ -463,8 +509,8 @@
       "symbolCount": 0,
       "lineCount": 477,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 37,
+      "pagerank": 0.002304,
+      "communityId": 39,
       "tags": [
         "low_signal_summary"
       ],
@@ -478,8 +524,8 @@
       "symbolCount": 0,
       "lineCount": 84,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 38,
+      "pagerank": 0.002304,
+      "communityId": 40,
       "tags": [
         "low_signal_summary"
       ],
@@ -493,8 +539,8 @@
       "symbolCount": 0,
       "lineCount": 768,
       "complexity": "complex",
-      "pagerank": 0.002315,
-      "communityId": 39,
+      "pagerank": 0.002304,
+      "communityId": 41,
       "tags": [
         "low_signal_summary"
       ],
@@ -508,8 +554,8 @@
       "symbolCount": 0,
       "lineCount": 216,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 40,
+      "pagerank": 0.002304,
+      "communityId": 42,
       "tags": [
         "low_signal_summary"
       ],
@@ -523,11 +569,10 @@
       "symbolCount": 0,
       "lineCount": 21,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 6,
       "tags": [],
-      "summary": "Application module eslint.config.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module eslint.config."
     },
     {
       "id": "file:modes/_shared.md",
@@ -537,8 +582,8 @@
       "symbolCount": 0,
       "lineCount": 165,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 42,
+      "pagerank": 0.002304,
+      "communityId": 44,
       "tags": [
         "low_signal_summary"
       ],
@@ -552,8 +597,8 @@
       "symbolCount": 0,
       "lineCount": 110,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 43,
+      "pagerank": 0.002304,
+      "communityId": 45,
       "tags": [
         "low_signal_summary"
       ],
@@ -567,8 +612,8 @@
       "symbolCount": 0,
       "lineCount": 101,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 44,
+      "pagerank": 0.002304,
+      "communityId": 46,
       "tags": [
         "low_signal_summary"
       ],
@@ -582,8 +627,8 @@
       "symbolCount": 0,
       "lineCount": 129,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 45,
+      "pagerank": 0.002304,
+      "communityId": 47,
       "tags": [
         "low_signal_summary"
       ],
@@ -597,8 +642,8 @@
       "symbolCount": 0,
       "lineCount": 116,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 46,
+      "pagerank": 0.002304,
+      "communityId": 48,
       "tags": [
         "low_signal_summary"
       ],
@@ -612,8 +657,8 @@
       "symbolCount": 0,
       "lineCount": 252,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 47,
+      "pagerank": 0.002304,
+      "communityId": 49,
       "tags": [
         "low_signal_summary"
       ],
@@ -627,8 +672,8 @@
       "symbolCount": 0,
       "lineCount": 3,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 48,
+      "pagerank": 0.002304,
+      "communityId": 50,
       "tags": [
         "config",
         "low_signal_summary"
@@ -643,8 +688,8 @@
       "symbolCount": 0,
       "lineCount": 342,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 49,
+      "pagerank": 0.002304,
+      "communityId": 51,
       "tags": [
         "low_signal_summary"
       ],
@@ -658,8 +703,8 @@
       "symbolCount": 0,
       "lineCount": 204,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 50,
+      "pagerank": 0.002304,
+      "communityId": 52,
       "tags": [
         "low_signal_summary"
       ],
@@ -673,8 +718,8 @@
       "symbolCount": 0,
       "lineCount": 261,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 51,
+      "pagerank": 0.002304,
+      "communityId": 53,
       "tags": [
         "low_signal_summary"
       ],
@@ -688,8 +733,8 @@
       "symbolCount": 0,
       "lineCount": 215,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 52,
+      "pagerank": 0.002304,
+      "communityId": 54,
       "tags": [
         "low_signal_summary"
       ],
@@ -703,8 +748,8 @@
       "symbolCount": 0,
       "lineCount": 269,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 53,
+      "pagerank": 0.002304,
+      "communityId": 55,
       "tags": [
         "low_signal_summary"
       ],
@@ -718,8 +763,8 @@
       "symbolCount": 0,
       "lineCount": 139,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 54,
+      "pagerank": 0.002304,
+      "communityId": 56,
       "tags": [
         "low_signal_summary"
       ],
@@ -733,8 +778,8 @@
       "symbolCount": 0,
       "lineCount": 129,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 55,
+      "pagerank": 0.002304,
+      "communityId": 57,
       "tags": [
         "low_signal_summary"
       ],
@@ -748,8 +793,8 @@
       "symbolCount": 0,
       "lineCount": 249,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 56,
+      "pagerank": 0.002304,
+      "communityId": 58,
       "tags": [
         "low_signal_summary"
       ],
@@ -763,8 +808,8 @@
       "symbolCount": 0,
       "lineCount": 180,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 57,
+      "pagerank": 0.002304,
+      "communityId": 59,
       "tags": [
         "low_signal_summary"
       ],
@@ -778,8 +823,8 @@
       "symbolCount": 0,
       "lineCount": 243,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 58,
+      "pagerank": 0.002304,
+      "communityId": 60,
       "tags": [
         "low_signal_summary"
       ],
@@ -793,8 +838,8 @@
       "symbolCount": 0,
       "lineCount": 198,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 59,
+      "pagerank": 0.002304,
+      "communityId": 61,
       "tags": [
         "low_signal_summary"
       ],
@@ -808,8 +853,8 @@
       "symbolCount": 0,
       "lineCount": 215,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 60,
+      "pagerank": 0.002304,
+      "communityId": 62,
       "tags": [
         "low_signal_summary"
       ],
@@ -823,8 +868,8 @@
       "symbolCount": 0,
       "lineCount": 302,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 61,
+      "pagerank": 0.002304,
+      "communityId": 63,
       "tags": [
         "low_signal_summary"
       ],
@@ -838,8 +883,8 @@
       "symbolCount": 0,
       "lineCount": 124,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 62,
+      "pagerank": 0.002304,
+      "communityId": 64,
       "tags": [
         "low_signal_summary"
       ],
@@ -853,8 +898,8 @@
       "symbolCount": 0,
       "lineCount": 307,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 63,
+      "pagerank": 0.002304,
+      "communityId": 65,
       "tags": [
         "low_signal_summary"
       ],
@@ -868,8 +913,8 @@
       "symbolCount": 0,
       "lineCount": 215,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 64,
+      "pagerank": 0.002304,
+      "communityId": 66,
       "tags": [
         "low_signal_summary"
       ],
@@ -883,8 +928,8 @@
       "symbolCount": 0,
       "lineCount": 256,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 65,
+      "pagerank": 0.002304,
+      "communityId": 67,
       "tags": [
         "low_signal_summary"
       ],
@@ -898,8 +943,8 @@
       "symbolCount": 0,
       "lineCount": 107,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 66,
+      "pagerank": 0.002304,
+      "communityId": 68,
       "tags": [
         "config"
       ],
@@ -913,11 +958,10 @@
       "symbolCount": 0,
       "lineCount": 9,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "Application module prisma.config.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module prisma.config."
     },
     {
       "id": "file:prisma/migrations/00000000000000_init/migration.sql",
@@ -927,8 +971,8 @@
       "symbolCount": 5,
       "lineCount": 93,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 67,
+      "pagerank": 0.002304,
+      "communityId": 69,
       "tags": [
         "data",
         "low_signal_summary"
@@ -943,8 +987,8 @@
       "symbolCount": 1,
       "lineCount": 30,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 68,
+      "pagerank": 0.002304,
+      "communityId": 70,
       "tags": [
         "data",
         "low_signal_summary"
@@ -959,8 +1003,8 @@
       "symbolCount": 1,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 69,
+      "pagerank": 0.002304,
+      "communityId": 71,
       "tags": [
         "data",
         "low_signal_summary"
@@ -975,8 +1019,8 @@
       "symbolCount": 1,
       "lineCount": 21,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 70,
+      "pagerank": 0.002304,
+      "communityId": 72,
       "tags": [
         "data",
         "low_signal_summary"
@@ -991,8 +1035,8 @@
       "symbolCount": 0,
       "lineCount": 12,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 71,
+      "pagerank": 0.002304,
+      "communityId": 73,
       "tags": [
         "data",
         "low_signal_summary"
@@ -1007,8 +1051,8 @@
       "symbolCount": 0,
       "lineCount": 0,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 72,
+      "pagerank": 0.002304,
+      "communityId": 74,
       "tags": [
         "config",
         "data",
@@ -1024,11 +1068,10 @@
       "symbolCount": 1,
       "lineCount": 76,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "Docs & Tooling module backfill-evaluations defining main.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module backfill-evaluations defining main."
     },
     {
       "id": "file:scripts/backfill-scores.ts",
@@ -1038,11 +1081,10 @@
       "symbolCount": 2,
       "lineCount": 64,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "Docs & Tooling module backfill-scores defining hasNumericScore, main.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module backfill-scores defining hasNumericScore, main."
     },
     {
       "id": "file:scripts/check-portals.ts",
@@ -1052,11 +1094,10 @@
       "symbolCount": 8,
       "lineCount": 206,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "Docs & Tooling module check-portals defining getArg, checkUrl, checkApi.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module check-portals defining getArg, checkUrl, checkApi."
     },
     {
       "id": "file:scripts/get-cv.ts",
@@ -1066,11 +1107,10 @@
       "symbolCount": 0,
       "lineCount": 22,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "Docs & Tooling module get-cv.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module get-cv."
     },
     {
       "id": "file:scripts/get-profile.ts",
@@ -1080,11 +1120,10 @@
       "symbolCount": 0,
       "lineCount": 20,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "Docs & Tooling module get-profile.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module get-profile."
     },
     {
       "id": "file:scripts/init-dynamo.ts",
@@ -1094,11 +1133,10 @@
       "symbolCount": 9,
       "lineCount": 243,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "Docs & Tooling module init-dynamo defining log, waitForDynamo, createTable.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module init-dynamo defining log, waitForDynamo, createTable."
     },
     {
       "id": "file:scripts/keywords.json",
@@ -1108,8 +1146,8 @@
       "symbolCount": 0,
       "lineCount": 36,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 73,
+      "pagerank": 0.002304,
+      "communityId": 75,
       "tags": [
         "config",
         "low_signal_summary"
@@ -1124,11 +1162,10 @@
       "symbolCount": 13,
       "lineCount": 289,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "Docs & Tooling module migrate-bucket defining resolveS3, extOf, classify.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module migrate-bucket defining resolveS3, extOf, classify."
     },
     {
       "id": "file:scripts/migrate-to-multitenant.ts",
@@ -1138,11 +1175,10 @@
       "symbolCount": 9,
       "lineCount": 312,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "Docs & Tooling module migrate-to-multitenant defining resolveS3, migrateDynamoRecord, listNonCanonicalObjects.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module migrate-to-multitenant defining resolveS3, migrateDynamoRecord, listNonCanonicalObjects."
     },
     {
       "id": "file:scripts/normalize-keywords.ts",
@@ -1152,11 +1188,10 @@
       "symbolCount": 1,
       "lineCount": 61,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "Docs & Tooling module normalize-keywords defining main.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module normalize-keywords defining main."
     },
     {
       "id": "file:scripts/portals.json",
@@ -1166,8 +1201,8 @@
       "symbolCount": 0,
       "lineCount": 2185,
       "complexity": "complex",
-      "pagerank": 0.002315,
-      "communityId": 74,
+      "pagerank": 0.002304,
+      "communityId": 76,
       "tags": [
         "config",
         "low_signal_summary"
@@ -1182,11 +1217,10 @@
       "symbolCount": 3,
       "lineCount": 85,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 4,
       "tags": [],
-      "summary": "Docs & Tooling module restore-recovered defining main.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Docs & Tooling module restore-recovered defining main."
     },
     {
       "id": "file:src/cli/evaluate.ts",
@@ -1196,11 +1230,10 @@
       "symbolCount": 1,
       "lineCount": 231,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "CLI module evaluate defining main.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "CLI module evaluate defining main."
     },
     {
       "id": "file:src/cli/pdf.ts",
@@ -1210,11 +1243,10 @@
       "symbolCount": 2,
       "lineCount": 38,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "CLI module pdf defining main.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "CLI module pdf defining main."
     },
     {
       "id": "file:src/cli/portals.ts",
@@ -1224,11 +1256,10 @@
       "symbolCount": 11,
       "lineCount": 221,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "CLI module portals defining required, detectMethod, cmdList.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "CLI module portals defining required, detectMethod, cmdList."
     },
     {
       "id": "file:src/cli/scan-portals.ts",
@@ -1238,11 +1269,10 @@
       "symbolCount": 1,
       "lineCount": 31,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "CLI module scan-portals defining main.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "CLI module scan-portals defining main."
     },
     {
       "id": "file:src/cli/scan.ts",
@@ -1252,11 +1282,10 @@
       "symbolCount": 2,
       "lineCount": 253,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "CLI module scan defining main, printCompact.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "CLI module scan defining main, printCompact."
     },
     {
       "id": "file:src/cli/tracker.ts",
@@ -1266,11 +1295,10 @@
       "symbolCount": 8,
       "lineCount": 177,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 2,
       "tags": [],
-      "summary": "CLI module tracker defining required, readStdin, cmdList.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "CLI module tracker defining required, readStdin, cmdList."
     },
     {
       "id": "file:src/lib/args.ts",
@@ -1280,11 +1308,10 @@
       "symbolCount": 7,
       "lineCount": 35,
       "complexity": "moderate",
-      "pagerank": 0.005739,
+      "pagerank": 0.005713,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module args defining Args, constructor, has.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module args defining Args, constructor, has."
     },
     {
       "id": "file:src/lib/candidate-loader.ts",
@@ -1294,11 +1321,10 @@
       "symbolCount": 4,
       "lineCount": 193,
       "complexity": "moderate",
-      "pagerank": 0.003815,
+      "pagerank": 0.003797,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module candidate-loader defining CandidateContext, loadCandidateContext, cvToMarkdown.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module candidate-loader defining CandidateContext, loadCandidateContext, cvToMarkdown."
     },
     {
       "id": "file:src/lib/concurrency.ts",
@@ -1308,11 +1334,10 @@
       "symbolCount": 2,
       "lineCount": 35,
       "complexity": "simple",
-      "pagerank": 0.003814,
+      "pagerank": 0.003797,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module concurrency defining mapLimit, createSemaphore.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module concurrency defining mapLimit, createSemaphore."
     },
     {
       "id": "file:src/lib/cv-store.ts",
@@ -1322,11 +1347,10 @@
       "symbolCount": 12,
       "lineCount": 106,
       "complexity": "moderate",
-      "pagerank": 0.009546,
+      "pagerank": 0.009502,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module cv-store defining ExperienceEntry, SkillGroup, EducationEntry.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module cv-store defining ExperienceEntry, SkillGroup, EducationEntry."
     },
     {
       "id": "file:src/lib/db.ts",
@@ -1336,11 +1360,10 @@
       "symbolCount": 2,
       "lineCount": 31,
       "complexity": "simple",
-      "pagerank": 0.025908,
+      "pagerank": 0.025788,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module db defining createPrismaClient.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module db defining createPrismaClient."
     },
     {
       "id": "file:src/lib/dynamo.ts",
@@ -1350,11 +1373,10 @@
       "symbolCount": 5,
       "lineCount": 48,
       "complexity": "moderate",
-      "pagerank": 0.014795,
+      "pagerank": 0.014727,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module dynamo defining createClient.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module dynamo defining createClient."
     },
     {
       "id": "file:src/lib/env.ts",
@@ -1364,11 +1386,10 @@
       "symbolCount": 1,
       "lineCount": 19,
       "complexity": "simple",
-      "pagerank": 0.003046,
+      "pagerank": 0.003032,
       "communityId": 4,
       "tags": [],
-      "summary": "Service module env defining loadEnv.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module env defining loadEnv."
     },
     {
       "id": "file:src/lib/evaluation.ts",
@@ -1378,11 +1399,10 @@
       "symbolCount": 16,
       "lineCount": 229,
       "complexity": "complex",
-      "pagerank": 0.004215,
+      "pagerank": 0.004196,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module evaluation defining ScoreDimension, EvaluationInsights, clean.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module evaluation defining ScoreDimension, EvaluationInsights, clean."
     },
     {
       "id": "file:src/lib/global-scan.ts",
@@ -1392,11 +1412,10 @@
       "symbolCount": 3,
       "lineCount": 92,
       "complexity": "simple",
-      "pagerank": 0.00297,
+      "pagerank": 0.002957,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module global-scan defining GlobalScanOptions, GlobalScanStats, runGlobalScan.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module global-scan defining GlobalScanOptions, GlobalScanStats, runGlobalScan."
     },
     {
       "id": "file:src/lib/jd.ts",
@@ -1406,11 +1425,10 @@
       "symbolCount": 4,
       "lineCount": 29,
       "complexity": "moderate",
-      "pagerank": 0.002438,
+      "pagerank": 0.002426,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module jd defining fetchJD, isJdOk.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module jd defining fetchJD, isJdOk."
     },
     {
       "id": "file:src/lib/job-signal.ts",
@@ -1420,11 +1438,10 @@
       "symbolCount": 4,
       "lineCount": 64,
       "complexity": "moderate",
-      "pagerank": 0.003852,
+      "pagerank": 0.003834,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module job-signal defining publisherClient, notifyJobQueued, subscribeJobQueued.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module job-signal defining publisherClient, notifyJobQueued, subscribeJobQueued."
     },
     {
       "id": "file:src/lib/jobs.ts",
@@ -1434,11 +1451,10 @@
       "symbolCount": 11,
       "lineCount": 173,
       "complexity": "moderate",
-      "pagerank": 0.006206,
+      "pagerank": 0.006177,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module jobs defining isValidJobId, capLog, enqueueJob.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module jobs defining isValidJobId, capLog, enqueueJob."
     },
     {
       "id": "file:src/lib/llm.ts",
@@ -1448,11 +1464,10 @@
       "symbolCount": 7,
       "lineCount": 120,
       "complexity": "moderate",
-      "pagerank": 0.003046,
+      "pagerank": 0.003032,
       "communityId": 4,
       "tags": [],
-      "summary": "Service module llm defining loadOpencodeConfig, resolveProvider, sleep.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module llm defining loadOpencodeConfig, resolveProvider, sleep."
     },
     {
       "id": "file:src/lib/logger.ts",
@@ -1462,11 +1477,10 @@
       "symbolCount": 1,
       "lineCount": 31,
       "complexity": "simple",
-      "pagerank": 0.010815,
+      "pagerank": 0.010765,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module logger (1 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module logger (1 symbols)."
     },
     {
       "id": "file:src/lib/matching.ts",
@@ -1476,11 +1490,10 @@
       "symbolCount": 10,
       "lineCount": 221,
       "complexity": "moderate",
-      "pagerank": 0.003122,
+      "pagerank": 0.003107,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module matching defining escapeRegex, keywordRegex, splitQualifier.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module matching defining escapeRegex, keywordRegex, splitQualifier."
     },
     {
       "id": "file:src/lib/minio.ts",
@@ -1490,11 +1503,10 @@
       "symbolCount": 8,
       "lineCount": 120,
       "complexity": "moderate",
-      "pagerank": 0.005633,
+      "pagerank": 0.005607,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module minio defining reportObjectKey, reportObjectUrl, resolveConfig.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module minio defining reportObjectKey, reportObjectUrl, resolveConfig."
     },
     {
       "id": "file:src/lib/owner.ts",
@@ -1504,11 +1516,10 @@
       "symbolCount": 1,
       "lineCount": 50,
       "complexity": "simple",
-      "pagerank": 0.005122,
+      "pagerank": 0.005098,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module owner defining resolveOwnerUserId.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module owner defining resolveOwnerUserId."
     },
     {
       "id": "file:src/lib/paths.ts",
@@ -1518,11 +1529,10 @@
       "symbolCount": 3,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.004887,
+      "pagerank": 0.004865,
       "communityId": 4,
       "tags": [],
-      "summary": "Service module paths defining findProjectRoot, p.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module paths defining findProjectRoot, p."
     },
     {
       "id": "file:src/lib/pdf.ts",
@@ -1532,11 +1542,10 @@
       "symbolCount": 3,
       "lineCount": 43,
       "complexity": "simple",
-      "pagerank": 0.00297,
+      "pagerank": 0.002957,
       "communityId": 4,
       "tags": [],
-      "summary": "Service module pdf defining PdfResult, generatePdf.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module pdf defining PdfResult, generatePdf."
     },
     {
       "id": "file:src/lib/pipeline-commands.ts",
@@ -1546,11 +1555,10 @@
       "symbolCount": 4,
       "lineCount": 54,
       "complexity": "moderate",
-      "pagerank": 0.007915,
+      "pagerank": 0.007879,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module pipeline-commands defining isPipelineCommand, resolveCommandProcess.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module pipeline-commands defining isPipelineCommand, resolveCommandProcess."
     },
     {
       "id": "file:src/lib/portals-db.ts",
@@ -1560,11 +1568,10 @@
       "symbolCount": 4,
       "lineCount": 45,
       "complexity": "moderate",
-      "pagerank": 0.003154,
+      "pagerank": 0.00314,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module portals-db defining rowToCompany, loadConfigFromDb, loadPortals.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module portals-db defining rowToCompany, loadConfigFromDb, loadPortals."
     },
     {
       "id": "file:src/lib/postings.ts",
@@ -1574,11 +1581,10 @@
       "symbolCount": 4,
       "lineCount": 88,
       "complexity": "moderate",
-      "pagerank": 0.002827,
+      "pagerank": 0.002814,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module postings defining upsertPostings, deactivatePostingsNotSeenSince, getActivePostings.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module postings defining upsertPostings, deactivatePostingsNotSeenSince, getActivePostings."
     },
     {
       "id": "file:src/lib/profile-store.ts",
@@ -1588,11 +1594,10 @@
       "symbolCount": 14,
       "lineCount": 148,
       "complexity": "moderate",
-      "pagerank": 0.016051,
+      "pagerank": 0.015977,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module profile-store defining CandidateIdentity, RoleArchetype, TargetRoles.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module profile-store defining CandidateIdentity, RoleArchetype, TargetRoles."
     },
     {
       "id": "file:src/lib/profile-validation.ts",
@@ -1602,11 +1607,10 @@
       "symbolCount": 4,
       "lineCount": 80,
       "complexity": "moderate",
-      "pagerank": 0.004252,
+      "pagerank": 0.004233,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module profile-validation defining ReadinessResult, filled, validateCandidateReadiness.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module profile-validation defining ReadinessResult, filled, validateCandidateReadiness."
     },
     {
       "id": "file:src/lib/prompt.ts",
@@ -1616,11 +1620,10 @@
       "symbolCount": 2,
       "lineCount": 104,
       "complexity": "moderate",
-      "pagerank": 0.007332,
+      "pagerank": 0.007298,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module prompt defining buildPrompt, parseScore.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module prompt defining buildPrompt, parseScore."
     },
     {
       "id": "file:src/lib/scanner.ts",
@@ -1630,11 +1633,10 @@
       "symbolCount": 15,
       "lineCount": 424,
       "complexity": "moderate",
-      "pagerank": 0.003987,
+      "pagerank": 0.003968,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module scanner defining slugFromAshby, slugFromLever, slugFromGreenhouse.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module scanner defining slugFromAshby, slugFromLever, slugFromGreenhouse."
     },
     {
       "id": "file:src/lib/text.ts",
@@ -1644,11 +1646,10 @@
       "symbolCount": 7,
       "lineCount": 39,
       "complexity": "moderate",
-      "pagerank": 0.005216,
+      "pagerank": 0.005192,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module text defining unquote, keywordMatch, normalizeUrl.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module text defining unquote, keywordMatch, normalizeUrl."
     },
     {
       "id": "file:src/lib/tracker.ts",
@@ -1658,11 +1659,10 @@
       "symbolCount": 8,
       "lineCount": 160,
       "complexity": "moderate",
-      "pagerank": 0.00362,
+      "pagerank": 0.003604,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module tracker defining getApplications, addApplication, patchApplication.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module tracker defining getApplications, addApplication, patchApplication."
     },
     {
       "id": "file:src/lib/url-validator.ts",
@@ -1672,11 +1672,10 @@
       "symbolCount": 1,
       "lineCount": 74,
       "complexity": "simple",
-      "pagerank": 0.002466,
+      "pagerank": 0.002455,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module url-validator defining validateJobUrls.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module url-validator defining validateJobUrls."
     },
     {
       "id": "file:src/types.ts",
@@ -1686,11 +1685,10 @@
       "symbolCount": 12,
       "lineCount": 68,
       "complexity": "moderate",
-      "pagerank": 0.009231,
+      "pagerank": 0.009188,
       "communityId": 2,
       "tags": [],
-      "summary": "Application module types defining Company, PortalsConfig, Job.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module types defining Company, PortalsConfig, Job."
     },
     {
       "id": "file:src/worker/index.ts",
@@ -1700,13 +1698,12 @@
       "symbolCount": 7,
       "lineCount": 245,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [
         "entry_point"
       ],
-      "summary": "Application module index defining sleep, idleWait, runJob.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module index defining sleep, idleWait, runJob."
     },
     {
       "id": "file:tests/candidate-loader.test.ts",
@@ -1716,11 +1713,10 @@
       "symbolCount": 4,
       "lineCount": 123,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module candidate-loader.test (4 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module candidate-loader.test (4 symbols)."
     },
     {
       "id": "file:tests/dynamo-stores.test.ts",
@@ -1730,11 +1726,10 @@
       "symbolCount": 2,
       "lineCount": 134,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module dynamo-stores.test (2 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module dynamo-stores.test (2 symbols)."
     },
     {
       "id": "file:tests/evaluation.test.ts",
@@ -1744,11 +1739,10 @@
       "symbolCount": 1,
       "lineCount": 184,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module evaluation.test (1 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module evaluation.test (1 symbols)."
     },
     {
       "id": "file:tests/keywords.test.ts",
@@ -1758,11 +1752,10 @@
       "symbolCount": 1,
       "lineCount": 71,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module keywords.test (1 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module keywords.test (1 symbols)."
     },
     {
       "id": "file:tests/matching-defaults.test.ts",
@@ -1772,11 +1765,10 @@
       "symbolCount": 0,
       "lineCount": 94,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module matching-defaults.test.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module matching-defaults.test."
     },
     {
       "id": "file:tests/matching.test.ts",
@@ -1786,11 +1778,10 @@
       "symbolCount": 2,
       "lineCount": 179,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module matching.test (2 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module matching.test (2 symbols)."
     },
     {
       "id": "file:tests/minio.test.ts",
@@ -1800,11 +1791,10 @@
       "symbolCount": 2,
       "lineCount": 115,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module minio.test (2 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module minio.test (2 symbols)."
     },
     {
       "id": "file:tests/preflight.test.ts",
@@ -1814,11 +1804,10 @@
       "symbolCount": 5,
       "lineCount": 119,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module preflight.test (5 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module preflight.test (5 symbols)."
     },
     {
       "id": "file:tests/profile-validation.test.ts",
@@ -1828,11 +1817,10 @@
       "symbolCount": 3,
       "lineCount": 188,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module profile-validation.test defining makeProfile, makeCV.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module profile-validation.test defining makeProfile, makeCV."
     },
     {
       "id": "file:tests/prompt.test.ts",
@@ -1842,11 +1830,10 @@
       "symbolCount": 0,
       "lineCount": 75,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module prompt.test.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module prompt.test."
     },
     {
       "id": "file:tests/resume-extract.test.ts",
@@ -1856,11 +1843,10 @@
       "symbolCount": 2,
       "lineCount": 299,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module resume-extract.test defining makeInput.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module resume-extract.test defining makeInput."
     },
     {
       "id": "file:tests/scanner.test.ts",
@@ -1870,11 +1856,10 @@
       "symbolCount": 0,
       "lineCount": 33,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module scanner.test.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module scanner.test."
     },
     {
       "id": "file:tests/storage.test.ts",
@@ -1884,11 +1869,10 @@
       "symbolCount": 2,
       "lineCount": 107,
       "complexity": "moderate",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module storage.test (2 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module storage.test (2 symbols)."
     },
     {
       "id": "file:tests/text.test.ts",
@@ -1898,11 +1882,10 @@
       "symbolCount": 0,
       "lineCount": 46,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module text.test.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module text.test."
     },
     {
       "id": "file:tests/tracker.test.ts",
@@ -1912,11 +1895,10 @@
       "symbolCount": 0,
       "lineCount": 68,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 41,
+      "pagerank": 0.002304,
+      "communityId": 43,
       "tags": [],
-      "summary": "Test module tracker.test.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Test module tracker.test."
     },
     {
       "id": "file:tsconfig.json",
@@ -1926,8 +1908,8 @@
       "symbolCount": 0,
       "lineCount": 16,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 75,
+      "pagerank": 0.002304,
+      "communityId": 77,
       "tags": [
         "config"
       ],
@@ -1941,11 +1923,10 @@
       "symbolCount": 0,
       "lineCount": 8,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 76,
+      "pagerank": 0.002304,
+      "communityId": 78,
       "tags": [],
-      "summary": "Application module vitest.config.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module vitest.config."
     },
     {
       "id": "file:vitest.e2e.config.ts",
@@ -1955,11 +1936,10 @@
       "symbolCount": 0,
       "lineCount": 22,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 77,
+      "pagerank": 0.002304,
+      "communityId": 79,
       "tags": [],
-      "summary": "Application module vitest.e2e.config.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module vitest.e2e.config."
     },
     {
       "id": "file:web/.eslintrc.json",
@@ -1969,8 +1949,8 @@
       "symbolCount": 0,
       "lineCount": 1,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 79,
+      "pagerank": 0.002304,
+      "communityId": 81,
       "tags": [
         "config"
       ],
@@ -1984,11 +1964,10 @@
       "symbolCount": 1,
       "lineCount": 11,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 0,
       "tags": [],
-      "summary": "Application module layout defining AppLayout.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module layout defining AppLayout."
     },
     {
       "id": "file:web/app/(app)/onboarding/page.tsx",
@@ -1998,11 +1977,10 @@
       "symbolCount": 2,
       "lineCount": 47,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "Application module page defining OnboardingPage.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module page defining OnboardingPage."
     },
     {
       "id": "file:web/app/(app)/page.tsx",
@@ -2012,11 +1990,10 @@
       "symbolCount": 1,
       "lineCount": 24,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "Application module page defining Home.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module page defining Home."
     },
     {
       "id": "file:web/app/(app)/profile/page.tsx",
@@ -2026,11 +2003,10 @@
       "symbolCount": 2,
       "lineCount": 5,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 7,
       "tags": [],
-      "summary": "Application module page defining ProfilePage.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module page defining ProfilePage."
     },
     {
       "id": "file:web/app/api/applications/route.ts",
@@ -2040,11 +2016,10 @@
       "symbolCount": 4,
       "lineCount": 57,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET, PATCH.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET, PATCH."
     },
     {
       "id": "file:web/app/api/auth/[...nextauth]/route.ts",
@@ -2054,11 +2029,10 @@
       "symbolCount": 1,
       "lineCount": 2,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 5,
       "tags": [],
-      "summary": "API module route (1 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route (1 symbols)."
     },
     {
       "id": "file:web/app/api/healthz/route.ts",
@@ -2068,11 +2042,10 @@
       "symbolCount": 3,
       "lineCount": 35,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "API module route defining GET.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET."
     },
     {
       "id": "file:web/app/api/job-titles/route.ts",
@@ -2082,11 +2055,10 @@
       "symbolCount": 14,
       "lineCount": 175,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining decodeEntities, cleanTitle, looksEnglish.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining decodeEntities, cleanTitle, looksEnglish."
     },
     {
       "id": "file:web/app/api/keywords/route.ts",
@@ -2096,11 +2068,10 @@
       "symbolCount": 6,
       "lineCount": 62,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET, POST, DELETE.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET, POST, DELETE."
     },
     {
       "id": "file:web/app/api/locations/route.ts",
@@ -2110,11 +2081,10 @@
       "symbolCount": 5,
       "lineCount": 66,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET, isStateCode.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET, isStateCode."
     },
     {
       "id": "file:web/app/api/metrics/route.ts",
@@ -2124,11 +2094,10 @@
       "symbolCount": 3,
       "lineCount": 17,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET."
     },
     {
       "id": "file:web/app/api/onboarding/route.ts",
@@ -2138,11 +2107,10 @@
       "symbolCount": 4,
       "lineCount": 40,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET, POST.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET, POST."
     },
     {
       "id": "file:web/app/api/pipeline/[command]/route.ts",
@@ -2152,11 +2120,10 @@
       "symbolCount": 3,
       "lineCount": 64,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining POST.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining POST."
     },
     {
       "id": "file:web/app/api/pipeline/active/route.ts",
@@ -2166,11 +2133,10 @@
       "symbolCount": 3,
       "lineCount": 17,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET."
     },
     {
       "id": "file:web/app/api/pipeline/jobs/[id]/cancel/route.ts",
@@ -2180,11 +2146,10 @@
       "symbolCount": 3,
       "lineCount": 22,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining POST.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining POST."
     },
     {
       "id": "file:web/app/api/pipeline/jobs/[id]/route.ts",
@@ -2194,11 +2159,10 @@
       "symbolCount": 3,
       "lineCount": 27,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET."
     },
     {
       "id": "file:web/app/api/profile/resume/extract/route.ts",
@@ -2208,11 +2172,10 @@
       "symbolCount": 5,
       "lineCount": 69,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 3,
       "tags": [],
-      "summary": "API module route defining safe, POST.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining safe, POST."
     },
     {
       "id": "file:web/app/api/profile/resume/route.ts",
@@ -2222,11 +2185,10 @@
       "symbolCount": 6,
       "lineCount": 91,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining POST, GET, DELETE.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining POST, GET, DELETE."
     },
     {
       "id": "file:web/app/api/profile/route.ts",
@@ -2236,11 +2198,10 @@
       "symbolCount": 6,
       "lineCount": 64,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining safeGetProfile, safeGetCV, GET.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining safeGetProfile, safeGetCV, GET."
     },
     {
       "id": "file:web/app/api/reports/[num]/route.ts",
@@ -2250,11 +2211,10 @@
       "symbolCount": 3,
       "lineCount": 32,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 1,
       "tags": [],
-      "summary": "API module route defining GET.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "API module route defining GET."
     },
     {
       "id": "file:web/app/layout.tsx",
@@ -2264,11 +2224,10 @@
       "symbolCount": 3,
       "lineCount": 37,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 7,
       "tags": [],
-      "summary": "Application module layout defining RootLayout.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module layout defining RootLayout."
     },
     {
       "id": "file:web/app/login/page.tsx",
@@ -2278,11 +2237,10 @@
       "symbolCount": 5,
       "lineCount": 154,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 0,
       "tags": [],
-      "summary": "Application module page defining LoginPage, SignInCard.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module page defining LoginPage, SignInCard."
     },
     {
       "id": "file:web/auth.config.ts",
@@ -2292,11 +2250,10 @@
       "symbolCount": 2,
       "lineCount": 54,
       "complexity": "simple",
-      "pagerank": 0.006497,
+      "pagerank": 0.006467,
       "communityId": 5,
       "tags": [],
-      "summary": "Application module auth.config (2 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module auth.config (2 symbols)."
     },
     {
       "id": "file:web/auth.ts",
@@ -2306,11 +2263,10 @@
       "symbolCount": 0,
       "lineCount": 12,
       "complexity": "simple",
-      "pagerank": 0.013204,
+      "pagerank": 0.013143,
       "communityId": 5,
       "tags": [],
-      "summary": "Application module auth.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module auth."
     },
     {
       "id": "file:web/components/application-detail.tsx",
@@ -2320,11 +2276,10 @@
       "symbolCount": 4,
       "lineCount": 111,
       "complexity": "moderate",
-      "pagerank": 0.00244,
+      "pagerank": 0.002429,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module application-detail defining barTone, ScoreBreakdown, MetaChip.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module application-detail defining barTone, ScoreBreakdown, MetaChip."
     },
     {
       "id": "file:web/components/brand.tsx",
@@ -2334,11 +2289,10 @@
       "symbolCount": 3,
       "lineCount": 86,
       "complexity": "simple",
-      "pagerank": 0.003228,
+      "pagerank": 0.003213,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module brand defining Logo, Wordmark.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module brand defining Logo, Wordmark."
     },
     {
       "id": "file:web/components/dashboard.tsx",
@@ -2348,11 +2302,10 @@
       "symbolCount": 9,
       "lineCount": 562,
       "complexity": "complex",
-      "pagerank": 0.002806,
+      "pagerank": 0.002793,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module dashboard defining inTab, Dashboard, DashboardInner.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module dashboard defining inTab, Dashboard, DashboardInner."
     },
     {
       "id": "file:web/components/gap-quest.tsx",
@@ -2362,11 +2315,10 @@
       "symbolCount": 1,
       "lineCount": 94,
       "complexity": "simple",
-      "pagerank": 0.002729,
+      "pagerank": 0.002717,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module gap-quest defining GapQuest.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module gap-quest defining GapQuest."
     },
     {
       "id": "file:web/components/keywords-manager.tsx",
@@ -2376,11 +2328,10 @@
       "symbolCount": 6,
       "lineCount": 195,
       "complexity": "moderate",
-      "pagerank": 0.00244,
+      "pagerank": 0.002429,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module keywords-manager defining KeywordSet, KeywordsManager, KindSection.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module keywords-manager defining KeywordSet, KeywordsManager, KindSection."
     },
     {
       "id": "file:web/components/landing-preview.tsx",
@@ -2390,11 +2341,10 @@
       "symbolCount": 8,
       "lineCount": 195,
       "complexity": "moderate",
-      "pagerank": 0.002708,
+      "pagerank": 0.002696,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module landing-preview defining usePrefersReducedMotion, useCountUp, PreviewRow.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module landing-preview defining usePrefersReducedMotion, useCountUp, PreviewRow."
     },
     {
       "id": "file:web/components/launch-pad.tsx",
@@ -2404,11 +2354,10 @@
       "symbolCount": 14,
       "lineCount": 526,
       "complexity": "complex",
-      "pagerank": 0.00244,
+      "pagerank": 0.002429,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module launch-pad defining LaunchPadProps, runningStep, RunProgress.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module launch-pad defining LaunchPadProps, runningStep, RunProgress."
     },
     {
       "id": "file:web/components/login-form.tsx",
@@ -2418,11 +2367,10 @@
       "symbolCount": 3,
       "lineCount": 53,
       "complexity": "simple",
-      "pagerank": 0.002708,
+      "pagerank": 0.002696,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module login-form defining ProviderIcon, LoginForm.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module login-form defining ProviderIcon, LoginForm."
     },
     {
       "id": "file:web/components/metrics-cards.tsx",
@@ -2432,11 +2380,10 @@
       "symbolCount": 3,
       "lineCount": 83,
       "complexity": "simple",
-      "pagerank": 0.00244,
+      "pagerank": 0.002429,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module metrics-cards defining Stat, MetricsCards.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module metrics-cards defining Stat, MetricsCards."
     },
     {
       "id": "file:web/components/onboarding/onboarding-flow.tsx",
@@ -2446,11 +2393,10 @@
       "symbolCount": 22,
       "lineCount": 1331,
       "complexity": "complex",
-      "pagerank": 0.002642,
+      "pagerank": 0.00263,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module onboarding-flow defining phaseFor, useCountUp, haptic.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module onboarding-flow defining phaseFor, useCountUp, haptic."
     },
     {
       "id": "file:web/components/pipeline-provider.tsx",
@@ -2460,11 +2406,10 @@
       "symbolCount": 8,
       "lineCount": 200,
       "complexity": "moderate",
-      "pagerank": 0.003221,
+      "pagerank": 0.003206,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module pipeline-provider defining RunOptions, PipelineContextValue, usePipeline.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module pipeline-provider defining RunOptions, PipelineContextValue, usePipeline."
     },
     {
       "id": "file:web/components/profile-view.tsx",
@@ -2474,11 +2419,10 @@
       "symbolCount": 27,
       "lineCount": 1551,
       "complexity": "complex",
-      "pagerank": 0.003298,
+      "pagerank": 0.003283,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module profile-view defining UserData, MatchingData, ProfileData.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module profile-view defining UserData, MatchingData, ProfileData."
     },
     {
       "id": "file:web/components/providers.tsx",
@@ -2488,11 +2432,10 @@
       "symbolCount": 1,
       "lineCount": 15,
       "complexity": "simple",
-      "pagerank": 0.00297,
+      "pagerank": 0.002957,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module providers defining Providers.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module providers defining Providers."
     },
     {
       "id": "file:web/components/report-modal.tsx",
@@ -2502,11 +2445,10 @@
       "symbolCount": 2,
       "lineCount": 78,
       "complexity": "simple",
-      "pagerank": 0.00244,
+      "pagerank": 0.002429,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module report-modal defining ReportModalProps, ReportModal.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module report-modal defining ReportModalProps, ReportModal."
     },
     {
       "id": "file:web/components/site-header.tsx",
@@ -2516,11 +2458,10 @@
       "symbolCount": 2,
       "lineCount": 60,
       "complexity": "simple",
-      "pagerank": 0.004282,
+      "pagerank": 0.004262,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module site-header defining SiteHeader.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module site-header defining SiteHeader."
     },
     {
       "id": "file:web/components/status-badge.tsx",
@@ -2530,11 +2471,10 @@
       "symbolCount": 5,
       "lineCount": 74,
       "complexity": "moderate",
-      "pagerank": 0.003776,
+      "pagerank": 0.003759,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module status-badge defining StatusBadge, RecommendationBadge, ScoreBadge.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module status-badge defining StatusBadge, RecommendationBadge, ScoreBadge."
     },
     {
       "id": "file:web/components/status-menu.tsx",
@@ -2544,11 +2484,10 @@
       "symbolCount": 2,
       "lineCount": 88,
       "complexity": "simple",
-      "pagerank": 0.00244,
+      "pagerank": 0.002429,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module status-menu defining StatusSelect.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module status-menu defining StatusSelect."
     },
     {
       "id": "file:web/components/theme-toggle.tsx",
@@ -2558,11 +2497,10 @@
       "symbolCount": 1,
       "lineCount": 18,
       "complexity": "simple",
-      "pagerank": 0.002834,
+      "pagerank": 0.002821,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module theme-toggle defining ThemeToggle.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module theme-toggle defining ThemeToggle."
     },
     {
       "id": "file:web/components/ui/button.tsx",
@@ -2572,11 +2510,10 @@
       "symbolCount": 1,
       "lineCount": 43,
       "complexity": "simple",
-      "pagerank": 0.00485,
+      "pagerank": 0.004828,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module button defining ButtonProps.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module button defining ButtonProps."
     },
     {
       "id": "file:web/components/ui/card.tsx",
@@ -2586,11 +2523,10 @@
       "symbolCount": 0,
       "lineCount": 17,
       "complexity": "simple",
-      "pagerank": 0.003193,
+      "pagerank": 0.003179,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module card.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module card."
     },
     {
       "id": "file:web/components/ui/confetti.tsx",
@@ -2600,11 +2536,10 @@
       "symbolCount": 4,
       "lineCount": 97,
       "complexity": "moderate",
-      "pagerank": 0.002653,
+      "pagerank": 0.002641,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module confetti defining Shard, makeShards, Confetti.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module confetti defining Shard, makeShards, Confetti."
     },
     {
       "id": "file:web/components/ui/modal.tsx",
@@ -2614,11 +2549,10 @@
       "symbolCount": 2,
       "lineCount": 51,
       "complexity": "simple",
-      "pagerank": 0.002907,
+      "pagerank": 0.002894,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module modal defining ModalProps, Modal.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module modal defining ModalProps, Modal."
     },
     {
       "id": "file:web/components/ui/skeleton.tsx",
@@ -2628,11 +2562,10 @@
       "symbolCount": 1,
       "lineCount": 18,
       "complexity": "simple",
-      "pagerank": 0.003934,
+      "pagerank": 0.003916,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module skeleton defining Skeleton.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module skeleton defining Skeleton."
     },
     {
       "id": "file:web/components/ui/spinner.tsx",
@@ -2642,11 +2575,10 @@
       "symbolCount": 1,
       "lineCount": 15,
       "complexity": "simple",
-      "pagerank": 0.004192,
+      "pagerank": 0.004173,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module spinner defining Spinner.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module spinner defining Spinner."
     },
     {
       "id": "file:web/components/ui/toast.tsx",
@@ -2656,11 +2588,10 @@
       "symbolCount": 8,
       "lineCount": 93,
       "complexity": "moderate",
-      "pagerank": 0.004217,
+      "pagerank": 0.004198,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module toast defining ToastItem, ToastInput, ToastContextValue.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module toast defining ToastItem, ToastInput, ToastContextValue."
     },
     {
       "id": "file:web/components/user-menu.tsx",
@@ -2670,11 +2601,10 @@
       "symbolCount": 1,
       "lineCount": 64,
       "complexity": "simple",
-      "pagerank": 0.002834,
+      "pagerank": 0.002821,
       "communityId": 0,
       "tags": [],
-      "summary": "UI module user-menu defining UserMenu.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "UI module user-menu defining UserMenu."
     },
     {
       "id": "file:web/lib/keywords.ts",
@@ -2684,11 +2614,10 @@
       "symbolCount": 7,
       "lineCount": 42,
       "complexity": "moderate",
-      "pagerank": 0.003626,
+      "pagerank": 0.003609,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module keywords defining KeywordSet, isKeywordKind, normalizeKeyword.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module keywords defining KeywordSet, isKeywordKind, normalizeKeyword."
     },
     {
       "id": "file:web/lib/kv.ts",
@@ -2698,11 +2627,10 @@
       "symbolCount": 8,
       "lineCount": 111,
       "complexity": "moderate",
-      "pagerank": 0.003692,
+      "pagerank": 0.003675,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module kv defining client, RateLimitResult, rateLimitCooldown.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module kv defining client, RateLimitResult, rateLimitCooldown."
     },
     {
       "id": "file:web/lib/matching-defaults.ts",
@@ -2712,11 +2640,10 @@
       "symbolCount": 6,
       "lineCount": 129,
       "complexity": "moderate",
-      "pagerank": 0.004368,
+      "pagerank": 0.004348,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module matching-defaults defining splitTitle, locationTokens, uniqueLower.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module matching-defaults defining splitTitle, locationTokens, uniqueLower."
     },
     {
       "id": "file:web/lib/metrics-db.ts",
@@ -2726,11 +2653,10 @@
       "symbolCount": 3,
       "lineCount": 126,
       "complexity": "moderate",
-      "pagerank": 0.00297,
+      "pagerank": 0.002957,
       "communityId": 2,
       "tags": [],
-      "summary": "Service module metrics-db defining DashboardMetrics, readDashboardMetrics.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module metrics-db defining DashboardMetrics, readDashboardMetrics."
     },
     {
       "id": "file:web/lib/onboarding.ts",
@@ -2740,11 +2666,10 @@
       "symbolCount": 4,
       "lineCount": 111,
       "complexity": "moderate",
-      "pagerank": 0.00379,
+      "pagerank": 0.003773,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module onboarding defining safe, hasCompletedOnboarding, markOnboardingComplete.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module onboarding defining safe, hasCompletedOnboarding, markOnboardingComplete."
     },
     {
       "id": "file:web/lib/paths.ts",
@@ -2754,11 +2679,10 @@
       "symbolCount": 3,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 4,
       "tags": [],
-      "summary": "Service module paths defining findRepoRoot, p.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module paths defining findRepoRoot, p."
     },
     {
       "id": "file:web/lib/pipeline.ts",
@@ -2768,11 +2692,10 @@
       "symbolCount": 0,
       "lineCount": 13,
       "complexity": "simple",
-      "pagerank": 0.004318,
+      "pagerank": 0.004298,
       "communityId": 0,
       "tags": [],
-      "summary": "Service module pipeline.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module pipeline."
     },
     {
       "id": "file:web/lib/preflight.ts",
@@ -2782,11 +2705,10 @@
       "symbolCount": 2,
       "lineCount": 54,
       "complexity": "simple",
-      "pagerank": 0.003102,
+      "pagerank": 0.003087,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module preflight defining safe, preflightPipeline.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module preflight defining safe, preflightPipeline."
     },
     {
       "id": "file:web/lib/reports.ts",
@@ -2796,11 +2718,10 @@
       "symbolCount": 9,
       "lineCount": 116,
       "complexity": "moderate",
-      "pagerank": 0.002806,
+      "pagerank": 0.002793,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module reports defining tableField, ReportSummary, resolveMinioClient.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module reports defining tableField, ReportSummary, resolveMinioClient."
     },
     {
       "id": "file:web/lib/resume-extract.ts",
@@ -2810,11 +2731,10 @@
       "symbolCount": 23,
       "lineCount": 500,
       "complexity": "complex",
-      "pagerank": 0.003579,
+      "pagerank": 0.003563,
       "communityId": 3,
       "tags": [],
-      "summary": "Service module resume-extract defining ensureEnv, extractResumeText, ExtractedProfile.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module resume-extract defining ensureEnv, extractResumeText, ExtractedProfile."
     },
     {
       "id": "file:web/lib/scan-telemetry.ts",
@@ -2824,11 +2744,10 @@
       "symbolCount": 2,
       "lineCount": 92,
       "complexity": "simple",
-      "pagerank": 0.003149,
+      "pagerank": 0.003134,
       "communityId": 0,
       "tags": [],
-      "summary": "Service module scan-telemetry defining ScanTelemetry, parseScanTelemetry.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module scan-telemetry defining ScanTelemetry, parseScanTelemetry."
     },
     {
       "id": "file:web/lib/session.ts",
@@ -2838,11 +2757,10 @@
       "symbolCount": 1,
       "lineCount": 8,
       "complexity": "simple",
-      "pagerank": 0.010498,
+      "pagerank": 0.01045,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module session defining requireUserId.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module session defining requireUserId."
     },
     {
       "id": "file:web/lib/status.ts",
@@ -2852,11 +2770,10 @@
       "symbolCount": 5,
       "lineCount": 59,
       "complexity": "moderate",
-      "pagerank": 0.005879,
+      "pagerank": 0.005852,
       "communityId": 0,
       "tags": [],
-      "summary": "Service module status defining normalizeStatus, statusPriority, statusLabel.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module status defining normalizeStatus, statusPriority, statusLabel."
     },
     {
       "id": "file:web/lib/storage.ts",
@@ -2866,11 +2783,10 @@
       "symbolCount": 8,
       "lineCount": 71,
       "complexity": "moderate",
-      "pagerank": 0.004071,
+      "pagerank": 0.004052,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module storage defining resolveClient, resumeObjectKey, uploadResume.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module storage defining resolveClient, resumeObjectKey, uploadResume."
     },
     {
       "id": "file:web/lib/tracker.ts",
@@ -2880,11 +2796,10 @@
       "symbolCount": 9,
       "lineCount": 160,
       "complexity": "moderate",
-      "pagerank": 0.0032,
+      "pagerank": 0.003185,
       "communityId": 1,
       "tags": [],
-      "summary": "Service module tracker defining ReadApplicationsOptions, ApplicationsPage, StoredInsights.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module tracker defining ReadApplicationsOptions, ApplicationsPage, StoredInsights."
     },
     {
       "id": "file:web/lib/types.ts",
@@ -2894,11 +2809,10 @@
       "symbolCount": 7,
       "lineCount": 83,
       "complexity": "moderate",
-      "pagerank": 0.007263,
+      "pagerank": 0.007229,
       "communityId": 0,
       "tags": [],
-      "summary": "Service module types defining Application, ScoreDimensionView, Metrics.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module types defining Application, ScoreDimensionView, Metrics."
     },
     {
       "id": "file:web/lib/utils.ts",
@@ -2908,11 +2822,10 @@
       "symbolCount": 1,
       "lineCount": 5,
       "complexity": "simple",
-      "pagerank": 0.022435,
+      "pagerank": 0.022332,
       "communityId": 0,
       "tags": [],
-      "summary": "Service module utils defining cn.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Service module utils defining cn."
     },
     {
       "id": "file:web/middleware.ts",
@@ -2922,11 +2835,10 @@
       "symbolCount": 1,
       "lineCount": 24,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 5,
       "tags": [],
-      "summary": "Application module middleware (1 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module middleware (1 symbols)."
     },
     {
       "id": "file:web/next.config.mjs",
@@ -2936,11 +2848,10 @@
       "symbolCount": 1,
       "lineCount": 29,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 4,
       "tags": [],
-      "summary": "Application module next.config (1 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module next.config (1 symbols)."
     },
     {
       "id": "file:web/package.json",
@@ -2950,8 +2861,8 @@
       "symbolCount": 0,
       "lineCount": 28,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 80,
+      "pagerank": 0.002304,
+      "communityId": 82,
       "tags": [
         "config"
       ],
@@ -2965,11 +2876,10 @@
       "symbolCount": 0,
       "lineCount": 3,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 81,
+      "pagerank": 0.002304,
+      "communityId": 83,
       "tags": [],
-      "summary": "Application module postcss.config.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module postcss.config."
     },
     {
       "id": "file:web/tailwind.config.ts",
@@ -2979,11 +2889,10 @@
       "symbolCount": 1,
       "lineCount": 152,
       "complexity": "moderate",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 8,
       "tags": [],
-      "summary": "Application module tailwind.config (1 symbols).",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Application module tailwind.config (1 symbols)."
     },
     {
       "id": "file:web/tsconfig.json",
@@ -2993,8 +2902,8 @@
       "symbolCount": 0,
       "lineCount": 14,
       "complexity": "simple",
-      "pagerank": 0.002315,
-      "communityId": 82,
+      "pagerank": 0.002304,
+      "communityId": 84,
       "tags": [
         "config"
       ],
@@ -3008,11 +2917,10 @@
       "symbolCount": 2,
       "lineCount": 6,
       "complexity": "simple",
-      "pagerank": 0.002315,
+      "pagerank": 0.002304,
       "communityId": 5,
       "tags": [],
-      "summary": "Types module next-auth.d defining Session, JWT.",
-      "primaryOwner": "PreethamNimmagadda02"
+      "summary": "Types module next-auth.d defining Session, JWT."
     },
     {
       "id": "function:src/lib/args.ts:constructor",
@@ -3496,6 +3404,105 @@
       "type": "function",
       "filePath": "src/lib/prompt.ts",
       "name": "parseScore",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:apiUrlFor",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "apiUrlFor",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:discoverAtsBoard",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "discoverAtsBoard",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:fetchJson",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "fetchJson",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:fetchStructuredJobs",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "fetchStructuredJobs",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:hasStructuredApi",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "hasStructuredApi",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:resolveApiSource",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "resolveApiSource",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:scanCompany",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "scanCompany",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:scanCompanyBrowser",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "scanCompanyBrowser",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:slugFromAshby",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "slugFromAshby",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:slugFromGreenhouse",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "slugFromGreenhouse",
+      "language": "typescript",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:src/lib/scanner.ts:slugFromLever",
+      "type": "function",
+      "filePath": "src/lib/scanner.ts",
+      "name": "slugFromLever",
       "language": "typescript",
       "tags": [],
       "summary": ""
@@ -5354,6 +5361,83 @@
       "source": "file:src/lib/scanner.ts",
       "target": "file:src/types.ts",
       "type": "imports",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:apiUrlFor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:discoverAtsBoard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:fetchJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:fetchStructuredJobs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:hasStructuredApi",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:resolveApiSource",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:scanCompany",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:scanCompanyBrowser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:slugFromAshby",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:slugFromGreenhouse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/lib/scanner.ts",
+      "target": "function:src/lib/scanner.ts:slugFromLever",
+      "type": "contains",
       "direction": "forward",
       "weight": 1.0
     },
@@ -7853,8 +7937,8 @@
   "layers": [
     {
       "id": "layer:cli",
-      "name": "Operational Task Runner",
-      "description": "Provides command-line utilities for scanning portals, processing PDFs, and executing data evaluation tasks.",
+      "name": "Data Processing Utilities",
+      "description": "A collection of command-line scripts for executing data scanning, evaluation, and portal management tasks.",
       "nodeIds": [
         "file:src/cli/evaluate.ts",
         "file:src/cli/pdf.ts",
@@ -7868,8 +7952,8 @@
     },
     {
       "id": "layer:api",
-      "name": "HTTP Request Handlers",
-      "description": "Manages server-side endpoints for authentication, job pipeline operations, and resource data retrieval.",
+      "name": "HTTP Endpoint Definitions",
+      "description": "A set of route handlers managing authentication, application data, and system health monitoring for the web interface.",
       "nodeIds": [
         "file:web/app/api/applications/route.ts",
         "file:web/app/api/auth/[...nextauth]/route.ts",
@@ -7977,8 +8061,8 @@
     },
     {
       "id": "layer:ui",
-      "name": "Frontend Component Library",
-      "description": "Contains reusable interface elements and layout components used to construct the user-facing dashboard.",
+      "name": "Frontend Interface Components",
+      "description": "A library of reusable UI elements and page-specific components used to construct the user-facing dashboard.",
       "nodeIds": [
         "file:web/components/application-detail.tsx",
         "file:web/components/brand.tsx",
@@ -8012,11 +8096,13 @@
     },
     {
       "id": "layer:application",
-      "name": "Project Configuration Environment",
-      "description": "Encompasses the global project settings, infrastructure definitions, documentation, and core build configuration files.",
+      "name": "Project Infrastructure Configuration",
+      "description": "A collection of environment settings, container definitions, and project-wide documentation files governing the application lifecycle.",
       "nodeIds": [
+        "file:.mcp.json",
         "file:.prettierrc.json",
         "file:AGENTS.md",
+        "file:Dockerfile",
         "file:README.md",
         "file:docker-compose.override.yml",
         "file:docker-compose.yml",
@@ -8079,8 +8165,8 @@
     },
     {
       "id": "layer:types",
-      "name": "Authentication Type Definitions",
-      "description": "Extends standard library interfaces to include custom user session and authentication properties.",
+      "name": "Authentication Type Extensions",
+      "description": "A specialized type definition file extending NextAuth interfaces for custom user session data.",
       "nodeIds": [
         "file:web/types/next-auth.d.ts"
       ],
@@ -8089,9 +8175,10 @@
     },
     {
       "id": "layer:config",
-      "name": "Agent Orchestration Definitions",
-      "description": "A collection of configuration files, AI agent prompts, and pipeline instructions that define the behavior and operational logic of the automated system.",
+      "name": "Agent Behavioral Definitions",
+      "description": "A collection of configuration files and instructions that define the operational logic and capabilities for automated AI agents.",
       "nodeIds": [
+        "file:.claude/CLAUDE.md",
         "file:.claude/launch.json",
         "file:.claude/skills/career-ops/SKILL.md",
         "file:.github/agents/apply.agent.md",
@@ -8119,8 +8206,8 @@
     },
     {
       "id": "layer:service",
-      "name": "Core Utility Library",
-      "description": "A shared set of foundational modules providing database interfaces, session management, logging, and data access patterns for the application.",
+      "name": "Shared Infrastructure Utilities",
+      "description": "A set of foundational helper modules providing standardized access to databases, logging, session management, and core data types.",
       "nodeIds": [
         "file:src/lib/args.ts",
         "file:src/lib/candidate-loader.ts",
@@ -8175,7 +8262,7 @@
     {
       "id": "layer:docs-tooling",
       "name": "Project Documentation and Maintenance",
-      "description": "A repository of architectural documentation and administrative utility scripts used for data migration, system maintenance, and project planning.",
+      "description": "A collection of architectural documentation and administrative utility scripts used for system maintenance and data management.",
       "nodeIds": [
         "file:docs/ARCHITECTURE.md",
         "file:docs/IMPLEMENTATION-SUMMARY.md",
@@ -8200,8 +8287,8 @@
     },
     {
       "id": "layer:test",
-      "name": "System Integration Tests",
-      "description": "A suite of automated test cases designed to validate data storage, matching logic, and core system functionality.",
+      "name": "System Validation Suite",
+      "description": "A comprehensive set of test cases designed to verify the integration, data processing, and matching logic of the system components.",
       "nodeIds": [
         "file:tests/candidate-loader.test.ts",
         "file:tests/dynamo-stores.test.ts",
@@ -8276,6 +8363,16 @@
     },
     {
       "order": 6,
+      "target_path": "web/components/ui/button.tsx",
+      "page_type": "file_page",
+      "title": "button.tsx",
+      "depth": 1,
+      "kind": "code",
+      "reason": "Directly imported by the anchor above; a core collaborator.",
+      "layer_id": "layer:ui"
+    },
+    {
+      "order": 7,
       "target_path": "scripts/backfill-evaluations.ts",
       "page_type": "file_page",
       "title": "backfill-evaluations.ts",
@@ -8285,7 +8382,7 @@
       "layer_id": "layer:docs-tooling"
     },
     {
-      "order": 7,
+      "order": 8,
       "target_path": "web/types/next-auth.d.ts",
       "page_type": "file_page",
       "title": "next-auth.d.ts",
@@ -8295,7 +8392,7 @@
       "layer_id": "layer:types"
     },
     {
-      "order": 8,
+      "order": 9,
       "target_path": "web/auth.ts",
       "page_type": "file_page",
       "title": "auth.ts",
@@ -8305,7 +8402,7 @@
       "layer_id": "layer:application"
     },
     {
-      "order": 9,
+      "order": 10,
       "target_path": "web/app/api/applications/route.ts",
       "page_type": "file_page",
       "title": "route.ts",
@@ -8315,23 +8412,13 @@
       "layer_id": "layer:api"
     },
     {
-      "order": 10,
+      "order": 11,
       "target_path": "src/cli/evaluate.ts",
       "page_type": "file_page",
       "title": "evaluate.ts",
       "depth": 1,
       "kind": "code",
       "reason": "The CLI layer's anchor \u2014 its most depended-on file.",
-      "layer_id": "layer:cli"
-    },
-    {
-      "order": 11,
-      "target_path": "src/cli/scan.ts",
-      "page_type": "file_page",
-      "title": "scan.ts",
-      "depth": 0,
-      "kind": "code",
-      "reason": "A top churn hotspot \u2014 one of the most frequently changed files in the repo; worth understanding early.",
       "layer_id": "layer:cli"
     },
     {
@@ -8430,8 +8517,10 @@
       "path": "",
       "layerId": "layer:application",
       "nodeIds": [
+        "file:.mcp.json",
         "file:.prettierrc.json",
         "file:AGENTS.md",
+        "file:Dockerfile",
         "file:README.md",
         "file:docker-compose.override.yml",
         "file:docker-compose.yml",
@@ -8498,6 +8587,7 @@
       "path": "",
       "layerId": "layer:config",
       "nodeIds": [
+        "file:.claude/CLAUDE.md",
         "file:.claude/launch.json",
         "file:.claude/skills/career-ops/SKILL.md",
         "file:.github/agents/apply.agent.md",
