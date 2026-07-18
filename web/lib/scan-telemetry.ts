@@ -72,7 +72,7 @@ export function parseScanTelemetry(log: string): ScanTelemetry {
 
   const progressMatches = [...log.matchAll(/Progress:\s*(\d+)\/(\d+)/g)];
   if (progressMatches.length) {
-    const last = progressMatches[progressMatches.length - 1] as RegExpMatchArray;
+    const last = progressMatches[progressMatches.length - 1];
     t.progressDone = Number(last[1]);
     t.progressTotal = Number(last[2]);
   }
