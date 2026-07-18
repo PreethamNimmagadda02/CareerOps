@@ -545,9 +545,14 @@ export function LaunchPad({
                   <p className="truncate text-xs text-muted-foreground">
                     {step.status === "locked" ? step.lockedReason : COPY[step.key].help}
                   </p>
-                  {onboarding.complete && step.busy && (
-                    <RunProgress percent={percent} progressLabel={progressLabel} />
-                  )}
+                  {/* Not gated on onboarding.complete: `onboarding` is a snapshot
+                      fetched once on load/onDone, so during the very run that
+                      would flip it true (e.g. the first evaluate that clears the
+                      last N/A score) it's still stale-false for the run's whole
+                      duration — which silently hid the bar for exactly the
+                      pre-completion runs a user watches most closely. `step.busy`
+                      alone is what actually means "this step is running now". */}
+                  {step.busy && <RunProgress percent={percent} progressLabel={progressLabel} />}
                 </div>
               </div>
               <div className="shrink-0">
