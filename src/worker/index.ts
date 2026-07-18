@@ -82,7 +82,7 @@ function idleWait(ms: number): Promise<boolean> {
 }
 
 /** Run a single claimed job to completion, streaming output into its log. */
-async function runJob(job: Job): Promise<void> {
+async function runJob(job: Job, slot: number): Promise<void> {
   const { id, userId, command, attempts } = job;
 
   if (!isPipelineCommand(command)) {
@@ -93,8 +93,15 @@ async function runJob(job: Job): Promise<void> {
 
   const { cmd, args } = resolveCommandProcess(command);
   let buffer = `$ ${cmd} ${args.join(" ")}\n`;
+  // Every line the child prints goes two places: into `buffer` (flushed to
+  // the Job row's `log` for the dashboard to poll) AND straight to this
+  // container's own stdout, tagged with the slot so concurrent jobs in the
+  // same process stay distinguishable — otherwise `docker compose logs
+  // worker` only ever shows the start/done bookends below, never the actual
+  // scan/evaluate output.
   const append = (line: string) => {
     buffer += line + "\n";
+    log.info(`[slot ${slot}] ${line}`);
   };
 
   const child = spawn(cmd, args, {
@@ -196,7 +203,7 @@ async function workLoop(slot: number): Promise<void> {
       }
       idlePollMs = POLL_INTERVAL_MS;
       log.info(`▶️  [slot ${slot}] job ${job.id} — ${job.command} (user ${job.userId})`);
-      await runJob(job);
+      await runJob(job, slot);
       log.info(`🏁 [slot ${slot}] job ${job.id} done`);
     } catch (err) {
       log.error(`[slot ${slot}] loop error: ${(err as Error).message}`);
