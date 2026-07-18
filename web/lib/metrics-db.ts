@@ -45,7 +45,7 @@ export interface DashboardMetrics {
 // survive the JS template literal and reach Postgres as a real regex.
 
 export async function readDashboardMetrics(userId: string): Promise<DashboardMetrics> {
-  const [byStatusGroups, scoreAgg, pdfCount, applyCountRows, evaluatedTabCountRows] =
+  const [byStatusGroups, scoreAgg, pdfCount, applyCountRows, evaluatedTabCountRows, topMatchesRows] =
     await Promise.all([
       db.application.groupBy({
         by: ["status"],
@@ -78,9 +78,16 @@ export async function readDashboardMetrics(userId: string): Promise<DashboardMet
           AND (COALESCE("scoreNumeric", (substring(score from '(\\d+\\.?\\d*)/5'))::float) IS NOT NULL
                OR recommendation IS NOT NULL)
       `,
+      // "Top matches" card: score strictly > 4
+      db.$queryRaw<Array<{ count: bigint }>>`
+        SELECT count(*) AS count FROM "Application"
+        WHERE "userId" = ${userId}
+          AND COALESCE("scoreNumeric", (substring(score from '(\\d+\\.?\\d*)/5'))::float) >= 4
+      `,
     ]);
   const applyCount = Number(applyCountRows[0]?.count ?? 0n);
   const evaluatedTabCount = Number(evaluatedTabCountRows[0]?.count ?? 0n);
+  const topMatchesCount = Number(topMatchesRows[0]?.count ?? 0n);
 
   const byStatus: Record<string, number> = {};
   let total = 0;
@@ -99,7 +106,7 @@ export async function readDashboardMetrics(userId: string): Promise<DashboardMet
     avgScore: scoreAgg._avg.scoreNumeric ?? 0,
     topScore: scoreAgg._max.scoreNumeric ?? 0,
     withPdf: pdfCount,
-    actionable: total - nonActionable,
+    topMatches: topMatchesCount,
     scored: scoreAgg._count._all,
   };
 

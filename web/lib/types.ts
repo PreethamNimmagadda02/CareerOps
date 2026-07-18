@@ -49,7 +49,7 @@ export interface Metrics {
   avgScore: number;
   topScore: number;
   withPdf: number;
-  actionable: number;
+  topMatches: number;
   scored: number;
 }
 

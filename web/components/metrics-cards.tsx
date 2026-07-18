@@ -47,13 +47,17 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 export function MetricsCards({ metrics }: { metrics: Metrics }) {
+  const activeStatuses = STATUS_GROUP_ORDER.filter(
+    (status) => status !== "evaluated" && metrics.byStatus[status] > 0
+  );
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Total" value={String(metrics.total)} icon={Layers} />
         <Stat
-          label="Actionable"
-          value={String(metrics.actionable)}
+          label="Top matches"
+          value={String(metrics.topMatches)}
           accent="text-ctp-sky"
           icon={Target}
         />
@@ -72,21 +76,22 @@ export function MetricsCards({ metrics }: { metrics: Metrics }) {
         <Stat label="With PDF" value={String(metrics.withPdf)} icon={Briefcase} />
       </div>
 
-      <Card>
-        <CardContent className="flex flex-wrap gap-x-5 gap-y-2 p-4">
-          {STATUS_GROUP_ORDER.map((status) => {
-            const count = metrics.byStatus[status];
-            if (!count) return null;
-            return (
-              <div key={status} className="flex items-center gap-2 text-sm">
-                <span className={cn("h-2.5 w-2.5 rounded-full", STATUS_DOT[status])} />
-                <span className="text-muted-foreground">{statusLabel(status)}</span>
-                <span className="font-semibold tabular-nums">{count}</span>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      {activeStatuses.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-wrap gap-x-5 gap-y-2 p-4">
+            {activeStatuses.map((status) => {
+              const count = metrics.byStatus[status];
+              return (
+                <div key={status} className="flex items-center gap-2 text-sm">
+                  <span className={cn("h-2.5 w-2.5 rounded-full", STATUS_DOT[status])} />
+                  <span className="text-muted-foreground">{statusLabel(status)}</span>
+                  <span className="font-semibold tabular-nums">{count}</span>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
