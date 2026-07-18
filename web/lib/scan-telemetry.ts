@@ -25,6 +25,15 @@ export interface ScanTelemetry {
   topScore: number | null;
   /** Final evaluated count from the summary line, once printed. */
   evaluated: number | null;
+  /**
+   * Items completed so far in the run's slow per-item phase (scan's URL
+   * validation, or evaluate's per-job loop), from the last `Progress:
+   * n/total` line. Null before any such line has appeared (e.g. during
+   * scan's instant matching phase, or when there's nothing to process).
+   */
+  progressDone: number | null;
+  /** The denominator for `progressDone`. Null under the same conditions. */
+  progressTotal: number | null;
 }
 
 export function parseScanTelemetry(log: string): ScanTelemetry {
@@ -36,6 +45,8 @@ export function parseScanTelemetry(log: string): ScanTelemetry {
     scored: 0,
     topScore: null,
     evaluated: null,
+    progressDone: null,
+    progressTotal: null,
   };
   if (!log) return t;
 
@@ -58,6 +69,13 @@ export function parseScanTelemetry(log: string): ScanTelemetry {
 
   const summary = log.match(/(\d+)\s+evaluated\s+(\d+)\s+skipped\s+(\d+)\s+errors/);
   if (summary) t.evaluated = Number(summary[1]);
+
+  const progressMatches = [...log.matchAll(/Progress:\s*(\d+)\/(\d+)/g)];
+  if (progressMatches.length) {
+    const last = progressMatches[progressMatches.length - 1] as RegExpMatchArray;
+    t.progressDone = Number(last[1]);
+    t.progressTotal = Number(last[2]);
+  }
 
   return t;
 }
