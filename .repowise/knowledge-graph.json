@@ -7937,8 +7937,8 @@
   "layers": [
     {
       "id": "layer:cli",
-      "name": "Data Processing CLI",
-      "description": "A collection of command-line tools for executing data scanning, portal tracking, and document processing tasks.",
+      "name": "Data Processing Utilities",
+      "description": "A collection of command-line tools for scanning, evaluating, and tracking external data sources and portals.",
       "nodeIds": [
         "file:src/cli/evaluate.ts",
         "file:src/cli/pdf.ts",
@@ -7952,8 +7952,8 @@
     },
     {
       "id": "layer:api",
-      "name": "HTTP Request Handlers",
-      "description": "A set of server-side route handlers that manage authentication, application data, and system health endpoints.",
+      "name": "HTTP Request Endpoints",
+      "description": "A set of route handlers managing application data, authentication, health checks, and pipeline operations.",
       "nodeIds": [
         "file:web/app/api/applications/route.ts",
         "file:web/app/api/auth/[...nextauth]/route.ts",
@@ -8061,8 +8061,8 @@
     },
     {
       "id": "layer:ui",
-      "name": "Frontend Component Library",
-      "description": "A collection of reusable UI elements and layout components used to construct the user-facing application interface.",
+      "name": "Frontend Interface Components",
+      "description": "A library of reusable UI elements and view components used to construct the application's visual interface.",
       "nodeIds": [
         "file:web/components/application-detail.tsx",
         "file:web/components/brand.tsx",
@@ -8097,7 +8097,7 @@
     {
       "id": "layer:application",
       "name": "Project Configuration Infrastructure",
-      "description": "The foundational project files including container orchestration, environment settings, documentation, and global type definitions.",
+      "description": "The foundational configuration files, environment definitions, and deployment manifests required to build and run the project.",
       "nodeIds": [
         "file:.mcp.json",
         "file:.prettierrc.json",
@@ -8165,8 +8165,8 @@
     },
     {
       "id": "layer:types",
-      "name": "Auth Type Definitions",
-      "description": "A specialized type declaration file extending the NextAuth session and user interfaces for the application.",
+      "name": "Authentication Type Extensions",
+      "description": "TypeScript declaration files that extend standard authentication types to support custom application requirements.",
       "nodeIds": [
         "file:web/types/next-auth.d.ts"
       ],
@@ -8176,7 +8176,7 @@
     {
       "id": "layer:config",
       "name": "AI Agent Definitions",
-      "description": "Contains configuration files and behavioral instructions for automated AI agents and development assistants.",
+      "description": "Contains configuration files and behavioral instructions for AI-driven development and automation agents.",
       "nodeIds": [
         "file:.claude/CLAUDE.md",
         "file:.claude/launch.json",
@@ -8207,7 +8207,7 @@
     {
       "id": "layer:service",
       "name": "Core Application Utilities",
-      "description": "Provides shared logic for database interactions, logging, session management, and data storage across the application.",
+      "description": "Provides shared infrastructure, database interfaces, and helper functions used across the application and web layers.",
       "nodeIds": [
         "file:src/lib/args.ts",
         "file:src/lib/candidate-loader.ts",
@@ -8261,8 +8261,8 @@
     },
     {
       "id": "layer:docs-tooling",
-      "name": "Project Maintenance Tools",
-      "description": "Includes architectural documentation and administrative scripts used for data backfilling and system verification.",
+      "name": "Project Maintenance Scripts",
+      "description": "Includes architectural documentation and administrative utility scripts for data management and system verification.",
       "nodeIds": [
         "file:docs/ARCHITECTURE.md",
         "file:docs/IMPLEMENTATION-SUMMARY.md",
@@ -8288,7 +8288,7 @@
     {
       "id": "layer:test",
       "name": "System Validation Suite",
-      "description": "Contains automated test cases to verify data processing, matching logic, and infrastructure integration.",
+      "description": "Contains automated test cases to verify core business logic, data storage, and matching algorithms.",
       "nodeIds": [
         "file:tests/candidate-loader.test.ts",
         "file:tests/dynamo-stores.test.ts",
