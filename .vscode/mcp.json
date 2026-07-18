@@ -6,13 +6,24 @@
       "headers": {
         "Authorization": "Bearer ${input:apifyToken}"
       }
+    },
+    "repowise": {
+      "type": "stdio",
+      "command": "repowise",
+      "args": [
+        "mcp",
+        "/Users/preethamnimmagadda/Desktop/CarrerOps",
+        "--transport",
+        "stdio"
+      ],
+      "description": "repowise: codebase intelligence \u2014 docs, graph, git signals, dead code, decisions"
     }
   },
   "inputs": [
     {
       "id": "apifyToken",
       "type": "promptString",
-      "description": "Apify API token — get yours free at https://console.apify.com/settings/integrations",
+      "description": "Apify API token \u2014 get yours free at https://console.apify.com/settings/integrations",
       "password": true
     }
   ]

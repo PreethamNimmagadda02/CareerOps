@@ -48,5 +48,11 @@ coverage/
 /src/generated/prisma
 data/scan-results.json
 
-# repowise API keys (local)
+# repowise — ignore caches, sessions, jobs, secrets & vector DB
+# Keep: config.yaml, wiki.db, state.json, knowledge-graph.json, mcp.json
 .repowise/.env
+.repowise/*.pkl
+.repowise/lancedb/
+.repowise/sessions/
+.repowise/omissions/
+.repowise/jobs/
