@@ -67,7 +67,7 @@ export function Dashboard() {
 }
 
 function DashboardInner() {
-  const { run, running } = usePipeline();
+  const { run, running, percent, progressLabel } = usePipeline();
   const toast = useToast();
 
   const [apps, setApps] = React.useState<Application[]>([]);
@@ -272,6 +272,8 @@ function DashboardInner() {
         onboarding={onboarding}
         loading={loading && onboarding === null}
         running={running}
+        percent={percent}
+        progressLabel={progressLabel}
         onOpenKeywords={() => setKeywordsOpen(true)}
         onRun={launchRun}
       />

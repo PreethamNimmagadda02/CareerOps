@@ -34,6 +34,11 @@ interface LaunchPadProps {
   loading: boolean;
   /** The pipeline command currently running, if any. */
   running: PipelineCommand | null;
+  /** 0–100 live progress for the current run, or null before telemetry
+   * exists. Only ever rendered when `onboarding.complete` — pre-completion
+   * runs keep the plain spinner. */
+  percent: number | null;
+  progressLabel: string | null;
   onOpenKeywords: () => void;
   onRun: (command: PipelineCommand) => void;
 }
@@ -62,6 +67,41 @@ function runningStep(running: PipelineCommand | null): OnboardingStep | null {
   if (running === "scan" || running === "scan:fallback") return "scan";
   if (running.startsWith("evaluate")) return "evaluate";
   return null;
+}
+
+/**
+ * Live percent bar for a post-onboarding re-run, reusing the same
+ * brand-gradient bar onboarding's goal-gradient bar uses
+ * (onboarding-flow.tsx:630-635) for visual consistency. Self-suppresses
+ * (renders nothing) until real per-item telemetry exists, so callers don't
+ * need their own null-guards beyond "is something running".
+ */
+function RunProgress({
+  percent,
+  progressLabel,
+}: {
+  percent: number | null;
+  progressLabel: string | null;
+}) {
+  if (percent === null || progressLabel === null) return null;
+  return (
+    <div className="mt-1.5 max-w-[220px]">
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className="brand-gradient h-full rounded-full transition-all duration-700 ease-out"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <p
+        className={cn(
+          "mt-1 truncate text-[0.68rem] text-muted-foreground",
+          percent >= 80 && "font-medium text-primary",
+        )}
+      >
+        {progressLabel} · {percent}%
+      </p>
+    </div>
+  );
 }
 
 interface StepView {
@@ -269,7 +309,15 @@ function useCountUp(target: number | null, duration = 800): number {
   return value;
 }
 
-export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun }: LaunchPadProps) {
+export function LaunchPad({
+  onboarding,
+  loading,
+  running,
+  percent,
+  progressLabel,
+  onOpenKeywords,
+  onRun,
+}: LaunchPadProps) {
   const [open, setOpen] = React.useState(false);
   // Read synchronously on the client (LaunchPad only renders after the
   // dashboard's client-side onboarding fetch, so `window` is always defined
@@ -355,6 +403,7 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
               Scan again
             </Button>
           </div>
+          <RunProgress percent={percent} progressLabel={progressLabel} />
         </Card>
       );
     }
@@ -395,34 +444,37 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
 
     // Steady state: everything's set up → slim status strip.
     return (
-      <Card className="flex animate-fade-in-up flex-wrap items-center justify-between gap-3 p-4">
-        <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ctp-green/20">
-            <CheckCircle2 className="h-5 w-5 text-ctp-green" />
-          </span>
-          <div>
-            <p className="text-sm font-semibold">You&apos;re all set</p>
-            <p className="text-xs text-muted-foreground">
-              {onboarding.scan.count} roles · {onboarding.evaluate.count} scored · re-run anytime
-            </p>
+      <Card className="animate-fade-in-up p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ctp-green/20">
+              <CheckCircle2 className="h-5 w-5 text-ctp-green" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">You&apos;re all set</p>
+              <p className="text-xs text-muted-foreground">
+                {onboarding.scan.count} roles · {onboarding.evaluate.count} scored · re-run anytime
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
+              {runningStep(running) === "scan" ? <Spinner className="h-3.5 w-3.5" /> : <Radar className="h-3.5 w-3.5" />}
+              Scan
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onRun("evaluate:all")} disabled={busyAny}>
+              {runningStep(running) === "evaluate" ? <Spinner className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Evaluate
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onOpenKeywords}>
+              <Tags className="h-3.5 w-3.5" /> Keywords
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setOpen(true)} title="Show setup steps">
+              <ChevronDown className="h-4 w-4" /> Steps
+            </Button>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
-            {runningStep(running) === "scan" ? <Spinner className="h-3.5 w-3.5" /> : <Radar className="h-3.5 w-3.5" />}
-            Scan
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onRun("evaluate:all")} disabled={busyAny}>
-            {runningStep(running) === "evaluate" ? <Spinner className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
-            Evaluate
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onOpenKeywords}>
-            <Tags className="h-3.5 w-3.5" /> Keywords
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setOpen(true)} title="Show setup steps">
-            <ChevronDown className="h-4 w-4" /> Steps
-          </Button>
-        </div>
+        <RunProgress percent={percent} progressLabel={progressLabel} />
       </Card>
     );
   }
@@ -493,6 +545,9 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
                   <p className="truncate text-xs text-muted-foreground">
                     {step.status === "locked" ? step.lockedReason : COPY[step.key].help}
                   </p>
+                  {onboarding.complete && step.busy && (
+                    <RunProgress percent={percent} progressLabel={progressLabel} />
+                  )}
                 </div>
               </div>
               <div className="shrink-0">
