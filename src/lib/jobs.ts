@@ -15,6 +15,7 @@
 import type { Job, JobStatus } from "@prisma/client";
 
 import { db } from "./db.js";
+import { notifyJobQueued } from "./job-signal.js";
 import { type PipelineCommand } from "./pipeline-commands.js";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,7 +46,9 @@ export function capLog(log: string): string {
 
 /** Enqueue a pipeline run for a user. Returns the created (Queued) job. */
 export async function enqueueJob(userId: string, command: PipelineCommand): Promise<Job> {
-  return db.job.create({ data: { userId, command } });
+  const job = await db.job.create({ data: { userId, command } });
+  await notifyJobQueued();
+  return job;
 }
 
 /**

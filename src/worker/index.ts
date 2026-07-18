@@ -12,18 +12,28 @@
  * killing the child. A crashed worker's job is reclaimed once its heartbeat
  * goes stale.
  *
+ * When idle, a slot's poll interval backs off up to WORKER_MAX_POLL_MS so N
+ * replicas don't hammer an empty queue — but a freshly enqueued job doesn't
+ * have to wait that out: enqueueJob() publishes a pub/sub nudge (see
+ * ../lib/job-signal.ts) that wakes any idle slot immediately when REDIS_URL
+ * is set. Purely a latency optimization; polling remains the fallback.
+ *
  * Env:
  *   WORKER_CONCURRENCY   parallel job loops per process (default 2)
  *   WORKER_POLL_MS       idle poll interval (default 2000)
+ *   WORKER_MAX_POLL_MS   idle poll backoff ceiling (default 10000)
  *   WORKER_HEARTBEAT_MS  log-flush / cancel-check cadence (default 2000)
  *   WORKER_STALE_MS      Running heartbeat age before reclaim (default 120000)
+ *   REDIS_URL            enables the job-queued nudge (optional)
  */
+import { EventEmitter } from "node:events";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 
 import type { Job } from "@prisma/client";
 
 import { db } from "../lib/db.js";
+import { subscribeJobQueued } from "../lib/job-signal.js";
 import {
   claimNextJob,
   finishJob,
@@ -46,6 +56,29 @@ let shuttingDown = false;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Lets an idle workLoop's wait be cut short the moment a job is enqueued
+// (see ../lib/job-signal.ts), instead of always sleeping out its current
+// backoff interval. Shared across every slot in this process — whichever
+// slot's claimNextJob() actually wins the row doesn't matter, since the rest
+// just find nothing and fall back to idling again.
+const wakeEmitter = new EventEmitter();
+wakeEmitter.setMaxListeners(CONCURRENCY + 1);
+
+/** Sleep up to `ms`, resolving early (with `true`) if a wake signal arrives. */
+function idleWait(ms: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const onWake = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+    const timer = setTimeout(() => {
+      wakeEmitter.off("wake", onWake);
+      resolve(false);
+    }, ms);
+    wakeEmitter.once("wake", onWake);
+  });
 }
 
 /** Run a single claimed job to completion, streaming output into its log. */
@@ -145,7 +178,7 @@ async function runJob(job: Job): Promise<void> {
 // hit claimNextJob every POLL_INTERVAL_MS — DB load scales with replica
 // count even with an empty queue. Doubling up to this ceiling keeps a claim
 // attempt frequent right after activity while capping steady-state idle load.
-const MAX_POLL_INTERVAL_MS = Number(process.env.WORKER_MAX_POLL_MS ?? 20_000);
+const MAX_POLL_INTERVAL_MS = Number(process.env.WORKER_MAX_POLL_MS ?? 10_000);
 
 /** A single claim→run→repeat loop. Multiple run concurrently per process. */
 async function workLoop(slot: number): Promise<void> {
@@ -154,8 +187,11 @@ async function workLoop(slot: number): Promise<void> {
     try {
       const job = await claimNextJob();
       if (!job) {
-        await sleep(idlePollMs);
-        idlePollMs = Math.min(idlePollMs * 2, MAX_POLL_INTERVAL_MS);
+        const woken = await idleWait(idlePollMs);
+        // A wake means something just changed (a job was queued) — the
+        // backoff's "nothing's happening" assumption no longer holds, so
+        // reset to the fast interval instead of continuing to grow it.
+        idlePollMs = woken ? POLL_INTERVAL_MS : Math.min(idlePollMs * 2, MAX_POLL_INTERVAL_MS);
         continue;
       }
       idlePollMs = POLL_INTERVAL_MS;
@@ -178,6 +214,10 @@ async function main(): Promise<void> {
   };
   process.on("SIGTERM", () => stop("SIGTERM"));
   process.on("SIGINT", () => stop("SIGINT"));
+
+  // No-op when REDIS_URL isn't set — idle slots just keep polling on their
+  // own schedule, as before.
+  subscribeJobQueued(() => wakeEmitter.emit("wake"));
 
   // Reclaim of jobs abandoned by crashed workers runs on its own timer so a
   // long-running job in any one slot never delays it.
