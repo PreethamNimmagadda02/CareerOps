@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { signIn } from "next-auth/react";
-import { Github, LogIn, Loader2 } from "lucide-react";
+import { Github, LogIn } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 type ProviderInfo = { id: string; name: string };
 
@@ -58,7 +59,7 @@ export function LoginForm({
           }}
         >
           {pending === p.id ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Spinner className="h-4 w-4" />
           ) : (
             <ProviderIcon id={p.id} />
           )}

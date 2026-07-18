@@ -6,6 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import { LogOut, User as UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserMenu() {
   const { data: session, status } = useSession();
@@ -22,7 +23,15 @@ export function UserMenu() {
   }, [status, session?.user]);
 
   if (status === "loading") {
-    return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />;
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-card/50 py-1 pl-1 pr-3">
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    );
   }
 
   if (!session?.user) return null;

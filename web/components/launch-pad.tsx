@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   ListChecks,
-  Loader2,
   Lock,
   MapPin,
   PartyPopper,
@@ -24,6 +23,8 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Confetti } from "@/components/ui/confetti";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import type { OnboardingState, OnboardingStep } from "@/lib/types";
 import type { PipelineCommand } from "@/lib/pipeline";
@@ -144,7 +145,7 @@ function Indicator({ step }: { step: StepView }) {
   if (step.busy) {
     return (
       <span className={cn(base, "bg-primary/15 text-primary")}>
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Spinner className="h-4 w-4" />
       </span>
     );
   }
@@ -235,7 +236,7 @@ function StepAction({
       onClick={onClick}
       disabled={disabled}
     >
-      {step.busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
+      {step.busy ? <Spinner className="h-3.5 w-3.5" /> : icon}
       {step.busy ? (step.key === "scan" ? "Scanning…" : "Evaluating…") : step.ctaLabel}
       {primary && !step.busy && <ArrowRight className="h-3.5 w-3.5" />}
     </Button>
@@ -285,11 +286,11 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
   if (!onboarding) {
     if (!loading) return null;
     return (
-      <Card className="animate-pulse p-5">
-        <div className="mb-4 h-4 w-40 rounded bg-muted" />
+      <Card className="p-5">
+        <Skeleton className="mb-4 h-4 w-40" />
         <div className="space-y-2">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-12 rounded-lg bg-muted/60" />
+            <Skeleton key={i} className="h-12" />
           ))}
         </div>
       </Card>
@@ -347,7 +348,7 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
             </Button>
             <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
               {runningStep(running) === "scan" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Spinner className="h-3.5 w-3.5" />
               ) : (
                 <RotateCw className="h-3.5 w-3.5" />
               )}
@@ -408,11 +409,11 @@ export function LaunchPad({ onboarding, loading, running, onOpenKeywords, onRun 
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
-            {runningStep(running) === "scan" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Radar className="h-3.5 w-3.5" />}
+            {runningStep(running) === "scan" ? <Spinner className="h-3.5 w-3.5" /> : <Radar className="h-3.5 w-3.5" />}
             Scan
           </Button>
           <Button variant="outline" size="sm" onClick={() => onRun("evaluate:all")} disabled={busyAny}>
-            {runningStep(running) === "evaluate" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {runningStep(running) === "evaluate" ? <Spinner className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
             Evaluate
           </Button>
           <Button variant="ghost" size="sm" onClick={onOpenKeywords}>

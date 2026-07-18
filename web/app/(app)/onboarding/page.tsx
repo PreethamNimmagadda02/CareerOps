@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { requireUserId } from "@/lib/session";
-import { getOnboardingState } from "@/lib/onboarding";
+import { getOnboardingState, hasCompletedOnboarding } from "@/lib/onboarding";
 import { latestActiveJobForUser } from "../../../../src/lib/jobs";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 import type { PipelineCommand } from "@/lib/pipeline";
@@ -11,18 +11,22 @@ export const metadata = { title: "Get set up" };
 /**
  * The guided activation flow (résumé → find → score → matches).
  *
- * A deliberate, sticky flow: we do NOT auto-redirect away, so a refresh or a
- * cold reopen resumes at the *exact* step the user left off (server truth via
- * `phaseFor`, plus an in-flight scan re-attaching through the pipeline
- * provider) — never bypassing a step and never skipping the payoff. The only
- * way out is the explicit "Go to my command center" action once complete.
+ * Onboarding is a one-way door. Once the user has finished it (persisted via
+ * `User.onboardedAt`), this route redirects to the command center and never
+ * shows the flow again — normal usage (scans/evaluates) lives entirely on `/`.
  *
- * The command-center gate lives on `/` (redirects here until onboarding is
- * fully complete), so the user can't reach it early — this route just resumes.
+ * While NOT yet onboarded it is a deliberate, sticky flow: we do not auto-skip
+ * steps, so a refresh or cold reopen resumes at the *exact* step the user left
+ * off (server truth via `phaseFor`, plus an in-flight scan re-attaching through
+ * the pipeline provider). The only way out is the explicit "Go to my command
+ * center" action, which marks onboarding complete.
  */
 export default async function OnboardingPage() {
   const userId = await requireUserId();
   if (!userId) redirect("/login");
+
+  // Already onboarded → straight to the command center; never re-enter the flow.
+  if (await hasCompletedOnboarding(userId)) redirect("/");
 
   const [state, activeJob] = await Promise.all([
     getOnboardingState(userId),

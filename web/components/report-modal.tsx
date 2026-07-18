@@ -3,9 +3,10 @@
 import * as React from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ExternalLink, FileText, Loader2 } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 
 import { Modal } from "@/components/ui/modal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { ReportPayload } from "@/lib/types";
 
 interface ReportModalProps {
@@ -76,8 +77,17 @@ export function ReportModal({ reportNumber, title, onClose }: ReportModalProps) 
       className="max-w-4xl"
     >
       {loading && (
-        <div className="flex items-center gap-2 py-10 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading report…
+        <div className="space-y-3 py-2">
+          <Skeleton className="h-5 w-2/3" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="pt-2">
+            <Skeleton className="h-4 w-1/3" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
         </div>
       )}
       {error && <div className="py-6 text-ctp-red">Error: {error}</div>}

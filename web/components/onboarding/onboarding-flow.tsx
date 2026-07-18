@@ -7,12 +7,12 @@ import {
   ArrowRight,
   Check,
   FileText,
-  Loader2,
   MapPin,
   PartyPopper,
   Pencil,
   Radar,
   RotateCw,
+  Search,
   Sparkles,
   Tags,
   UploadCloud,
@@ -26,6 +26,7 @@ import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { usePipeline } from "@/components/pipeline-provider";
+import { Spinner } from "@/components/ui/spinner";
 import { parseScanTelemetry } from "@/lib/scan-telemetry";
 import { deriveMatchingDefaults } from "@/lib/matching-defaults";
 import type { OnboardingState } from "@/lib/types";
@@ -177,10 +178,14 @@ function Counter({ label, value, accent }: { label: string; value: number | null
   );
 }
 
-/** Live feed of the roles the scan finds — role + company only. */
+/** Live feed of the roles the scan finds — role + company only. Shows every
+ * role found so far, newest first, in a scrollable list so the count can grow
+ * without limit while staying legible. */
 function ActivityFeed({ roles, active }: { roles: FoundRole[]; active: boolean }) {
   if (!active && roles.length === 0) return null;
-  const shown = roles.slice(0, 5);
+  // Newest-first: `roles` arrives in ascending discovery order, so reverse it
+  // for display — new finds should appear at the top, not get buried below.
+  const shown = [...roles].reverse();
 
   return (
     <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background/60">
@@ -194,8 +199,13 @@ function ActivityFeed({ roles, active }: { roles: FoundRole[]; active: boolean }
         <span className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-muted-foreground">
           {active ? "Live activity" : "Found roles"}
         </span>
+        {shown.length > 0 && (
+          <span className="ml-auto font-mono text-[0.6rem] tabular-nums text-muted-foreground/70">
+            {shown.length}
+          </span>
+        )}
       </div>
-      <div className="space-y-1 px-3 py-2">
+      <div className="max-h-64 space-y-1 overflow-y-auto px-3 py-2">
         {shown.length === 0 ? (
           <p className="font-mono text-[0.68rem] text-muted-foreground/50">Warming up the scanners…</p>
         ) : (
@@ -207,6 +217,41 @@ function ActivityFeed({ roles, active }: { roles: FoundRole[]; active: boolean }
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+/** What the scan is doing, cycled through for the searching indicator below —
+ * a mix of the real sources it hits and the matching it runs against them, so
+ * the wait reads as "out combing the web for you" rather than an opaque bar. */
+const SEARCH_STEPS = [
+  "Searching boards.greenhouse.io…",
+  "Matching titles against your keywords…",
+  "Searching jobs.lever.co…",
+  "Checking seniority & location fit…",
+  "Searching jobs.ashbyhq.com…",
+  "Filtering out the noise…",
+];
+
+/** A browser-bar-styled ticker that cycles through the boards being searched —
+ * makes the otherwise-invisible server-side crawl legible as "we're out on
+ * the web right now," without this component knowing anything about the
+ * actual crawl's real-time state. */
+function SearchTicker({ active }: { active: boolean }) {
+  const [i, setI] = React.useState(0);
+  React.useEffect(() => {
+    if (!active) return;
+    const id = setInterval(() => setI((v) => (v + 1) % SEARCH_STEPS.length), 1700);
+    return () => clearInterval(id);
+  }, [active]);
+  if (!active) return null;
+
+  return (
+    <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2">
+      <Search className="h-3.5 w-3.5 shrink-0 animate-pulse-dot text-primary" />
+      <span key={i} className="animate-fade-in truncate font-mono text-xs text-muted-foreground">
+        {SEARCH_STEPS[i]}
+      </span>
     </div>
   );
 }
@@ -248,6 +293,19 @@ export function OnboardingFlow({
   const [foundRoles, setFoundRoles] = React.useState<FoundRole[]>([]);
   const fileInput = React.useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = React.useState(false);
+
+  // Leave onboarding for good: persist the one-way `onboardedAt` marker so the
+  // `/` gate unlocks permanently, then navigate. If the POST fails we still
+  // navigate — the gate re-checks server-side and will bounce back here only if
+  // the marker truly didn't stick, so the user is never stranded.
+  const finishOnboarding = React.useCallback(async () => {
+    try {
+      await fetch("/api/onboarding", { method: "POST" });
+    } catch {
+      /* non-fatal — the `/` gate re-checks and redirects here if needed */
+    }
+    router.push("/");
+  }, [router]);
 
   const refetchOnboarding = React.useCallback(async (): Promise<OnboardingState | null> => {
     try {
@@ -462,7 +520,9 @@ export function OnboardingFlow({
     let stop = false;
     const fetchRoles = async () => {
       try {
-        const res = await fetch("/api/applications?limit=50", { cache: "no-store" });
+        // 500 = the server's max page size — comfortably above any single
+        // scan's yield, so every job found shows up in the live feed.
+        const res = await fetch("/api/applications?limit=500", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
         if (stop) return;
@@ -615,7 +675,7 @@ export function OnboardingFlow({
                 {resumeState === "done" ? (
                   <Check className="h-6 w-6 text-ctp-green" />
                 ) : resumeState === "uploading" || resumeState === "extracting" ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <Spinner className="h-6 w-6 text-primary" />
                 ) : (
                   <UploadCloud className="h-6 w-6 text-muted-foreground" />
                 )}
@@ -675,7 +735,7 @@ export function OnboardingFlow({
             </Button>
             {!profileReady && onboarding.profile.done && (
               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Setting up your role filters…
+                <Spinner className="h-3.5 w-3.5" /> Setting up your role filters…
               </p>
             )}
             {!profileReady && !onboarding.profile.done && (
@@ -756,6 +816,7 @@ export function OnboardingFlow({
             )}
 
             <div className="sm:col-span-2">
+              <SearchTicker active={scanStage === "scanning"} />
               <ActivityFeed roles={foundRoles} active={scanStage === "scanning" || scanStage === "scoring"} />
             </div>
           </Card>
@@ -773,7 +834,7 @@ export function OnboardingFlow({
               ))}
             {(scanStage === "scanning" || scanStage === "scoring") && (
               <Button size="lg" disabled>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner className="h-4 w-4" />
                 {scanStage === "scanning" ? "Scanning…" : "Scoring…"}
               </Button>
             )}
@@ -793,7 +854,7 @@ export function OnboardingFlow({
 
       {/* ── PHASE: REVEAL (peak-end + variable reward) ── */}
       {phase === "reveal" && (
-        <RevealStep onboarding={onboarding} telTop={tel.topScore} onFinish={() => router.push("/")} onRescan={() => setPhase("scan")} />
+        <RevealStep onboarding={onboarding} telTop={tel.topScore} onFinish={finishOnboarding} onRescan={() => setPhase("scan")} />
       )}
     </div>
   );
@@ -1039,7 +1100,7 @@ function ExtractedFields({
 
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            {saving ? <Spinner className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
             Save changes
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={saving}>

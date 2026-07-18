@@ -173,34 +173,44 @@ async function main(): Promise<void> {
           // can each grab a distinct number without the old in-process
           // `trackerLock` serialization. writeReport / updateTracker below
           // target distinct rows/objects, so they're safe to run in parallel.
-          const reportNum = await nextReportNumber(userId);
-          const filename = await writeReport({
-            userId,
-            num: reportNum,
-            company: job.company,
-            role: job.role,
-            url: url as string,
-            evaluation,
-            providerLabel,
-          });
-          log.info(`${tag} ☁️  Uploaded → ${filename}`);
+          //
+          // Guarded like the LLM call above: a DB or MinIO hiccup on ONE job
+          // must not reject the shared `Promise.all` and take down every
+          // other job still mid-flight — it should just count as an error and
+          // let the batch keep going.
+          try {
+            const reportNum = await nextReportNumber(userId);
+            const filename = await writeReport({
+              userId,
+              num: reportNum,
+              company: job.company,
+              role: job.role,
+              url: url as string,
+              evaluation,
+              providerLabel,
+            });
+            log.info(`${tag} ☁️  Uploaded → ${filename}`);
 
-          const updated = await updateTracker(
-            job.num,
-            userId,
-            score || "N/A",
-            reportNum,
-            job.company,
-            date,
-            insights,
-          );
-          if (updated) {
-            log.info(
-              `${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`,
+            const updated = await updateTracker(
+              job.num,
+              userId,
+              score || "N/A",
+              reportNum,
+              job.company,
+              date,
+              insights,
             );
-          }
+            if (updated) {
+              log.info(
+                `${tag} ✅ Tracker → #${job.num} score=${score}/5  report=[${String(reportNum).padStart(3, "0")}]`,
+              );
+            }
 
-          results.evaluated += 1;
+            results.evaluated += 1;
+          } catch (err) {
+            log.info(`${tag} ❌ Failed to save report/tracker: ${(err as Error).message}`);
+            results.errors += 1;
+          }
         }),
       ),
     );

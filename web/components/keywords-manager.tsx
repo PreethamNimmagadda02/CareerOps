@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Plus, Tag, X } from "lucide-react";
+import { Plus, Tag, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 type Kind = "positive" | "negative";
@@ -115,8 +117,17 @@ export function KeywordsManager({ open, onClose }: { open: boolean; onClose: () 
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 py-10 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading keywords…
+        <div className="space-y-6">
+          {[0, 1].map((i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <div className="flex flex-wrap gap-1.5">
+                {[0, 1, 2, 3, 4].map((j) => (
+                  <Skeleton key={j} className="h-5 w-16 rounded-full" />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="space-y-6">
@@ -199,7 +210,7 @@ function KindSection({
                 aria-label={`Remove ${value}`}
               >
                 {removing ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Spinner className="h-3 w-3" />
                 ) : (
                   <X className="h-3 w-3" />
                 )}
@@ -237,7 +248,7 @@ function KindSection({
                 disabled={adding}
                 className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-solid hover:bg-accent hover:text-foreground disabled:opacity-50"
               >
-                {adding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                {adding ? <Spinner className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                 {s}
               </button>
             );

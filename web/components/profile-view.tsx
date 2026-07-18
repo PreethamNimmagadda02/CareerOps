@@ -9,7 +9,6 @@ import {
   Download,
   ExternalLink,
   FileText,
-  Loader2,
   MapPin,
   Pencil,
   Plus,
@@ -24,6 +23,8 @@ import {
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/toast";
 import { buildMatchingPrefs } from "@/lib/matching-defaults";
 import { cn } from "@/lib/utils";
@@ -393,7 +394,7 @@ function Section({ id, title, icon, badge, editing, saving, onEdit, onSave, onCa
         ) : (
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={onSave} disabled={saving} className="min-w-[80px]">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {saving ? <Spinner className="h-4 w-4" /> : <Check className="h-4 w-4" />}
               {saving ? "Saving…" : "Save"}
             </Button>
             <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving} className="min-w-[80px]">
@@ -511,7 +512,7 @@ function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: 
       {error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
       {notice && (
         <p className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-foreground">
-          {extracting && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-primary" />}
+          {extracting && <Spinner className="h-3 w-3 shrink-0 text-primary" />}
           {notice}
         </p>
       )}
@@ -520,12 +521,15 @@ function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: 
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) void handleFile(f); }}
         onClick={() => inputRef.current?.click()}
-        className={cn("flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-6 text-center transition-colors",
+        className={cn("relative flex cursor-pointer flex-col items-center gap-2 overflow-hidden rounded-lg border-2 border-dashed p-6 text-center transition-colors",
           dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-accent/30")}
       >
+        {busy && (
+          <div className="pointer-events-none absolute inset-0 animate-shimmer bg-[linear-gradient(115deg,transparent_30%,hsl(var(--primary)/0.14)_50%,transparent_70%)] bg-[length:220%_100%]" />
+        )}
         <input ref={inputRef} type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.target.value = ""; }} />
-        {uploading ? <Loader2 className="h-7 w-7 animate-spin text-primary" /> : <Upload className="h-7 w-7 text-muted-foreground" />}
+        {uploading ? <Spinner className="h-7 w-7 text-primary" /> : <Upload className="h-7 w-7 text-muted-foreground" />}
         <div>
           <p className="text-sm font-medium">{uploading ? "Uploading…" : "Click or drag to upload"}</p>
           <p className="text-xs text-muted-foreground">PDF · DOC · DOCX · Max 10 MB · auto-fills your profile</p>
@@ -544,7 +548,7 @@ function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: 
             <button onClick={() => void runExtract(false)} disabled={busy}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
               title="Re-read the résumé and fill in any empty fields">
-              {extracting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {extracting ? <Spinner className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
               Auto-fill
             </button>
             <a href="/api/profile/resume" download={`resume.${ext}`}
@@ -553,7 +557,7 @@ function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: 
             </a>
             <button onClick={handleDelete} disabled={deleting || extracting}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50" title="Remove">
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {deleting ? <Spinner className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
             </button>
           </div>
         </div>
@@ -751,8 +755,34 @@ export function ProfileView() {
   const matchingComplete = checklist.find(i => i.id === "section-matching")?.done ?? false;
 
   if (loading) return (
-    <div className="flex items-center justify-center py-24">
-      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    <div className="mx-auto max-w-3xl animate-fade-in space-y-5 p-4 sm:p-6">
+      <Skeleton className="h-4 w-36" />
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="h-4 w-72 max-w-full" />
+      </div>
+      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+        <Skeleton className="h-1.5 w-full" />
+      </div>
+      <div className="flex gap-1.5">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-7 flex-1 rounded-full" />
+        ))}
+      </div>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="space-y-3 rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+      ))}
     </div>
   );
   if (pageError) return (

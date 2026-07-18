@@ -13,6 +13,34 @@ async function safe<T>(fn: () => Promise<T>): Promise<T | null> {
 }
 
 /**
+ * Whether the user has finished the guided onboarding flow at least once.
+ *
+ * This is the ONLY source of truth for the command-center gate. It is a
+ * persisted, one-way marker (`User.onboardedAt`) — deliberately decoupled from
+ * the live pipeline state below. Normal usage (running fresh scans/evaluates
+ * from the dashboard) changes the derived `getOnboardingState`, but must never
+ * send a returning user back into onboarding, so routing gates on this instead.
+ */
+export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { onboardedAt: true },
+  });
+  return Boolean(user?.onboardedAt);
+}
+
+/**
+ * Mark onboarding as complete (idempotent). Stamps `onboardedAt` the first time
+ * only, so the "onboarded on" date is stable across repeat calls.
+ */
+export async function markOnboardingComplete(userId: string): Promise<void> {
+  await db.user.updateMany({
+    where: { id: userId, onboardedAt: null },
+    data: { onboardedAt: new Date() },
+  });
+}
+
+/**
  * Compute the user's activation progress in a single round-trip.
  *
  * The pipeline has a real dependency chain (profile + keywords → scan →
@@ -55,7 +83,12 @@ export async function getOnboardingState(userId: string): Promise<OnboardingStat
   const profileDone = readiness.ok;
   const keywordsDone = positiveKeywords > 0;
   const scanDone = totalRoles > 0;
-  const evaluateDone = evaluatedRoles > 0;
+  // "Done" means EVERY scanned role has a real score, not just one — otherwise
+  // the progress bar (and a stale/killed evaluate job's own exit) would read
+  // a batch that's 1/50 through as fully complete. See evaluate.ts's own
+  // `isComplete` check, which this mirrors: a role only counts once it has a
+  // parseable numeric score.
+  const evaluateDone = scanDone && evaluatedRoles >= totalRoles;
 
   let nextStep: OnboardingStep | "done" = "done";
   if (!profileDone) nextStep = "profile";

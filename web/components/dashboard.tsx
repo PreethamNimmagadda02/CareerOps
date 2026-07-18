@@ -9,7 +9,6 @@ import {
   Inbox,
   Layers,
   RefreshCw,
-  Loader2,
   Search,
   X,
 } from "lucide-react";
@@ -18,6 +17,8 @@ import { ApplicationInsights } from "@/components/application-detail";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { MetricsCards } from "@/components/metrics-cards";
 import { usePipeline } from "@/components/pipeline-provider";
 import { LaunchPad } from "@/components/launch-pad";
@@ -261,7 +262,7 @@ function DashboardInner() {
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          {loading ? <Spinner className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
           Refresh
         </Button>
       </div>
@@ -398,7 +399,7 @@ function DashboardInner() {
             <div className="flex justify-center">
               <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
                 {loadingMore ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Spinner className="h-4 w-4" />
                 ) : (
                   <ChevronRight className="h-4 w-4" />
                 )}
@@ -407,8 +408,20 @@ function DashboardInner() {
             </div>
           )}
         </>
+      ) : loading ? (
+        <div className="overflow-hidden rounded-xl border border-border/80 bg-card/40 p-3 space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="h-4 w-8 rounded-full" />
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-6 w-20 rounded-md" />
+            </div>
+          ))}
+        </div>
       ) : (
-        !loading && <EmptyRoles onboarding={onboarding} onRun={launchRun} running={running} />
+        <EmptyRoles onboarding={onboarding} onRun={launchRun} running={running} />
       )}
 
       <ReportModal
@@ -455,7 +468,7 @@ function EmptyRoles({
       {ready && (
         <Button size="sm" onClick={() => onRun("scan:fallback")} disabled={running !== null}>
           {running === "scan" || running === "scan:fallback" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Spinner className="h-4 w-4" />
           ) : (
             <RefreshCw className="h-4 w-4" />
           )}

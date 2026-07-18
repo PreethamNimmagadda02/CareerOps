@@ -31,7 +31,7 @@ import { getActivePostings, postingCorpusStatus } from "../lib/postings.js";
 import { resolveOwnerUserId } from "../lib/owner.js";
 import { getProfile } from "../lib/profile-store.js";
 import { validateMatchingReadiness } from "../lib/profile-validation.js";
-import { dedupKey, normalizeUrl } from "../lib/text.js";
+import { normalizeUrl } from "../lib/text.js";
 import { validateJobUrls } from "../lib/url-validator.js";
 import { db } from "../lib/db.js";
 import type { Job, RelevantJob } from "../types.js";
@@ -164,9 +164,17 @@ async function main(): Promise<void> {
     }
   }
 
-  // ── 2. Prune tracked rows whose postings are no longer relevant/active ────
+  // ── 2. Prune tracked rows whose postings are no longer active ────────────
   // Only rows where the candidate hasn't actively engaged are pruned; Applied /
   // Responded / Interview / Offer / Rejected are always kept.
+  //
+  // Staleness is decided by the posting's OWN `active` flag (via its URL), not
+  // by whether it happens to reappear in this run's `relevant` shortlist. The
+  // shortlist is recomputed from the user's CURRENT keyword/location prefs —
+  // if those prefs are ever narrowed (or a source's postings just don't come
+  // back within this run for an unrelated reason), a role that's already been
+  // delivered to the user must not vanish out from under them. It should only
+  // ever be removed once the underlying posting is genuinely gone.
   const ACTIVE_STATUSES: AppStatus[] = [
     AppStatus.Applied,
     AppStatus.Responded,
@@ -174,13 +182,22 @@ async function main(): Promise<void> {
     AppStatus.Offer,
     AppStatus.Rejected,
   ];
-  if (relevant.length > 0) {
-    const currentKeys = new Set(relevant.map((j) => dedupKey(j.company, j.title)));
-    const pruneable = await db.application.findMany({
+  // Rows with no URL weren't sourced from the corpus (e.g. manually added) —
+  // there's no posting to check them against, so leave them alone entirely
+  // rather than treating "nothing to compare" as "stale."
+  const pruneable = (
+    await db.application.findMany({
       where: { userId, status: { notIn: ACTIVE_STATUSES } },
-      select: { id: true, company: true, role: true },
+      select: { id: true, url: true },
+    })
+  ).filter((a): a is { id: string; url: string } => a.url !== null && a.url !== "");
+  if (pruneable.length > 0) {
+    const activePostings = await db.posting.findMany({
+      where: { url: { in: pruneable.map((a) => a.url) }, active: true },
+      select: { url: true },
     });
-    const stale = pruneable.filter((a) => !currentKeys.has(dedupKey(a.company, a.role)));
+    const activeUrls = new Set(activePostings.map((p) => p.url));
+    const stale = pruneable.filter((a) => !activeUrls.has(a.url));
     if (stale.length > 0) {
       await db.application.deleteMany({ where: { id: { in: stale.map((a) => a.id) } } });
       log.step(`🗑️  Pruned ${stale.length} application(s) whose postings are no longer active.`);

@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronDown, Loader2 } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 import { StatusBadge } from "@/components/status-badge";
+import { Spinner } from "@/components/ui/spinner";
 import { normalizeStatus, statusLabel, STATUS_OPTIONS } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +66,7 @@ export function StatusSelect({
       >
         <StatusBadge status={norm} />
         {saving ? (
-          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          <Spinner className="h-3 w-3 text-muted-foreground" />
         ) : (
           <ChevronDown
             className={cn("h-3 w-3 text-muted-foreground transition-transform", open && "rotate-180")}

@@ -23,6 +23,13 @@ model User {
   resumeKey       String?
   resumeUpdatedAt DateTime?
 
+  /// One-time marker: set the moment the user finishes the guided onboarding
+  /// flow. Onboarding is a one-way door — once this is set the command center
+  /// is unlocked permanently and we never route back into the flow, regardless
+  /// of live pipeline state (a fresh scan adds unevaluated roles, but that's
+  /// normal usage, not "un-onboarding"). Null = has not completed onboarding.
+  onboardedAt     DateTime?
+
   /// Per-user monotonic report counter. Allocated atomically via
   /// `UPDATE … SET reportSeq = reportSeq + 1 RETURNING reportSeq` so report
   /// numbers are unique + gap-tolerant per tenant without a global table scan.
