@@ -1,0 +1,151 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+env:
+  AWS_REGION: ap-southeast-2
+  APP_NAME: careerops
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: Build Docker image and push to ECR
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push to ECR
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag }}
+      ecr-repo: ${{ steps.ecr-login.outputs.registry }}/${{ env.APP_NAME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: echo "tag=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          IMAGE=$REGISTRY/$APP_NAME
+          docker build \
+            --target runtime \
+            --cache-from $IMAGE:latest \
+            -t $IMAGE:$TAG \
+            -t $IMAGE:latest \
+            .
+          docker push $IMAGE:$TAG
+          docker push $IMAGE:latest
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 2: Run Prisma migrations (one-shot ECS task)
+  # ─────────────────────────────────────────────────────────────────────────────
+  migrate:
+    name: Run DB Migrations
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run migration task
+        env:
+          CLUSTER: ${{ env.APP_NAME }}
+          TASK_DEF: ${{ env.APP_NAME }}-migrate
+          SUBNETS: ${{ secrets.ECS_SUBNET_ID }}
+          SECURITY_GROUPS: ${{ secrets.ECS_WORKER_SG_ID }}
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster $CLUSTER \
+            --task-definition $TASK_DEF \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SECURITY_GROUPS],assignPublicIp=ENABLED}" \
+            --query "tasks[0].taskArn" \
+            --output text)
+
+          echo "Migration task: $TASK_ARN"
+
+          # Wait up to 5 minutes for the task to complete
+          aws ecs wait tasks-stopped \
+            --cluster $CLUSTER \
+            --tasks $TASK_ARN
+
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster $CLUSTER \
+            --tasks $TASK_ARN \
+            --query "tasks[0].containers[0].exitCode" \
+            --output text)
+
+          echo "Migration exit code: $EXIT_CODE"
+          [ "$EXIT_CODE" = "0" ] || exit 1
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 3: Update ECS services (rolling deployment)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy ECS Services
+    runs-on: ubuntu-latest
+    needs: migrate
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update app service
+        run: |
+          aws ecs update-service \
+            --cluster $APP_NAME \
+            --service $APP_NAME-app \
+            --force-new-deployment \
+            --query "service.serviceName" \
+            --output text
+
+      - name: Update worker service
+        run: |
+          aws ecs update-service \
+            --cluster $APP_NAME \
+            --service $APP_NAME-worker \
+            --force-new-deployment \
+            --query "service.serviceName" \
+            --output text
+
+      - name: Wait for app service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster $APP_NAME \
+            --services $APP_NAME-app
+
+      - name: Print app URL
+        run: |
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names $APP_NAME-alb \
+            --query "LoadBalancers[0].DNSName" \
+            --output text)
+          echo "✅ Deployed to: http://$ALB_DNS"

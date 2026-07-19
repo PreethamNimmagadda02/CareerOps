@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CareerOps — Terraform variable values
+# Copy this to terraform.tfvars and fill in the secrets.
+# terraform.tfvars is git-ignored — never commit it.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Pre-filled from your existing AWS account (ap-southeast-2, account 302388404732)
+aws_region  = "ap-southeast-2"
+app_name    = "careerops"
+environment = "prod"
+
+# ── Database ──────────────────────────────────────────────────────────────────
+db_name     = "careerops"
+db_username = "careeropsadmin"    # NOTE: 'admin' is reserved in RDS PostgreSQL — don't use it
+db_password = "CHANGE_ME_strong_password_min16chars!"
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+# Generate with: openssl rand -base64 33
+auth_secret = "CHANGE_ME_run_openssl_rand_base64_33"
+
+# OAuth — fill in at least one provider.
+# Google:  https://console.cloud.google.com/apis/credentials
+#          Authorized redirect URI: http://<ALB_DNS>/api/auth/callback/google
+auth_google_id     = ""
+auth_google_secret = ""
+
+# GitHub:  https://github.com/settings/developers → New OAuth App
+#          Authorization callback URL: http://<ALB_DNS>/api/auth/callback/github
+auth_github_id     = ""
+auth_github_secret = ""
+
+# ── LLM providers ─────────────────────────────────────────────────────────────
+# At least one must be set for the evaluate pipeline to work.
+nvidia_api_key   = "nvapi-CHANGE_ME"   # https://build.nvidia.com
+opencode_api_key = ""                  # https://opencode.ai/auth (optional)
+
+# ── Pipeline user ─────────────────────────────────────────────────────────────
+career_ops_user_email = "you@example.com"
+
+# ── Compute (minimal sizes — upgrade if tasks OOM) ────────────────────────────
+app_cpu    = 512   # 0.5 vCPU
+app_memory = 1024  # 1 GB
+
+worker_cpu    = 1024  # 1 vCPU (Playwright needs headroom)
+worker_memory = 2048  # 2 GB
+
+scan_cpu    = 1024
+scan_memory = 2048

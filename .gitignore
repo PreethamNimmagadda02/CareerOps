@@ -56,3 +56,10 @@ data/scan-results.json
 .repowise/sessions/
 .repowise/omissions/
 .repowise/jobs/
+
+# Terraform — never commit secrets or state
+deploy/terraform/terraform.tfvars
+deploy/terraform/.terraform/
+deploy/terraform/*.tfstate
+deploy/terraform/*.tfstate.backup
+deploy/terraform/.terraform.lock.hcl
