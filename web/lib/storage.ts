@@ -22,6 +22,15 @@ function resolveClient(): S3Client {
   const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";
   const secretAccessKey = process.env.MINIO_SECRET_KEY ?? "";
 
+  // Fall back to native AWS SDK credentials (IAM Task Role) if no explicit keys/endpoint are provided
+  if (!endpoint && !accessKeyId && !secretAccessKey) {
+    if (process.env.AWS_REGION || process.env.AWS_EXECUTION_ENV) {
+      return new S3Client({
+        region: process.env.AWS_REGION || "us-east-1",
+      });
+    }
+  }
+
   if (!endpoint || !accessKeyId || !secretAccessKey) {
     throw new Error(
       "MinIO is not configured. Set MINIO_ENDPOINT, MINIO_ACCESS_KEY, and MINIO_SECRET_KEY.",

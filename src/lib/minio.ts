@@ -41,6 +41,13 @@ export function reportObjectUrl(userId: string, filename: string): string {
     /\/$/,
     "",
   );
+  
+  if (!endpoint) {
+    // If no endpoint is configured, assume native AWS S3
+    const region = process.env.AWS_REGION || "us-east-1";
+    return `https://${BUCKET}.s3.${region}.amazonaws.com/${reportObjectKey(userId, filename)}`;
+  }
+  
   return `${endpoint}/${BUCKET}/${reportObjectKey(userId, filename)}`;
 }
 
@@ -48,6 +55,15 @@ export function resolveConfig(): S3Client {
   const endpoint = (process.env.MINIO_ENDPOINT ?? "").replace(/\/$/, "");
   const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";
   const secretAccessKey = process.env.MINIO_SECRET_KEY ?? "";
+
+  // Fall back to native AWS SDK credentials (IAM Task Role) if no explicit keys/endpoint are provided
+  if (!endpoint && !accessKeyId && !secretAccessKey) {
+    if (process.env.AWS_REGION || process.env.AWS_EXECUTION_ENV) {
+      return new S3Client({
+        region: process.env.AWS_REGION || "us-east-1",
+      });
+    }
+  }
 
   if (!endpoint || !accessKeyId || !secretAccessKey) {
     throw new Error(
