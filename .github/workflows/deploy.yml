@@ -75,9 +75,10 @@ jobs:
         env:
           CLUSTER: ${{ env.APP_NAME }}
           TASK_DEF: ${{ env.APP_NAME }}-migrate
-          SUBNETS: ${{ secrets.ECS_SUBNET_ID }}
-          SECURITY_GROUPS: ${{ secrets.ECS_WORKER_SG_ID }}
         run: |
+          SUBNETS=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${APP_NAME}-public-a" --query "Subnets[0].SubnetId" --output text)
+          SECURITY_GROUPS=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=${APP_NAME}-worker-sg" --query "SecurityGroups[0].GroupId" --output text)
+          
           TASK_ARN=$(aws ecs run-task \
             --cluster $CLUSTER \
             --task-definition $TASK_DEF \

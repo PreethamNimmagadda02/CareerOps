@@ -3,7 +3,7 @@
   "project": {
     "name": "CarrerOps",
     "is_monorepo": false,
-    "total_files": 209,
+    "total_files": 218,
     "entry_points": [],
     "tech_stack": [
       {
@@ -53,7 +53,7 @@
       "symbolCount": 0,
       "lineCount": 199,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 9,
       "tags": [],
       "summary": "Repository instructions and context for AI coding agents.",
@@ -67,7 +67,7 @@
       "symbolCount": 0,
       "lineCount": 12,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 10,
       "tags": [
         "config",
@@ -83,7 +83,7 @@
       "symbolCount": 0,
       "lineCount": 75,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 11,
       "tags": [
         "low_signal_summary"
@@ -98,7 +98,7 @@
       "symbolCount": 0,
       "lineCount": 46,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 12,
       "tags": [
         "low_signal_summary"
@@ -113,7 +113,7 @@
       "symbolCount": 0,
       "lineCount": 54,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 13,
       "tags": [
         "low_signal_summary"
@@ -128,7 +128,7 @@
       "symbolCount": 0,
       "lineCount": 65,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 14,
       "tags": [
         "low_signal_summary"
@@ -143,7 +143,7 @@
       "symbolCount": 0,
       "lineCount": 55,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 15,
       "tags": [
         "low_signal_summary"
@@ -158,7 +158,7 @@
       "symbolCount": 0,
       "lineCount": 33,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 16,
       "tags": [
         "low_signal_summary"
@@ -173,7 +173,7 @@
       "symbolCount": 0,
       "lineCount": 50,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 17,
       "tags": [
         "low_signal_summary"
@@ -188,7 +188,7 @@
       "symbolCount": 0,
       "lineCount": 102,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 18,
       "tags": [
         "low_signal_summary"
@@ -203,7 +203,7 @@
       "symbolCount": 0,
       "lineCount": 6,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 19,
       "tags": [
         "config",
@@ -219,7 +219,7 @@
       "symbolCount": 0,
       "lineCount": 35,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 20,
       "tags": [
         "low_signal_summary"
@@ -234,7 +234,7 @@
       "symbolCount": 0,
       "lineCount": 45,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 21,
       "tags": [
         "low_signal_summary"
@@ -249,7 +249,7 @@
       "symbolCount": 0,
       "lineCount": 19,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 22,
       "tags": [
         "low_signal_summary"
@@ -264,7 +264,7 @@
       "symbolCount": 0,
       "lineCount": 27,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 23,
       "tags": [
         "low_signal_summary"
@@ -279,7 +279,7 @@
       "symbolCount": 0,
       "lineCount": 21,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 24,
       "tags": [
         "low_signal_summary"
@@ -294,7 +294,7 @@
       "symbolCount": 0,
       "lineCount": 25,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 25,
       "tags": [
         "low_signal_summary"
@@ -309,7 +309,7 @@
       "symbolCount": 0,
       "lineCount": 32,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 26,
       "tags": [
         "low_signal_summary"
@@ -324,7 +324,7 @@
       "symbolCount": 0,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 27,
       "tags": [
         "low_signal_summary"
@@ -339,7 +339,7 @@
       "symbolCount": 0,
       "lineCount": 23,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 28,
       "tags": [
         "low_signal_summary"
@@ -354,7 +354,7 @@
       "symbolCount": 0,
       "lineCount": 70,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 29,
       "tags": [
         "low_signal_summary"
@@ -369,13 +369,30 @@
       "symbolCount": 0,
       "lineCount": 36,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 30,
       "tags": [
         "config",
         "ci"
       ],
       "summary": "GitHub Actions CI/CD workflow definition."
+    },
+    {
+      "id": "file:.github/workflows/deploy.yml",
+      "type": "pipeline",
+      "filePath": ".github/workflows/deploy.yml",
+      "language": "yaml",
+      "symbolCount": 0,
+      "lineCount": 145,
+      "complexity": "moderate",
+      "pagerank": 0.002257,
+      "communityId": 31,
+      "tags": [
+        "config",
+        "ci"
+      ],
+      "summary": "GitHub Actions CI/CD workflow definition.",
+      "primaryOwner": "PreethamNimmagadda02"
     },
     {
       "id": "file:.mcp.json",
@@ -385,8 +402,8 @@
       "symbolCount": 0,
       "lineCount": 8,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 31,
+      "pagerank": 0.002257,
+      "communityId": 32,
       "tags": [
         "config",
         "low_signal_summary"
@@ -401,8 +418,8 @@
       "symbolCount": 0,
       "lineCount": 3,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 32,
+      "pagerank": 0.002257,
+      "communityId": 33,
       "tags": [
         "config",
         "low_signal_summary"
@@ -417,8 +434,8 @@
       "symbolCount": 0,
       "lineCount": 11,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 33,
+      "pagerank": 0.002257,
+      "communityId": 34,
       "tags": [
         "low_signal_summary"
       ],
@@ -432,8 +449,8 @@
       "symbolCount": 5,
       "lineCount": 85,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 34,
+      "pagerank": 0.002257,
+      "communityId": 35,
       "tags": [
         "config",
         "infra"
@@ -448,10 +465,146 @@
       "symbolCount": 0,
       "lineCount": 195,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 35,
+      "pagerank": 0.002257,
+      "communityId": 36,
       "tags": [],
       "summary": "Project overview and entry point for new readers."
+    },
+    {
+      "id": "file:deploy/AWS_DEPLOY.md",
+      "type": "document",
+      "filePath": "deploy/AWS_DEPLOY.md",
+      "language": "markdown",
+      "symbolCount": 0,
+      "lineCount": 171,
+      "complexity": "moderate",
+      "pagerank": 0.002257,
+      "communityId": 37,
+      "tags": [
+        "low_signal_summary"
+      ],
+      "summary": "Documentation: AWS_DEPLOY.md.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
+      "id": "file:deploy/terraform/alb.tf",
+      "type": "service",
+      "filePath": "deploy/terraform/alb.tf",
+      "language": "terraform",
+      "symbolCount": 0,
+      "lineCount": 30,
+      "complexity": "simple",
+      "pagerank": 0.002257,
+      "communityId": 38,
+      "tags": [
+        "infra",
+        "low_signal_summary"
+      ],
+      "summary": "Infrastructure definition: alb.tf.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
+      "id": "file:deploy/terraform/ecs.tf",
+      "type": "service",
+      "filePath": "deploy/terraform/ecs.tf",
+      "language": "terraform",
+      "symbolCount": 0,
+      "lineCount": 269,
+      "complexity": "moderate",
+      "pagerank": 0.002257,
+      "communityId": 39,
+      "tags": [
+        "infra",
+        "low_signal_summary"
+      ],
+      "summary": "Infrastructure definition: ecs.tf.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
+      "id": "file:deploy/terraform/eventbridge.tf",
+      "type": "service",
+      "filePath": "deploy/terraform/eventbridge.tf",
+      "language": "terraform",
+      "symbolCount": 0,
+      "lineCount": 69,
+      "complexity": "simple",
+      "pagerank": 0.002257,
+      "communityId": 40,
+      "tags": [
+        "infra",
+        "low_signal_summary"
+      ],
+      "summary": "Infrastructure definition: eventbridge.tf.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
+      "id": "file:deploy/terraform/main.tf",
+      "type": "service",
+      "filePath": "deploy/terraform/main.tf",
+      "language": "terraform",
+      "symbolCount": 0,
+      "lineCount": 151,
+      "complexity": "moderate",
+      "pagerank": 0.002257,
+      "communityId": 41,
+      "tags": [
+        "entry_point",
+        "infra",
+        "low_signal_summary"
+      ],
+      "summary": "Infrastructure definition: main.tf.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
+      "id": "file:deploy/terraform/outputs.tf",
+      "type": "service",
+      "filePath": "deploy/terraform/outputs.tf",
+      "language": "terraform",
+      "symbolCount": 0,
+      "lineCount": 42,
+      "complexity": "simple",
+      "pagerank": 0.002257,
+      "communityId": 42,
+      "tags": [
+        "infra",
+        "low_signal_summary"
+      ],
+      "summary": "Infrastructure definition: outputs.tf.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
+      "id": "file:deploy/terraform/services.tf",
+      "type": "service",
+      "filePath": "deploy/terraform/services.tf",
+      "language": "terraform",
+      "symbolCount": 0,
+      "lineCount": 123,
+      "complexity": "moderate",
+      "pagerank": 0.002257,
+      "communityId": 43,
+      "tags": [
+        "infra",
+        "low_signal_summary"
+      ],
+      "summary": "Infrastructure definition: services.tf.",
+      "primaryOwner": "PreethamNimmagadda02"
+    },
+    {
+      "id": "file:deploy/terraform/variables.tf",
+      "type": "service",
+      "filePath": "deploy/terraform/variables.tf",
+      "language": "terraform",
+      "symbolCount": 0,
+      "lineCount": 97,
+      "complexity": "simple",
+      "pagerank": 0.002257,
+      "communityId": 44,
+      "tags": [
+        "infra",
+        "low_signal_summary"
+      ],
+      "summary": "Infrastructure definition: variables.tf.",
+      "primaryOwner": "PreethamNimmagadda02"
     },
     {
       "id": "file:docker-compose.override.yml",
@@ -461,8 +614,8 @@
       "symbolCount": 0,
       "lineCount": 33,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 36,
+      "pagerank": 0.002257,
+      "communityId": 45,
       "tags": [
         "config",
         "infra",
@@ -478,8 +631,8 @@
       "symbolCount": 0,
       "lineCount": 234,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 37,
+      "pagerank": 0.002257,
+      "communityId": 46,
       "tags": [
         "config",
         "infra"
@@ -494,8 +647,8 @@
       "symbolCount": 0,
       "lineCount": 155,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 38,
+      "pagerank": 0.002257,
+      "communityId": 47,
       "tags": [
         "low_signal_summary"
       ],
@@ -509,8 +662,8 @@
       "symbolCount": 0,
       "lineCount": 477,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 39,
+      "pagerank": 0.002257,
+      "communityId": 48,
       "tags": [
         "low_signal_summary"
       ],
@@ -524,8 +677,8 @@
       "symbolCount": 0,
       "lineCount": 84,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 40,
+      "pagerank": 0.002257,
+      "communityId": 49,
       "tags": [
         "low_signal_summary"
       ],
@@ -539,8 +692,8 @@
       "symbolCount": 0,
       "lineCount": 768,
       "complexity": "complex",
-      "pagerank": 0.002304,
-      "communityId": 41,
+      "pagerank": 0.002257,
+      "communityId": 50,
       "tags": [
         "low_signal_summary"
       ],
@@ -554,8 +707,8 @@
       "symbolCount": 0,
       "lineCount": 216,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 42,
+      "pagerank": 0.002257,
+      "communityId": 51,
       "tags": [
         "low_signal_summary"
       ],
@@ -569,7 +722,7 @@
       "symbolCount": 0,
       "lineCount": 21,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 6,
       "tags": [],
       "summary": "Application module eslint.config."
@@ -582,8 +735,8 @@
       "symbolCount": 0,
       "lineCount": 165,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 44,
+      "pagerank": 0.002257,
+      "communityId": 53,
       "tags": [
         "low_signal_summary"
       ],
@@ -597,8 +750,8 @@
       "symbolCount": 0,
       "lineCount": 110,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 45,
+      "pagerank": 0.002257,
+      "communityId": 54,
       "tags": [
         "low_signal_summary"
       ],
@@ -612,8 +765,8 @@
       "symbolCount": 0,
       "lineCount": 101,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 46,
+      "pagerank": 0.002257,
+      "communityId": 55,
       "tags": [
         "low_signal_summary"
       ],
@@ -627,8 +780,8 @@
       "symbolCount": 0,
       "lineCount": 129,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 47,
+      "pagerank": 0.002257,
+      "communityId": 56,
       "tags": [
         "low_signal_summary"
       ],
@@ -642,8 +795,8 @@
       "symbolCount": 0,
       "lineCount": 116,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 48,
+      "pagerank": 0.002257,
+      "communityId": 57,
       "tags": [
         "low_signal_summary"
       ],
@@ -657,8 +810,8 @@
       "symbolCount": 0,
       "lineCount": 252,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 49,
+      "pagerank": 0.002257,
+      "communityId": 58,
       "tags": [
         "low_signal_summary"
       ],
@@ -672,8 +825,8 @@
       "symbolCount": 0,
       "lineCount": 3,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 50,
+      "pagerank": 0.002257,
+      "communityId": 59,
       "tags": [
         "config",
         "low_signal_summary"
@@ -688,8 +841,8 @@
       "symbolCount": 0,
       "lineCount": 342,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 51,
+      "pagerank": 0.002257,
+      "communityId": 60,
       "tags": [
         "low_signal_summary"
       ],
@@ -703,8 +856,8 @@
       "symbolCount": 0,
       "lineCount": 204,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 52,
+      "pagerank": 0.002257,
+      "communityId": 61,
       "tags": [
         "low_signal_summary"
       ],
@@ -718,8 +871,8 @@
       "symbolCount": 0,
       "lineCount": 261,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 53,
+      "pagerank": 0.002257,
+      "communityId": 62,
       "tags": [
         "low_signal_summary"
       ],
@@ -733,8 +886,8 @@
       "symbolCount": 0,
       "lineCount": 215,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 54,
+      "pagerank": 0.002257,
+      "communityId": 63,
       "tags": [
         "low_signal_summary"
       ],
@@ -748,8 +901,8 @@
       "symbolCount": 0,
       "lineCount": 269,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 55,
+      "pagerank": 0.002257,
+      "communityId": 64,
       "tags": [
         "low_signal_summary"
       ],
@@ -763,8 +916,8 @@
       "symbolCount": 0,
       "lineCount": 139,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 56,
+      "pagerank": 0.002257,
+      "communityId": 65,
       "tags": [
         "low_signal_summary"
       ],
@@ -778,8 +931,8 @@
       "symbolCount": 0,
       "lineCount": 129,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 57,
+      "pagerank": 0.002257,
+      "communityId": 66,
       "tags": [
         "low_signal_summary"
       ],
@@ -793,8 +946,8 @@
       "symbolCount": 0,
       "lineCount": 249,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 58,
+      "pagerank": 0.002257,
+      "communityId": 67,
       "tags": [
         "low_signal_summary"
       ],
@@ -808,8 +961,8 @@
       "symbolCount": 0,
       "lineCount": 180,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 59,
+      "pagerank": 0.002257,
+      "communityId": 68,
       "tags": [
         "low_signal_summary"
       ],
@@ -823,8 +976,8 @@
       "symbolCount": 0,
       "lineCount": 243,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 60,
+      "pagerank": 0.002257,
+      "communityId": 69,
       "tags": [
         "low_signal_summary"
       ],
@@ -838,8 +991,8 @@
       "symbolCount": 0,
       "lineCount": 198,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 61,
+      "pagerank": 0.002257,
+      "communityId": 70,
       "tags": [
         "low_signal_summary"
       ],
@@ -853,8 +1006,8 @@
       "symbolCount": 0,
       "lineCount": 215,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 62,
+      "pagerank": 0.002257,
+      "communityId": 71,
       "tags": [
         "low_signal_summary"
       ],
@@ -868,8 +1021,8 @@
       "symbolCount": 0,
       "lineCount": 302,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 63,
+      "pagerank": 0.002257,
+      "communityId": 72,
       "tags": [
         "low_signal_summary"
       ],
@@ -883,8 +1036,8 @@
       "symbolCount": 0,
       "lineCount": 124,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 64,
+      "pagerank": 0.002257,
+      "communityId": 73,
       "tags": [
         "low_signal_summary"
       ],
@@ -898,8 +1051,8 @@
       "symbolCount": 0,
       "lineCount": 307,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 65,
+      "pagerank": 0.002257,
+      "communityId": 74,
       "tags": [
         "low_signal_summary"
       ],
@@ -913,8 +1066,8 @@
       "symbolCount": 0,
       "lineCount": 215,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 66,
+      "pagerank": 0.002257,
+      "communityId": 75,
       "tags": [
         "low_signal_summary"
       ],
@@ -928,8 +1081,8 @@
       "symbolCount": 0,
       "lineCount": 256,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 67,
+      "pagerank": 0.002257,
+      "communityId": 76,
       "tags": [
         "low_signal_summary"
       ],
@@ -943,8 +1096,8 @@
       "symbolCount": 0,
       "lineCount": 107,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 68,
+      "pagerank": 0.002257,
+      "communityId": 77,
       "tags": [
         "config"
       ],
@@ -958,7 +1111,7 @@
       "symbolCount": 0,
       "lineCount": 9,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "Application module prisma.config."
@@ -971,8 +1124,8 @@
       "symbolCount": 5,
       "lineCount": 93,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 69,
+      "pagerank": 0.002257,
+      "communityId": 78,
       "tags": [
         "data",
         "low_signal_summary"
@@ -987,8 +1140,8 @@
       "symbolCount": 1,
       "lineCount": 30,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 70,
+      "pagerank": 0.002257,
+      "communityId": 79,
       "tags": [
         "data",
         "low_signal_summary"
@@ -1003,8 +1156,8 @@
       "symbolCount": 1,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 71,
+      "pagerank": 0.002257,
+      "communityId": 80,
       "tags": [
         "data",
         "low_signal_summary"
@@ -1019,8 +1172,8 @@
       "symbolCount": 1,
       "lineCount": 21,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 72,
+      "pagerank": 0.002257,
+      "communityId": 81,
       "tags": [
         "data",
         "low_signal_summary"
@@ -1035,8 +1188,8 @@
       "symbolCount": 0,
       "lineCount": 12,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 73,
+      "pagerank": 0.002257,
+      "communityId": 82,
       "tags": [
         "data",
         "low_signal_summary"
@@ -1051,8 +1204,8 @@
       "symbolCount": 0,
       "lineCount": 0,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 74,
+      "pagerank": 0.002257,
+      "communityId": 83,
       "tags": [
         "config",
         "data",
@@ -1068,7 +1221,7 @@
       "symbolCount": 1,
       "lineCount": 76,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "Docs & Tooling module backfill-evaluations defining main."
@@ -1081,7 +1234,7 @@
       "symbolCount": 2,
       "lineCount": 64,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "Docs & Tooling module backfill-scores defining hasNumericScore, main."
@@ -1094,7 +1247,7 @@
       "symbolCount": 8,
       "lineCount": 206,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "Docs & Tooling module check-portals defining getArg, checkUrl, checkApi."
@@ -1107,7 +1260,7 @@
       "symbolCount": 0,
       "lineCount": 22,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "Docs & Tooling module get-cv."
@@ -1120,7 +1273,7 @@
       "symbolCount": 0,
       "lineCount": 20,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "Docs & Tooling module get-profile."
@@ -1133,7 +1286,7 @@
       "symbolCount": 9,
       "lineCount": 243,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "Docs & Tooling module init-dynamo defining log, waitForDynamo, createTable."
@@ -1146,8 +1299,8 @@
       "symbolCount": 0,
       "lineCount": 36,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 75,
+      "pagerank": 0.002257,
+      "communityId": 84,
       "tags": [
         "config",
         "low_signal_summary"
@@ -1162,7 +1315,7 @@
       "symbolCount": 13,
       "lineCount": 289,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "Docs & Tooling module migrate-bucket defining resolveS3, extOf, classify."
@@ -1175,7 +1328,7 @@
       "symbolCount": 9,
       "lineCount": 312,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "Docs & Tooling module migrate-to-multitenant defining resolveS3, migrateDynamoRecord, listNonCanonicalObjects."
@@ -1188,7 +1341,7 @@
       "symbolCount": 1,
       "lineCount": 61,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "Docs & Tooling module normalize-keywords defining main."
@@ -1201,8 +1354,8 @@
       "symbolCount": 0,
       "lineCount": 2185,
       "complexity": "complex",
-      "pagerank": 0.002304,
-      "communityId": 76,
+      "pagerank": 0.002257,
+      "communityId": 85,
       "tags": [
         "config",
         "low_signal_summary"
@@ -1217,7 +1370,7 @@
       "symbolCount": 3,
       "lineCount": 85,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 4,
       "tags": [],
       "summary": "Docs & Tooling module restore-recovered defining main."
@@ -1230,7 +1383,7 @@
       "symbolCount": 1,
       "lineCount": 231,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "CLI module evaluate defining main."
@@ -1243,7 +1396,7 @@
       "symbolCount": 2,
       "lineCount": 38,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "CLI module pdf defining main."
@@ -1256,7 +1409,7 @@
       "symbolCount": 11,
       "lineCount": 221,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "CLI module portals defining required, detectMethod, cmdList."
@@ -1269,7 +1422,7 @@
       "symbolCount": 1,
       "lineCount": 31,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "CLI module scan-portals defining main."
@@ -1282,7 +1435,7 @@
       "symbolCount": 2,
       "lineCount": 253,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "CLI module scan defining main, printCompact."
@@ -1295,7 +1448,7 @@
       "symbolCount": 8,
       "lineCount": 177,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 2,
       "tags": [],
       "summary": "CLI module tracker defining required, readStdin, cmdList."
@@ -1308,7 +1461,7 @@
       "symbolCount": 7,
       "lineCount": 35,
       "complexity": "moderate",
-      "pagerank": 0.005713,
+      "pagerank": 0.005597,
       "communityId": 2,
       "tags": [],
       "summary": "Service module args defining Args, constructor, has."
@@ -1321,7 +1474,7 @@
       "symbolCount": 4,
       "lineCount": 193,
       "complexity": "moderate",
-      "pagerank": 0.003797,
+      "pagerank": 0.00372,
       "communityId": 3,
       "tags": [],
       "summary": "Service module candidate-loader defining CandidateContext, loadCandidateContext, cvToMarkdown."
@@ -1334,7 +1487,7 @@
       "symbolCount": 2,
       "lineCount": 35,
       "complexity": "simple",
-      "pagerank": 0.003797,
+      "pagerank": 0.003719,
       "communityId": 2,
       "tags": [],
       "summary": "Service module concurrency defining mapLimit, createSemaphore."
@@ -1347,7 +1500,7 @@
       "symbolCount": 12,
       "lineCount": 106,
       "complexity": "moderate",
-      "pagerank": 0.009502,
+      "pagerank": 0.009309,
       "communityId": 3,
       "tags": [],
       "summary": "Service module cv-store defining ExperienceEntry, SkillGroup, EducationEntry."
@@ -1360,7 +1513,7 @@
       "symbolCount": 2,
       "lineCount": 31,
       "complexity": "simple",
-      "pagerank": 0.025788,
+      "pagerank": 0.025264,
       "communityId": 2,
       "tags": [],
       "summary": "Service module db defining createPrismaClient."
@@ -1373,7 +1526,7 @@
       "symbolCount": 5,
       "lineCount": 48,
       "complexity": "moderate",
-      "pagerank": 0.014727,
+      "pagerank": 0.014427,
       "communityId": 3,
       "tags": [],
       "summary": "Service module dynamo defining createClient."
@@ -1386,7 +1539,7 @@
       "symbolCount": 1,
       "lineCount": 19,
       "complexity": "simple",
-      "pagerank": 0.003032,
+      "pagerank": 0.00297,
       "communityId": 4,
       "tags": [],
       "summary": "Service module env defining loadEnv."
@@ -1399,7 +1552,7 @@
       "symbolCount": 16,
       "lineCount": 229,
       "complexity": "complex",
-      "pagerank": 0.004196,
+      "pagerank": 0.00411,
       "communityId": 2,
       "tags": [],
       "summary": "Service module evaluation defining ScoreDimension, EvaluationInsights, clean."
@@ -1412,7 +1565,7 @@
       "symbolCount": 3,
       "lineCount": 92,
       "complexity": "simple",
-      "pagerank": 0.002957,
+      "pagerank": 0.002897,
       "communityId": 2,
       "tags": [],
       "summary": "Service module global-scan defining GlobalScanOptions, GlobalScanStats, runGlobalScan."
@@ -1425,7 +1578,7 @@
       "symbolCount": 4,
       "lineCount": 29,
       "complexity": "moderate",
-      "pagerank": 0.002426,
+      "pagerank": 0.002377,
       "communityId": 2,
       "tags": [],
       "summary": "Service module jd defining fetchJD, isJdOk."
@@ -1438,7 +1591,7 @@
       "symbolCount": 4,
       "lineCount": 64,
       "complexity": "moderate",
-      "pagerank": 0.003834,
+      "pagerank": 0.003756,
       "communityId": 1,
       "tags": [],
       "summary": "Service module job-signal defining publisherClient, notifyJobQueued, subscribeJobQueued."
@@ -1451,7 +1604,7 @@
       "symbolCount": 11,
       "lineCount": 173,
       "complexity": "moderate",
-      "pagerank": 0.006177,
+      "pagerank": 0.006052,
       "communityId": 1,
       "tags": [],
       "summary": "Service module jobs defining isValidJobId, capLog, enqueueJob."
@@ -1464,7 +1617,7 @@
       "symbolCount": 7,
       "lineCount": 120,
       "complexity": "moderate",
-      "pagerank": 0.003032,
+      "pagerank": 0.00297,
       "communityId": 4,
       "tags": [],
       "summary": "Service module llm defining loadOpencodeConfig, resolveProvider, sleep."
@@ -1477,7 +1630,7 @@
       "symbolCount": 1,
       "lineCount": 31,
       "complexity": "simple",
-      "pagerank": 0.010765,
+      "pagerank": 0.010546,
       "communityId": 2,
       "tags": [],
       "summary": "Service module logger (1 symbols)."
@@ -1490,7 +1643,7 @@
       "symbolCount": 10,
       "lineCount": 221,
       "complexity": "moderate",
-      "pagerank": 0.003107,
+      "pagerank": 0.003044,
       "communityId": 2,
       "tags": [],
       "summary": "Service module matching defining escapeRegex, keywordRegex, splitQualifier."
@@ -1503,7 +1656,7 @@
       "symbolCount": 8,
       "lineCount": 120,
       "complexity": "moderate",
-      "pagerank": 0.005607,
+      "pagerank": 0.005493,
       "communityId": 3,
       "tags": [],
       "summary": "Service module minio defining reportObjectKey, reportObjectUrl, resolveConfig."
@@ -1516,7 +1669,7 @@
       "symbolCount": 1,
       "lineCount": 50,
       "complexity": "simple",
-      "pagerank": 0.005098,
+      "pagerank": 0.004994,
       "communityId": 2,
       "tags": [],
       "summary": "Service module owner defining resolveOwnerUserId."
@@ -1529,7 +1682,7 @@
       "symbolCount": 3,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.004865,
+      "pagerank": 0.004766,
       "communityId": 4,
       "tags": [],
       "summary": "Service module paths defining findProjectRoot, p."
@@ -1542,7 +1695,7 @@
       "symbolCount": 3,
       "lineCount": 43,
       "complexity": "simple",
-      "pagerank": 0.002957,
+      "pagerank": 0.002897,
       "communityId": 4,
       "tags": [],
       "summary": "Service module pdf defining PdfResult, generatePdf."
@@ -1555,7 +1708,7 @@
       "symbolCount": 4,
       "lineCount": 54,
       "complexity": "moderate",
-      "pagerank": 0.007879,
+      "pagerank": 0.007719,
       "communityId": 1,
       "tags": [],
       "summary": "Service module pipeline-commands defining isPipelineCommand, resolveCommandProcess."
@@ -1568,7 +1721,7 @@
       "symbolCount": 4,
       "lineCount": 45,
       "complexity": "moderate",
-      "pagerank": 0.00314,
+      "pagerank": 0.003076,
       "communityId": 2,
       "tags": [],
       "summary": "Service module portals-db defining rowToCompany, loadConfigFromDb, loadPortals."
@@ -1581,7 +1734,7 @@
       "symbolCount": 4,
       "lineCount": 88,
       "complexity": "moderate",
-      "pagerank": 0.002814,
+      "pagerank": 0.002756,
       "communityId": 2,
       "tags": [],
       "summary": "Service module postings defining upsertPostings, deactivatePostingsNotSeenSince, getActivePostings."
@@ -1594,7 +1747,7 @@
       "symbolCount": 14,
       "lineCount": 148,
       "complexity": "moderate",
-      "pagerank": 0.015977,
+      "pagerank": 0.015652,
       "communityId": 3,
       "tags": [],
       "summary": "Service module profile-store defining CandidateIdentity, RoleArchetype, TargetRoles."
@@ -1607,7 +1760,7 @@
       "symbolCount": 4,
       "lineCount": 80,
       "complexity": "moderate",
-      "pagerank": 0.004233,
+      "pagerank": 0.004147,
       "communityId": 3,
       "tags": [],
       "summary": "Service module profile-validation defining ReadinessResult, filled, validateCandidateReadiness."
@@ -1620,7 +1773,7 @@
       "symbolCount": 2,
       "lineCount": 104,
       "complexity": "moderate",
-      "pagerank": 0.007298,
+      "pagerank": 0.00715,
       "communityId": 2,
       "tags": [],
       "summary": "Service module prompt defining buildPrompt, parseScore."
@@ -1633,7 +1786,7 @@
       "symbolCount": 15,
       "lineCount": 424,
       "complexity": "moderate",
-      "pagerank": 0.003968,
+      "pagerank": 0.003888,
       "communityId": 2,
       "tags": [],
       "summary": "Service module scanner defining slugFromAshby, slugFromLever, slugFromGreenhouse."
@@ -1646,7 +1799,7 @@
       "symbolCount": 7,
       "lineCount": 39,
       "complexity": "moderate",
-      "pagerank": 0.005192,
+      "pagerank": 0.005086,
       "communityId": 2,
       "tags": [],
       "summary": "Service module text defining unquote, keywordMatch, normalizeUrl."
@@ -1659,7 +1812,7 @@
       "symbolCount": 8,
       "lineCount": 160,
       "complexity": "moderate",
-      "pagerank": 0.003604,
+      "pagerank": 0.00353,
       "communityId": 2,
       "tags": [],
       "summary": "Service module tracker defining getApplications, addApplication, patchApplication."
@@ -1672,7 +1825,7 @@
       "symbolCount": 1,
       "lineCount": 74,
       "complexity": "simple",
-      "pagerank": 0.002455,
+      "pagerank": 0.002405,
       "communityId": 2,
       "tags": [],
       "summary": "Service module url-validator defining validateJobUrls."
@@ -1685,7 +1838,7 @@
       "symbolCount": 12,
       "lineCount": 68,
       "complexity": "moderate",
-      "pagerank": 0.009188,
+      "pagerank": 0.009002,
       "communityId": 2,
       "tags": [],
       "summary": "Application module types defining Company, PortalsConfig, Job."
@@ -1698,7 +1851,7 @@
       "symbolCount": 7,
       "lineCount": 245,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [
         "entry_point"
@@ -1713,8 +1866,8 @@
       "symbolCount": 4,
       "lineCount": 123,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module candidate-loader.test (4 symbols)."
     },
@@ -1726,8 +1879,8 @@
       "symbolCount": 2,
       "lineCount": 134,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module dynamo-stores.test (2 symbols)."
     },
@@ -1739,8 +1892,8 @@
       "symbolCount": 1,
       "lineCount": 184,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module evaluation.test (1 symbols)."
     },
@@ -1752,8 +1905,8 @@
       "symbolCount": 1,
       "lineCount": 71,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module keywords.test (1 symbols)."
     },
@@ -1765,8 +1918,8 @@
       "symbolCount": 0,
       "lineCount": 94,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module matching-defaults.test."
     },
@@ -1778,8 +1931,8 @@
       "symbolCount": 2,
       "lineCount": 179,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module matching.test (2 symbols)."
     },
@@ -1791,8 +1944,8 @@
       "symbolCount": 2,
       "lineCount": 115,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module minio.test (2 symbols)."
     },
@@ -1804,8 +1957,8 @@
       "symbolCount": 5,
       "lineCount": 119,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module preflight.test (5 symbols)."
     },
@@ -1817,8 +1970,8 @@
       "symbolCount": 3,
       "lineCount": 188,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module profile-validation.test defining makeProfile, makeCV."
     },
@@ -1830,8 +1983,8 @@
       "symbolCount": 0,
       "lineCount": 75,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module prompt.test."
     },
@@ -1843,8 +1996,8 @@
       "symbolCount": 2,
       "lineCount": 299,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module resume-extract.test defining makeInput."
     },
@@ -1856,8 +2009,8 @@
       "symbolCount": 0,
       "lineCount": 33,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module scanner.test."
     },
@@ -1869,8 +2022,8 @@
       "symbolCount": 2,
       "lineCount": 107,
       "complexity": "moderate",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module storage.test (2 symbols)."
     },
@@ -1882,8 +2035,8 @@
       "symbolCount": 0,
       "lineCount": 46,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module text.test."
     },
@@ -1895,8 +2048,8 @@
       "symbolCount": 0,
       "lineCount": 68,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 43,
+      "pagerank": 0.002257,
+      "communityId": 52,
       "tags": [],
       "summary": "Test module tracker.test."
     },
@@ -1908,8 +2061,8 @@
       "symbolCount": 0,
       "lineCount": 16,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 77,
+      "pagerank": 0.002257,
+      "communityId": 86,
       "tags": [
         "config"
       ],
@@ -1923,8 +2076,8 @@
       "symbolCount": 0,
       "lineCount": 8,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 78,
+      "pagerank": 0.002257,
+      "communityId": 87,
       "tags": [],
       "summary": "Application module vitest.config."
     },
@@ -1936,8 +2089,8 @@
       "symbolCount": 0,
       "lineCount": 22,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 79,
+      "pagerank": 0.002257,
+      "communityId": 88,
       "tags": [],
       "summary": "Application module vitest.e2e.config."
     },
@@ -1949,8 +2102,8 @@
       "symbolCount": 0,
       "lineCount": 1,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 81,
+      "pagerank": 0.002257,
+      "communityId": 90,
       "tags": [
         "config"
       ],
@@ -1964,7 +2117,7 @@
       "symbolCount": 1,
       "lineCount": 11,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 0,
       "tags": [],
       "summary": "Application module layout defining AppLayout."
@@ -1977,7 +2130,7 @@
       "symbolCount": 2,
       "lineCount": 47,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "Application module page defining OnboardingPage."
@@ -1990,7 +2143,7 @@
       "symbolCount": 1,
       "lineCount": 24,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "Application module page defining Home."
@@ -2003,7 +2156,7 @@
       "symbolCount": 2,
       "lineCount": 5,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 7,
       "tags": [],
       "summary": "Application module page defining ProfilePage."
@@ -2016,7 +2169,7 @@
       "symbolCount": 4,
       "lineCount": 57,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET, PATCH."
@@ -2029,7 +2182,7 @@
       "symbolCount": 1,
       "lineCount": 2,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 5,
       "tags": [],
       "summary": "API module route (1 symbols)."
@@ -2042,7 +2195,7 @@
       "symbolCount": 3,
       "lineCount": 35,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "API module route defining GET."
@@ -2055,7 +2208,7 @@
       "symbolCount": 14,
       "lineCount": 175,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining decodeEntities, cleanTitle, looksEnglish."
@@ -2068,7 +2221,7 @@
       "symbolCount": 6,
       "lineCount": 62,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET, POST, DELETE."
@@ -2081,7 +2234,7 @@
       "symbolCount": 5,
       "lineCount": 66,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET, isStateCode."
@@ -2094,7 +2247,7 @@
       "symbolCount": 3,
       "lineCount": 17,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET."
@@ -2107,7 +2260,7 @@
       "symbolCount": 4,
       "lineCount": 40,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET, POST."
@@ -2120,7 +2273,7 @@
       "symbolCount": 3,
       "lineCount": 64,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining POST."
@@ -2133,7 +2286,7 @@
       "symbolCount": 3,
       "lineCount": 17,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET."
@@ -2146,7 +2299,7 @@
       "symbolCount": 3,
       "lineCount": 22,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining POST."
@@ -2159,7 +2312,7 @@
       "symbolCount": 3,
       "lineCount": 27,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET."
@@ -2172,7 +2325,7 @@
       "symbolCount": 5,
       "lineCount": 69,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 3,
       "tags": [],
       "summary": "API module route defining safe, POST."
@@ -2185,7 +2338,7 @@
       "symbolCount": 6,
       "lineCount": 91,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining POST, GET, DELETE."
@@ -2198,7 +2351,7 @@
       "symbolCount": 6,
       "lineCount": 64,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining safeGetProfile, safeGetCV, GET."
@@ -2211,7 +2364,7 @@
       "symbolCount": 3,
       "lineCount": 32,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 1,
       "tags": [],
       "summary": "API module route defining GET."
@@ -2224,7 +2377,7 @@
       "symbolCount": 3,
       "lineCount": 37,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 7,
       "tags": [],
       "summary": "Application module layout defining RootLayout."
@@ -2237,7 +2390,7 @@
       "symbolCount": 5,
       "lineCount": 154,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 0,
       "tags": [],
       "summary": "Application module page defining LoginPage, SignInCard."
@@ -2250,7 +2403,7 @@
       "symbolCount": 2,
       "lineCount": 54,
       "complexity": "simple",
-      "pagerank": 0.006467,
+      "pagerank": 0.006336,
       "communityId": 5,
       "tags": [],
       "summary": "Application module auth.config (2 symbols)."
@@ -2263,7 +2416,7 @@
       "symbolCount": 0,
       "lineCount": 12,
       "complexity": "simple",
-      "pagerank": 0.013143,
+      "pagerank": 0.012876,
       "communityId": 5,
       "tags": [],
       "summary": "Application module auth."
@@ -2276,7 +2429,7 @@
       "symbolCount": 4,
       "lineCount": 111,
       "complexity": "moderate",
-      "pagerank": 0.002429,
+      "pagerank": 0.00238,
       "communityId": 0,
       "tags": [],
       "summary": "UI module application-detail defining barTone, ScoreBreakdown, MetaChip."
@@ -2289,7 +2442,7 @@
       "symbolCount": 3,
       "lineCount": 86,
       "complexity": "simple",
-      "pagerank": 0.003213,
+      "pagerank": 0.003148,
       "communityId": 0,
       "tags": [],
       "summary": "UI module brand defining Logo, Wordmark."
@@ -2302,7 +2455,7 @@
       "symbolCount": 9,
       "lineCount": 562,
       "complexity": "complex",
-      "pagerank": 0.002793,
+      "pagerank": 0.002737,
       "communityId": 0,
       "tags": [],
       "summary": "UI module dashboard defining inTab, Dashboard, DashboardInner."
@@ -2315,7 +2468,7 @@
       "symbolCount": 1,
       "lineCount": 94,
       "complexity": "simple",
-      "pagerank": 0.002717,
+      "pagerank": 0.002662,
       "communityId": 0,
       "tags": [],
       "summary": "UI module gap-quest defining GapQuest."
@@ -2328,7 +2481,7 @@
       "symbolCount": 6,
       "lineCount": 195,
       "complexity": "moderate",
-      "pagerank": 0.002429,
+      "pagerank": 0.00238,
       "communityId": 0,
       "tags": [],
       "summary": "UI module keywords-manager defining KeywordSet, KeywordsManager, KindSection."
@@ -2341,7 +2494,7 @@
       "symbolCount": 8,
       "lineCount": 195,
       "complexity": "moderate",
-      "pagerank": 0.002696,
+      "pagerank": 0.002641,
       "communityId": 0,
       "tags": [],
       "summary": "UI module landing-preview defining usePrefersReducedMotion, useCountUp, PreviewRow."
@@ -2354,7 +2507,7 @@
       "symbolCount": 14,
       "lineCount": 526,
       "complexity": "complex",
-      "pagerank": 0.002429,
+      "pagerank": 0.00238,
       "communityId": 0,
       "tags": [],
       "summary": "UI module launch-pad defining LaunchPadProps, runningStep, RunProgress."
@@ -2367,7 +2520,7 @@
       "symbolCount": 3,
       "lineCount": 53,
       "complexity": "simple",
-      "pagerank": 0.002696,
+      "pagerank": 0.002641,
       "communityId": 0,
       "tags": [],
       "summary": "UI module login-form defining ProviderIcon, LoginForm."
@@ -2380,7 +2533,7 @@
       "symbolCount": 3,
       "lineCount": 83,
       "complexity": "simple",
-      "pagerank": 0.002429,
+      "pagerank": 0.00238,
       "communityId": 0,
       "tags": [],
       "summary": "UI module metrics-cards defining Stat, MetricsCards."
@@ -2393,7 +2546,7 @@
       "symbolCount": 22,
       "lineCount": 1331,
       "complexity": "complex",
-      "pagerank": 0.00263,
+      "pagerank": 0.002577,
       "communityId": 0,
       "tags": [],
       "summary": "UI module onboarding-flow defining phaseFor, useCountUp, haptic."
@@ -2406,7 +2559,7 @@
       "symbolCount": 8,
       "lineCount": 200,
       "complexity": "moderate",
-      "pagerank": 0.003206,
+      "pagerank": 0.003141,
       "communityId": 0,
       "tags": [],
       "summary": "UI module pipeline-provider defining RunOptions, PipelineContextValue, usePipeline."
@@ -2419,7 +2572,7 @@
       "symbolCount": 27,
       "lineCount": 1551,
       "complexity": "complex",
-      "pagerank": 0.003283,
+      "pagerank": 0.003216,
       "communityId": 0,
       "tags": [],
       "summary": "UI module profile-view defining UserData, MatchingData, ProfileData."
@@ -2432,7 +2585,7 @@
       "symbolCount": 1,
       "lineCount": 15,
       "complexity": "simple",
-      "pagerank": 0.002957,
+      "pagerank": 0.002897,
       "communityId": 0,
       "tags": [],
       "summary": "UI module providers defining Providers."
@@ -2445,7 +2598,7 @@
       "symbolCount": 2,
       "lineCount": 78,
       "complexity": "simple",
-      "pagerank": 0.002429,
+      "pagerank": 0.00238,
       "communityId": 0,
       "tags": [],
       "summary": "UI module report-modal defining ReportModalProps, ReportModal."
@@ -2458,7 +2611,7 @@
       "symbolCount": 2,
       "lineCount": 60,
       "complexity": "simple",
-      "pagerank": 0.004262,
+      "pagerank": 0.004176,
       "communityId": 0,
       "tags": [],
       "summary": "UI module site-header defining SiteHeader."
@@ -2471,7 +2624,7 @@
       "symbolCount": 5,
       "lineCount": 74,
       "complexity": "moderate",
-      "pagerank": 0.003759,
+      "pagerank": 0.003682,
       "communityId": 0,
       "tags": [],
       "summary": "UI module status-badge defining StatusBadge, RecommendationBadge, ScoreBadge."
@@ -2484,7 +2637,7 @@
       "symbolCount": 2,
       "lineCount": 88,
       "complexity": "simple",
-      "pagerank": 0.002429,
+      "pagerank": 0.00238,
       "communityId": 0,
       "tags": [],
       "summary": "UI module status-menu defining StatusSelect."
@@ -2497,7 +2650,7 @@
       "symbolCount": 1,
       "lineCount": 18,
       "complexity": "simple",
-      "pagerank": 0.002821,
+      "pagerank": 0.002764,
       "communityId": 0,
       "tags": [],
       "summary": "UI module theme-toggle defining ThemeToggle."
@@ -2510,7 +2663,7 @@
       "symbolCount": 1,
       "lineCount": 43,
       "complexity": "simple",
-      "pagerank": 0.004828,
+      "pagerank": 0.00473,
       "communityId": 0,
       "tags": [],
       "summary": "UI module button defining ButtonProps."
@@ -2523,7 +2676,7 @@
       "symbolCount": 0,
       "lineCount": 17,
       "complexity": "simple",
-      "pagerank": 0.003179,
+      "pagerank": 0.003114,
       "communityId": 0,
       "tags": [],
       "summary": "UI module card."
@@ -2536,7 +2689,7 @@
       "symbolCount": 4,
       "lineCount": 97,
       "complexity": "moderate",
-      "pagerank": 0.002641,
+      "pagerank": 0.002587,
       "communityId": 0,
       "tags": [],
       "summary": "UI module confetti defining Shard, makeShards, Confetti."
@@ -2549,7 +2702,7 @@
       "symbolCount": 2,
       "lineCount": 51,
       "complexity": "simple",
-      "pagerank": 0.002894,
+      "pagerank": 0.002835,
       "communityId": 0,
       "tags": [],
       "summary": "UI module modal defining ModalProps, Modal."
@@ -2562,7 +2715,7 @@
       "symbolCount": 1,
       "lineCount": 18,
       "complexity": "simple",
-      "pagerank": 0.003916,
+      "pagerank": 0.003837,
       "communityId": 0,
       "tags": [],
       "summary": "UI module skeleton defining Skeleton."
@@ -2575,7 +2728,7 @@
       "symbolCount": 1,
       "lineCount": 15,
       "complexity": "simple",
-      "pagerank": 0.004173,
+      "pagerank": 0.004088,
       "communityId": 0,
       "tags": [],
       "summary": "UI module spinner defining Spinner."
@@ -2588,7 +2741,7 @@
       "symbolCount": 8,
       "lineCount": 93,
       "complexity": "moderate",
-      "pagerank": 0.004198,
+      "pagerank": 0.004112,
       "communityId": 0,
       "tags": [],
       "summary": "UI module toast defining ToastItem, ToastInput, ToastContextValue."
@@ -2601,7 +2754,7 @@
       "symbolCount": 1,
       "lineCount": 64,
       "complexity": "simple",
-      "pagerank": 0.002821,
+      "pagerank": 0.002764,
       "communityId": 0,
       "tags": [],
       "summary": "UI module user-menu defining UserMenu."
@@ -2614,7 +2767,7 @@
       "symbolCount": 7,
       "lineCount": 42,
       "complexity": "moderate",
-      "pagerank": 0.003609,
+      "pagerank": 0.003536,
       "communityId": 1,
       "tags": [],
       "summary": "Service module keywords defining KeywordSet, isKeywordKind, normalizeKeyword."
@@ -2627,7 +2780,7 @@
       "symbolCount": 8,
       "lineCount": 111,
       "complexity": "moderate",
-      "pagerank": 0.003675,
+      "pagerank": 0.0036,
       "communityId": 1,
       "tags": [],
       "summary": "Service module kv defining client, RateLimitResult, rateLimitCooldown."
@@ -2640,7 +2793,7 @@
       "symbolCount": 6,
       "lineCount": 129,
       "complexity": "moderate",
-      "pagerank": 0.004348,
+      "pagerank": 0.00426,
       "communityId": 3,
       "tags": [],
       "summary": "Service module matching-defaults defining splitTitle, locationTokens, uniqueLower."
@@ -2653,7 +2806,7 @@
       "symbolCount": 3,
       "lineCount": 126,
       "complexity": "moderate",
-      "pagerank": 0.002957,
+      "pagerank": 0.002897,
       "communityId": 2,
       "tags": [],
       "summary": "Service module metrics-db defining DashboardMetrics, readDashboardMetrics."
@@ -2666,7 +2819,7 @@
       "symbolCount": 4,
       "lineCount": 111,
       "complexity": "moderate",
-      "pagerank": 0.003773,
+      "pagerank": 0.003696,
       "communityId": 1,
       "tags": [],
       "summary": "Service module onboarding defining safe, hasCompletedOnboarding, markOnboardingComplete."
@@ -2679,7 +2832,7 @@
       "symbolCount": 3,
       "lineCount": 26,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 4,
       "tags": [],
       "summary": "Service module paths defining findRepoRoot, p."
@@ -2692,7 +2845,7 @@
       "symbolCount": 0,
       "lineCount": 13,
       "complexity": "simple",
-      "pagerank": 0.004298,
+      "pagerank": 0.004211,
       "communityId": 0,
       "tags": [],
       "summary": "Service module pipeline."
@@ -2705,7 +2858,7 @@
       "symbolCount": 2,
       "lineCount": 54,
       "complexity": "simple",
-      "pagerank": 0.003087,
+      "pagerank": 0.003025,
       "communityId": 3,
       "tags": [],
       "summary": "Service module preflight defining safe, preflightPipeline."
@@ -2718,7 +2871,7 @@
       "symbolCount": 9,
       "lineCount": 116,
       "complexity": "moderate",
-      "pagerank": 0.002793,
+      "pagerank": 0.002737,
       "communityId": 1,
       "tags": [],
       "summary": "Service module reports defining tableField, ReportSummary, resolveMinioClient."
@@ -2731,7 +2884,7 @@
       "symbolCount": 23,
       "lineCount": 500,
       "complexity": "complex",
-      "pagerank": 0.003563,
+      "pagerank": 0.00349,
       "communityId": 3,
       "tags": [],
       "summary": "Service module resume-extract defining ensureEnv, extractResumeText, ExtractedProfile."
@@ -2744,7 +2897,7 @@
       "symbolCount": 2,
       "lineCount": 92,
       "complexity": "simple",
-      "pagerank": 0.003134,
+      "pagerank": 0.003071,
       "communityId": 0,
       "tags": [],
       "summary": "Service module scan-telemetry defining ScanTelemetry, parseScanTelemetry."
@@ -2757,7 +2910,7 @@
       "symbolCount": 1,
       "lineCount": 8,
       "complexity": "simple",
-      "pagerank": 0.01045,
+      "pagerank": 0.010237,
       "communityId": 1,
       "tags": [],
       "summary": "Service module session defining requireUserId."
@@ -2770,7 +2923,7 @@
       "symbolCount": 5,
       "lineCount": 59,
       "complexity": "moderate",
-      "pagerank": 0.005852,
+      "pagerank": 0.005733,
       "communityId": 0,
       "tags": [],
       "summary": "Service module status defining normalizeStatus, statusPriority, statusLabel."
@@ -2783,7 +2936,7 @@
       "symbolCount": 8,
       "lineCount": 71,
       "complexity": "moderate",
-      "pagerank": 0.004052,
+      "pagerank": 0.00397,
       "communityId": 1,
       "tags": [],
       "summary": "Service module storage defining resolveClient, resumeObjectKey, uploadResume."
@@ -2796,7 +2949,7 @@
       "symbolCount": 9,
       "lineCount": 160,
       "complexity": "moderate",
-      "pagerank": 0.003185,
+      "pagerank": 0.00312,
       "communityId": 1,
       "tags": [],
       "summary": "Service module tracker defining ReadApplicationsOptions, ApplicationsPage, StoredInsights."
@@ -2809,7 +2962,7 @@
       "symbolCount": 7,
       "lineCount": 83,
       "complexity": "moderate",
-      "pagerank": 0.007229,
+      "pagerank": 0.007083,
       "communityId": 0,
       "tags": [],
       "summary": "Service module types defining Application, ScoreDimensionView, Metrics."
@@ -2822,7 +2975,7 @@
       "symbolCount": 1,
       "lineCount": 5,
       "complexity": "simple",
-      "pagerank": 0.022332,
+      "pagerank": 0.021878,
       "communityId": 0,
       "tags": [],
       "summary": "Service module utils defining cn."
@@ -2835,7 +2988,7 @@
       "symbolCount": 1,
       "lineCount": 24,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 5,
       "tags": [],
       "summary": "Application module middleware (1 symbols)."
@@ -2848,7 +3001,7 @@
       "symbolCount": 1,
       "lineCount": 29,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 4,
       "tags": [],
       "summary": "Application module next.config (1 symbols)."
@@ -2861,8 +3014,8 @@
       "symbolCount": 0,
       "lineCount": 28,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 82,
+      "pagerank": 0.002257,
+      "communityId": 91,
       "tags": [
         "config"
       ],
@@ -2876,8 +3029,8 @@
       "symbolCount": 0,
       "lineCount": 3,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 83,
+      "pagerank": 0.002257,
+      "communityId": 92,
       "tags": [],
       "summary": "Application module postcss.config."
     },
@@ -2889,7 +3042,7 @@
       "symbolCount": 1,
       "lineCount": 152,
       "complexity": "moderate",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 8,
       "tags": [],
       "summary": "Application module tailwind.config (1 symbols)."
@@ -2902,8 +3055,8 @@
       "symbolCount": 0,
       "lineCount": 14,
       "complexity": "simple",
-      "pagerank": 0.002304,
-      "communityId": 84,
+      "pagerank": 0.002257,
+      "communityId": 93,
       "tags": [
         "config"
       ],
@@ -2917,7 +3070,7 @@
       "symbolCount": 2,
       "lineCount": 6,
       "complexity": "simple",
-      "pagerank": 0.002304,
+      "pagerank": 0.002257,
       "communityId": 5,
       "tags": [],
       "summary": "Types module next-auth.d defining Session, JWT."
@@ -7937,8 +8090,8 @@
   "layers": [
     {
       "id": "layer:cli",
-      "name": "Data Processing CLI",
-      "description": "A collection of command-line tools for scanning, evaluating, and processing external portal data.",
+      "name": "Data Processing Utilities",
+      "description": "A collection of command-line tools for scanning, evaluating, and tracking portal and document data.",
       "nodeIds": [
         "file:src/cli/evaluate.ts",
         "file:src/cli/pdf.ts",
@@ -7952,8 +8105,8 @@
     },
     {
       "id": "layer:api",
-      "name": "HTTP Route Handlers",
-      "description": "Server-side endpoints that manage application data, authentication, and pipeline operations.",
+      "name": "HTTP Request Endpoints",
+      "description": "A set of route handlers managing application data, authentication, and system health monitoring.",
       "nodeIds": [
         "file:web/app/api/applications/route.ts",
         "file:web/app/api/auth/[...nextauth]/route.ts",
@@ -8061,8 +8214,8 @@
     },
     {
       "id": "layer:ui",
-      "name": "Frontend Component Library",
-      "description": "A set of reusable interface elements and layout components used to build the user dashboard.",
+      "name": "Frontend Interface Components",
+      "description": "A library of reusable UI elements and page-specific components used to build the user interface.",
       "nodeIds": [
         "file:web/components/application-detail.tsx",
         "file:web/components/brand.tsx",
@@ -8096,14 +8249,22 @@
     },
     {
       "id": "layer:application",
-      "name": "Project Infrastructure Configuration",
-      "description": "Core project settings, container orchestration files, and environment documentation for the application ecosystem.",
+      "name": "Project Configuration Infrastructure",
+      "description": "The foundational configuration files, environment settings, and deployment definitions for the project.",
       "nodeIds": [
         "file:.mcp.json",
         "file:.prettierrc.json",
         "file:AGENTS.md",
         "file:Dockerfile",
         "file:README.md",
+        "file:deploy/AWS_DEPLOY.md",
+        "file:deploy/terraform/alb.tf",
+        "file:deploy/terraform/ecs.tf",
+        "file:deploy/terraform/eventbridge.tf",
+        "file:deploy/terraform/main.tf",
+        "file:deploy/terraform/outputs.tf",
+        "file:deploy/terraform/services.tf",
+        "file:deploy/terraform/variables.tf",
         "file:docker-compose.override.yml",
         "file:docker-compose.yml",
         "file:eslint.config.js",
@@ -8161,12 +8322,124 @@
         "file:web/tsconfig.json"
       ],
       "display_order": 3,
-      "order_basis": "imports"
+      "order_basis": "imports",
+      "subGroups": [
+        {
+          "id": "layer:application:root",
+          "name": "(root)",
+          "nodeIds": [
+            "file:.mcp.json",
+            "file:.prettierrc.json",
+            "file:AGENTS.md",
+            "file:Dockerfile",
+            "file:README.md",
+            "file:docker-compose.override.yml",
+            "file:docker-compose.yml",
+            "file:eslint.config.js",
+            "file:package.json",
+            "file:prisma.config.ts",
+            "file:tsconfig.json",
+            "file:vitest.config.ts",
+            "file:vitest.e2e.config.ts"
+          ]
+        },
+        {
+          "id": "layer:application:deploy",
+          "name": "deploy",
+          "nodeIds": [
+            "file:deploy/AWS_DEPLOY.md",
+            "file:deploy/terraform/alb.tf",
+            "file:deploy/terraform/ecs.tf",
+            "file:deploy/terraform/eventbridge.tf",
+            "file:deploy/terraform/main.tf",
+            "file:deploy/terraform/outputs.tf",
+            "file:deploy/terraform/services.tf",
+            "file:deploy/terraform/variables.tf"
+          ]
+        },
+        {
+          "id": "layer:application:modes",
+          "name": "modes",
+          "nodeIds": [
+            "file:modes/_shared.md",
+            "file:modes/apply.md",
+            "file:modes/batch.md",
+            "file:modes/oferta.md",
+            "file:modes/pdf.md",
+            "file:modes/scan.md"
+          ]
+        },
+        {
+          "id": "layer:application:openwiki",
+          "name": "openwiki",
+          "nodeIds": [
+            "file:openwiki/.last-update.json",
+            "file:openwiki/architecture/overview.md",
+            "file:openwiki/operations/cli.md",
+            "file:openwiki/operations/overview.md",
+            "file:openwiki/operations/troubleshooting.md",
+            "file:openwiki/quickstart.md",
+            "file:openwiki/storage/dynamodb.md",
+            "file:openwiki/storage/minio.md",
+            "file:openwiki/storage/overview.md",
+            "file:openwiki/storage/schema.md",
+            "file:openwiki/testing/overview.md",
+            "file:openwiki/web-dashboard/api.md",
+            "file:openwiki/web-dashboard/auth.md",
+            "file:openwiki/web-dashboard/overview.md",
+            "file:openwiki/web-dashboard/profile-view.md",
+            "file:openwiki/workflows/evaluate.md",
+            "file:openwiki/workflows/overview.md",
+            "file:openwiki/workflows/scan.md"
+          ]
+        },
+        {
+          "id": "layer:application:prisma",
+          "name": "prisma",
+          "nodeIds": [
+            "file:prisma/migrations/00000000000000_init/migration.sql",
+            "file:prisma/migrations/20260714000001_add_report_seq_sync_session/migration.sql",
+            "file:prisma/migrations/20260714000002_add_job_queue/migration.sql",
+            "file:prisma/migrations/20260714000003_add_posting_corpus/migration.sql",
+            "file:prisma/migrations/20260716000001_add_user_onboarded_at/migration.sql",
+            "file:prisma/migrations/migration_lock.toml"
+          ]
+        },
+        {
+          "id": "layer:application:src",
+          "name": "src",
+          "nodeIds": [
+            "file:src/types.ts",
+            "file:src/worker/index.ts"
+          ]
+        },
+        {
+          "id": "layer:application:web",
+          "name": "web",
+          "nodeIds": [
+            "file:web/.eslintrc.json",
+            "file:web/app/(app)/layout.tsx",
+            "file:web/app/(app)/onboarding/page.tsx",
+            "file:web/app/(app)/page.tsx",
+            "file:web/app/(app)/profile/page.tsx",
+            "file:web/app/layout.tsx",
+            "file:web/app/login/page.tsx",
+            "file:web/auth.config.ts",
+            "file:web/auth.ts",
+            "file:web/middleware.ts",
+            "file:web/next.config.mjs",
+            "file:web/package.json",
+            "file:web/postcss.config.mjs",
+            "file:web/tailwind.config.ts",
+            "file:web/tsconfig.json"
+          ]
+        }
+      ]
     },
     {
       "id": "layer:types",
-      "name": "Authentication Type Definitions",
-      "description": "TypeScript declaration files that extend standard authentication interfaces for the application.",
+      "name": "Authentication Type Extensions",
+      "description": "TypeScript declaration files that extend the authentication library's core type definitions.",
       "nodeIds": [
         "file:web/types/next-auth.d.ts"
       ],
@@ -8175,8 +8448,8 @@
     },
     {
       "id": "layer:config",
-      "name": "AI Agent Orchestration",
-      "description": "Contains configuration files and behavioral definitions for AI-driven development agents and automated workflows.",
+      "name": "AI Agent Definitions",
+      "description": "A collection of configuration files and instructions that define the behavior and operational capabilities of automated AI agents.",
       "nodeIds": [
         "file:.claude/CLAUDE.md",
         "file:.claude/launch.json",
@@ -8199,15 +8472,16 @@
         "file:.github/prompts/outreach.prompt.md",
         "file:.github/prompts/tracker.prompt.md",
         "file:.github/skills/career-ops/SKILL.md",
-        "file:.github/workflows/ci.yml"
+        "file:.github/workflows/ci.yml",
+        "file:.github/workflows/deploy.yml"
       ],
       "display_order": 5,
       "order_basis": "imports"
     },
     {
       "id": "layer:service",
-      "name": "Shared Application Infrastructure",
-      "description": "Provides core utility modules, database interfaces, and common data access patterns used across the application.",
+      "name": "Core Shared Utilities",
+      "description": "A foundational library of shared modules providing database connectivity, logging, session management, and common data access patterns.",
       "nodeIds": [
         "file:src/lib/args.ts",
         "file:src/lib/candidate-loader.ts",
@@ -8261,8 +8535,8 @@
     },
     {
       "id": "layer:docs-tooling",
-      "name": "Project Documentation Utilities",
-      "description": "Houses technical design documentation and administrative scripts for data maintenance and system verification.",
+      "name": "Project Maintenance Scripts",
+      "description": "A set of technical documentation and administrative utility scripts used for project planning, data backfilling, and manual system inspection.",
       "nodeIds": [
         "file:docs/ARCHITECTURE.md",
         "file:docs/IMPLEMENTATION-SUMMARY.md",
@@ -8287,8 +8561,8 @@
     },
     {
       "id": "layer:test",
-      "name": "System Integration Tests",
-      "description": "Contains the test suite responsible for validating business logic, data storage interactions, and matching algorithms.",
+      "name": "System Validation Suite",
+      "description": "A collection of automated test cases designed to verify core business logic, data store integrity, and system integration points.",
       "nodeIds": [
         "file:tests/candidate-loader.test.ts",
         "file:tests/dynamo-stores.test.ts",
@@ -8353,26 +8627,6 @@
     },
     {
       "order": 5,
-      "target_path": "web/lib/status.ts",
-      "page_type": "file_page",
-      "title": "status.ts",
-      "depth": 1,
-      "kind": "code",
-      "reason": "Directly imported by the anchor above; a core collaborator.",
-      "layer_id": "layer:service"
-    },
-    {
-      "order": 6,
-      "target_path": "web/components/ui/button.tsx",
-      "page_type": "file_page",
-      "title": "button.tsx",
-      "depth": 1,
-      "kind": "code",
-      "reason": "Directly imported by the anchor above; a core collaborator.",
-      "layer_id": "layer:ui"
-    },
-    {
-      "order": 7,
       "target_path": "scripts/backfill-evaluations.ts",
       "page_type": "file_page",
       "title": "backfill-evaluations.ts",
@@ -8382,7 +8636,7 @@
       "layer_id": "layer:docs-tooling"
     },
     {
-      "order": 8,
+      "order": 6,
       "target_path": "web/types/next-auth.d.ts",
       "page_type": "file_page",
       "title": "next-auth.d.ts",
@@ -8392,7 +8646,7 @@
       "layer_id": "layer:types"
     },
     {
-      "order": 9,
+      "order": 7,
       "target_path": "web/auth.ts",
       "page_type": "file_page",
       "title": "auth.ts",
@@ -8402,7 +8656,7 @@
       "layer_id": "layer:application"
     },
     {
-      "order": 10,
+      "order": 8,
       "target_path": "web/app/api/applications/route.ts",
       "page_type": "file_page",
       "title": "route.ts",
@@ -8412,7 +8666,7 @@
       "layer_id": "layer:api"
     },
     {
-      "order": 11,
+      "order": 9,
       "target_path": "src/cli/evaluate.ts",
       "page_type": "file_page",
       "title": "evaluate.ts",
@@ -8422,7 +8676,7 @@
       "layer_id": "layer:cli"
     },
     {
-      "order": 12,
+      "order": 10,
       "target_path": "tests/candidate-loader.test.ts",
       "page_type": "file_page",
       "title": "candidate-loader.test.ts",
@@ -8430,6 +8684,26 @@
       "kind": "code",
       "reason": "The test suite \u2014 how the system's behavior is verified.",
       "layer_id": "layer:test"
+    },
+    {
+      "order": 11,
+      "target_path": "deploy/terraform/alb.tf",
+      "page_type": "infra_page",
+      "title": "alb.tf",
+      "depth": 2,
+      "kind": "infra",
+      "reason": "How the system above is configured, built, or deployed.",
+      "layer_id": "layer:application"
+    },
+    {
+      "order": 12,
+      "target_path": "deploy/terraform/ecs.tf",
+      "page_type": "infra_page",
+      "title": "ecs.tf",
+      "depth": 2,
+      "kind": "infra",
+      "reason": "How the system above is configured, built, or deployed.",
+      "layer_id": "layer:application"
     }
   ],
   "modules": [
@@ -8522,6 +8796,14 @@
         "file:AGENTS.md",
         "file:Dockerfile",
         "file:README.md",
+        "file:deploy/AWS_DEPLOY.md",
+        "file:deploy/terraform/alb.tf",
+        "file:deploy/terraform/ecs.tf",
+        "file:deploy/terraform/eventbridge.tf",
+        "file:deploy/terraform/main.tf",
+        "file:deploy/terraform/outputs.tf",
+        "file:deploy/terraform/services.tf",
+        "file:deploy/terraform/variables.tf",
         "file:docker-compose.override.yml",
         "file:docker-compose.yml",
         "file:eslint.config.js",
@@ -8608,7 +8890,8 @@
         "file:.github/prompts/outreach.prompt.md",
         "file:.github/prompts/tracker.prompt.md",
         "file:.github/skills/career-ops/SKILL.md",
-        "file:.github/workflows/ci.yml"
+        "file:.github/workflows/ci.yml",
+        "file:.github/workflows/deploy.yml"
       ],
       "wholeLayer": true,
       "language": "markdown"

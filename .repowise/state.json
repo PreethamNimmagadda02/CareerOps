@@ -1,6 +1,6 @@
 {
-  "last_sync_commit": "2b6df11c64aceec3cfceb6218fcc5522b2f79e80",
-  "total_pages": 138,
+  "last_sync_commit": "a479b5054886fc31fa941e0e287ce5bc045c5f53",
+  "total_pages": 145,
   "provider": "gemini",
   "model": "gemini-3.1-flash-lite-preview",
   "docs_enabled": true,
@@ -17,14 +17,14 @@
   },
   "knowledge_graph": {
     "version": "1.0.0",
-    "node_count": 303,
+    "node_count": 312,
     "layer_count": 9,
     "tour_steps": 12,
     "has_summaries": true,
-    "fingerprint": "5bfa6337ac813789"
+    "fingerprint": "f38daa7c5063ad93"
   },
   "store_format_version": 1,
   "written_by_version": "0.33.0",
   "config_fingerprint": "42ed39888f277d1579c93a24d031ba591ebd1be86ef6ac4ffac9589de1b4dba2",
-  "last_docs_commit": "2b6df11c64aceec3cfceb6218fcc5522b2f79e80"
+  "last_docs_commit": "a479b5054886fc31fa941e0e287ce5bc045c5f53"
 }
