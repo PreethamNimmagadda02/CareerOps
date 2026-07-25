@@ -134,9 +134,3 @@ variable "scan_interval_seconds" {
   type        = number
   default     = 21600 # 6 hours
 }
-
-# ── Bastion ─────────────────────────────────────────────────────────────────────
-variable "bastion_ssh_cidr" {
-  description = "CIDR allowed to SSH into the bastion host (e.g. \"1.2.3.4/32\")"
-  type        = string
-}

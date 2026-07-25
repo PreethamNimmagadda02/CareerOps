@@ -45,14 +45,9 @@ output "dynamo_init_task_definition" {
   value       = aws_ecs_task_definition.dynamo_init.arn
 }
 
-output "bastion_public_ip" {
-  description = "Public IP of the SSH bastion — use as the SSH Tunnel host in your Postgres client"
-  value       = aws_instance.bastion.public_ip
-}
-
-output "bastion_ssh_key_path" {
-  description = "Local path to the bastion's private SSH key"
-  value       = local_sensitive_file.bastion_private_key.filename
+output "bastion_instance_id" {
+  description = "Instance ID of the SSM bastion — use as --target for `aws ssm start-session`"
+  value       = aws_instance.bastion.id
 }
 
 output "update_oauth_redirect_uris" {
