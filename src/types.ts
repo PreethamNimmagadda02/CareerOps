@@ -13,13 +13,6 @@ export interface Company {
   [key: string]: string | undefined;
 }
 
-/** Scan configuration loaded from Postgres (`Portal` + `FilterKeyword` tables). */
-export interface PortalsConfig {
-  positive: string[];
-  negative: string[];
-  companies: Company[];
-}
-
 /** A single job posting discovered during a scan. */
 export interface Job {
   company: string;
@@ -37,12 +30,6 @@ export interface ScanResult {
   error: string;
 }
 
-export interface TitleMatch {
-  relevant: boolean;
-  positive: string;
-  negative: string;
-}
-
 export interface EngineeringMatch {
   engineering: boolean;
   excluded: boolean;
@@ -57,7 +44,6 @@ export interface LocationMatch {
 
 /** An evaluated/relevant job carrying its match metadata. */
 export interface RelevantJob extends Job {
-  match: TitleMatch;
   engineeringMatch?: EngineeringMatch;
   locationMatch?: LocationMatch;
 }

@@ -1,6 +1,5 @@
-import type { EngineeringMatch, Job, LocationMatch, TitleMatch } from "../types.js";
+import type { EngineeringMatch, Job, LocationMatch } from "../types.js";
 import type { MatchingPrefs } from "./profile-store.js";
-import { keywordMatch } from "./text.js";
 
 /**
  * All matchers in this module are driven entirely by the per-user
@@ -108,14 +107,6 @@ export function normalizeMatchingPrefs(prefs: Partial<MatchingPrefs> | undefined
 }
 
 // ─── Matchers ────────────────────────────────────────────────────────────────
-
-/** Determine whether a title is relevant based on positive/negative keywords. */
-export function titleMatches(title: string, positive: string[], negative: string[]): TitleMatch {
-  const lower = title.toLowerCase();
-  const pos = positive.find((kw) => keywordMatch(lower, kw));
-  const neg = negative.find((kw) => keywordMatch(lower, kw));
-  return { relevant: Boolean(pos) && !neg, positive: pos || "", negative: neg || "" };
-}
 
 /**
  * Classify whether a title is within the user's target discipline (and not an

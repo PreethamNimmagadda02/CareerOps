@@ -24,9 +24,7 @@ import {
   isHighSignal,
   locationMatch,
   normalizeMatchingPrefs,
-  titleMatches,
 } from "../lib/matching.js";
-import { loadConfigFromDb } from "../lib/portals-db.js";
 import { getActivePostings, postingCorpusStatus } from "../lib/postings.js";
 import { resolveOwnerUserId } from "../lib/owner.js";
 import { getProfile } from "../lib/profile-store.js";
@@ -51,10 +49,6 @@ async function main(): Promise<void> {
 
   const userId = await resolveOwnerUserId();
 
-  // Keywords are per-user; portals are irrelevant here (the shared scan owns
-  // them). loadConfigFromDb still gives us the user's include/exclude filters.
-  const config = await loadConfigFromDb(userId);
-
   const profile = await getProfile(userId);
   const matchingReadiness = validateMatchingReadiness(profile);
   if (!matchingReadiness.ok) {
@@ -66,15 +60,6 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const matchingPrefs = normalizeMatchingPrefs(profile?.matching);
-
-  if (config.positive.length === 0) {
-    log.error(
-      "❌ No title-filter keywords configured. Add at least one “Include” keyword before scanning:\n" +
-        '   npm run portals -- keywords add --kind positive --value "software engineer"\n' +
-        "   (or use the Keywords panel in the dashboard).",
-    );
-    process.exit(1);
-  }
 
   // ── Read the shared corpus ───────────────────────────────────────────────
   const corpus = await postingCorpusStatus();
@@ -97,7 +82,7 @@ async function main(): Promise<void> {
 
   // ── Match (title → engineering → location), dedup by URL ─────────────────
   const relevant: RelevantJob[] = [];
-  const skipped = { title: 0, nonEngineering: 0, location: 0, duplicate: 0 };
+  const skipped = { nonEngineering: 0, location: 0, duplicate: 0 };
   const seenInRun = new Set<string>();
 
   // Corpus matching itself is a fast in-memory sweep (well under a second even
@@ -116,11 +101,6 @@ async function main(): Promise<void> {
       log.info(`   📊 Progress: ${scanned}/${total} postings scanned`);
     }
 
-    const match = titleMatches(job.title || "", config.positive, config.negative);
-    if (!match.relevant) {
-      skipped.title += 1;
-      continue;
-    }
     const eng = engineeringMatch(job.title || "", matchingPrefs);
     if (!eng.engineering) {
       skipped.nonEngineering += 1;
@@ -137,13 +117,13 @@ async function main(): Promise<void> {
       continue;
     }
     seenInRun.add(urlKey);
-    relevant.push({ ...job, match, engineeringMatch: eng, locationMatch: loc });
+    relevant.push({ ...job, engineeringMatch: eng, locationMatch: loc });
   }
 
   let shortlist = relevant.filter((job) => isHighSignal(job, matchingPrefs));
   log.step(
     `📊 ${jobs.length} postings → ${relevant.length} relevant, ${shortlist.length} high-signal ` +
-      `(skipped: ${skipped.title} title, ${skipped.nonEngineering} non-eng, ${skipped.location} location, ${skipped.duplicate} dup)`,
+      `(skipped: ${skipped.nonEngineering} non-eng, ${skipped.location} location, ${skipped.duplicate} dup)`,
   );
 
   if (browserValidate && shortlist.length > 0) {

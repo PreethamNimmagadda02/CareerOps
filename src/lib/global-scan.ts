@@ -10,9 +10,15 @@
 import { chromium } from "playwright";
 
 import { mapLimit } from "./concurrency.js";
+import { fetchJD, isJdOk } from "./jd.js";
 import { log } from "./logger.js";
 import { loadPortals } from "./portals-db.js";
-import { deactivatePostingsNotSeenSince, upsertPostings } from "./postings.js";
+import {
+  deactivatePostingsNotSeenSince,
+  getPostingsNeedingJD,
+  setPostingJD,
+  upsertPostings,
+} from "./postings.js";
 import { hasStructuredApi, scanCompany, scanCompanyBrowser } from "./scanner.js";
 import type { Job, ScanResult } from "../types.js";
 
@@ -22,6 +28,13 @@ export interface GlobalScanOptions {
   useFallback?: boolean;
   /** Cap the number of portals scanned (testing). Disables deactivation. */
   limitPortals?: number;
+  /** Fetch and cache JD text for postings missing one. Default true. */
+  fetchJD?: boolean;
+  /** Concurrent JD page fetches. Default 6. */
+  jdConcurrency?: number;
+  /** Max postings to fetch JD for per run — caps runtime; the backlog drains
+   * FIFO across scheduled runs. Default 300. */
+  jdLimit?: number;
 }
 
 export interface GlobalScanStats {
@@ -31,6 +44,8 @@ export interface GlobalScanStats {
   fetched: number;
   upserted: number;
   deactivated: number;
+  jdFetched: number;
+  jdFailed: number;
   seconds: number;
 }
 
@@ -85,6 +100,37 @@ export async function runGlobalScan(opts: GlobalScanOptions = {}): Promise<Globa
     deactivated = await deactivatePostingsNotSeenSince(scanStartedAt, scannedOkCompanies);
   }
 
+  // ── JD prefetch: cache job-description text once globally, so per-user
+  // evaluate no longer has to re-scrape the same posting (src/lib/jd.ts is
+  // the same extractor evaluate.ts uses). Best-effort — a problem here must
+  // never fail the scan itself; evaluate still falls back to a live fetch.
+  let jdFetched = 0;
+  let jdFailed = 0;
+  if (opts.fetchJD ?? true) {
+    try {
+      const toFetch = await getPostingsNeedingJD(opts.jdLimit ?? 300);
+      if (toFetch.length) {
+        const jdConcurrency = opts.jdConcurrency ?? 6;
+        const browser = await chromium.launch({ headless: true });
+        try {
+          await mapLimit(toFetch, jdConcurrency, async ({ url }) => {
+            const jd = await fetchJD(browser, url);
+            if (isJdOk(jd)) {
+              await setPostingJD(url, jd);
+              jdFetched += 1;
+            } else {
+              jdFailed += 1;
+            }
+          });
+        } finally {
+          await browser.close();
+        }
+      }
+    } catch (err) {
+      log.warn(`⚠️  JD prefetch pass failed: ${(err as Error).message}`);
+    }
+  }
+
   const stats: GlobalScanStats = {
     portals: companies.length,
     structuredOk,
@@ -92,12 +138,15 @@ export async function runGlobalScan(opts: GlobalScanOptions = {}): Promise<Globa
     fetched: jobs.length,
     upserted,
     deactivated,
+    jdFetched,
+    jdFailed,
     seconds: Number(((Date.now() - t0) / 1000).toFixed(1)),
   };
 
   log.step(
     `✅ Global scan done in ${stats.seconds}s — ${stats.fetched} postings fetched, ` +
-      `${stats.upserted} upserted, ${stats.deactivated} retired, ${stats.failed} board(s) failed`,
+      `${stats.upserted} upserted, ${stats.deactivated} retired, ${stats.failed} board(s) failed, ` +
+      `${stats.jdFetched} JD(s) cached, ${stats.jdFailed} JD fetch(es) failed`,
   );
   return stats;
 }

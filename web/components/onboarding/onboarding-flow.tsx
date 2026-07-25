@@ -100,36 +100,6 @@ function haptic(pattern: number | number[] = 18) {
 /** A role discovered by the scan — the only shape the live feed needs. */
 type FoundRole = { num: string; company: string; role: string };
 
-/**
- * Reconcile the positive keyword filters (which drive the scan's title match)
- * with the candidate's target roles: add titles that were added, remove titles
- * that were removed. Diffing against the previous titles means keywords the
- * user added by hand are left untouched. Pass `oldTitles = []` to seed.
- */
-async function syncKeywordsToTitles(oldTitles: string[], newTitles: string[]): Promise<void> {
-  const norm = (s: string) => s.trim().toLowerCase();
-  const oldSet = new Set(oldTitles.map(norm).filter(Boolean));
-  const newSet = new Set(newTitles.map(norm).filter(Boolean));
-  const toAdd = [...newSet].filter((v) => !oldSet.has(v)).slice(0, 12);
-  const toRemove = [...oldSet].filter((v) => !newSet.has(v));
-  await Promise.all([
-    ...toAdd.map((value) =>
-      fetch("/api/keywords", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "positive", value }),
-      }).catch(() => null),
-    ),
-    ...toRemove.map((value) =>
-      fetch("/api/keywords", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "positive", value }),
-      }).catch(() => null),
-    ),
-  ]);
-}
-
 /** Deterministic blip coordinates (percent) around the radar face, per index. */
 function blipPos(i: number): { top: string; left: string } {
   const golden = 2.399963; // golden-angle spread → even, organic scatter
@@ -370,28 +340,32 @@ export function OnboardingFlow({
     };
   }, [refetchOnboarding]);
 
-  // The keyword filters that scanning needs are derived from the target roles.
-  // If the profile is complete (target roles are a required field) but no
-  // positive keywords exist yet — e.g. the user filled the profile by hand
-  // instead of via a résumé — seed them from the target roles so "Find my
-  // roles" isn't stuck disabled on a requirement the user can't see.
-  const seedingKeywords = React.useRef(false);
+  // The Job Matching prefs that scanning needs are derived from the target
+  // roles. If the profile is complete (target roles are a required field) but
+  // matching prefs aren't set yet — e.g. the user filled the profile by hand
+  // instead of via a résumé — derive and save them so "Find my roles" isn't
+  // stuck disabled on a requirement the user can't see.
+  const seedingMatching = React.useRef(false);
   React.useEffect(() => {
-    if (!onboarding.profile.done || onboarding.keywords.done || seedingKeywords.current) return;
-    seedingKeywords.current = true;
+    if (!onboarding.profile.done || onboarding.keywords.done || seedingMatching.current) return;
+    seedingMatching.current = true;
     void (async () => {
       try {
         const res = await fetch("/api/profile", { cache: "no-store" });
         const p = res.ok ? ((await res.json()).profile ?? {}) : {};
-        const titles: string[] = p?.target_roles?.primary ?? p?.matching?.include_titles ?? [];
-        if (titles.length > 0) {
-          await syncKeywordsToTitles([], titles);
+        const matching = deriveMatchingDefaults(p);
+        if (matching.include_titles.length > 0) {
+          await fetch("/api/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile: { matching } }),
+          });
           await refetchOnboarding();
         }
       } catch {
-        /* non-fatal — the keywords step still lets them add these by hand */
+        /* non-fatal — the Job Matching section still lets them fill this in by hand */
       } finally {
-        seedingKeywords.current = false;
+        seedingMatching.current = false;
       }
     })();
   }, [onboarding.profile.done, onboarding.keywords.done, refetchOnboarding]);
@@ -419,11 +393,6 @@ export function OnboardingFlow({
       }
       const { profile, cv } = await ex.json();
       setExtracted({ profile: profile ?? null, cv: cv ?? null });
-
-      // Seed positive keyword filters from the candidate's target roles.
-      const titles: string[] =
-        profile?.target_roles?.primary ?? profile?.matching?.include_titles ?? [];
-      await syncKeywordsToTitles([], titles);
       setResumeState("done");
       await refetchOnboarding();
     } catch (e) {
@@ -1019,11 +988,6 @@ function ExtractedFields({
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
-
-      // Keep the positive keyword filters in sync with the target roles: add
-      // the newly-added titles, drop the removed ones. Only titles the user
-      // changed are touched, so any keywords they added by hand are preserved.
-      await syncKeywordsToTitles(titles, primary);
 
       const nextProfile: Record<string, any> = {
         candidate: { ...(p.candidate ?? {}), full_name: dName.trim() },

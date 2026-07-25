@@ -1,4 +1,3 @@
-import { db } from "../../src/lib/db";
 import { getProfile } from "../../src/lib/profile-store";
 import { getCV } from "../../src/lib/cv-store";
 import {
@@ -15,8 +14,8 @@ async function safe<T>(fn: () => Promise<T>): Promise<T | null> {
  * Pre-flight gate for the pipeline. Returns an error message when the command
  * must NOT run, or `null` when it's allowed.
  *
- *  • scan      → requires at least one positive ("Include") keyword and the
- *                profile's Job Matching preferences (they drive the matchers).
+ *  • scan      → requires the profile's Job Matching preferences to be filled
+ *                in (they drive the matchers).
  *  • evaluate  → requires the profile/CV to have the minimum required details.
  */
 export async function preflightPipeline(
@@ -24,15 +23,6 @@ export async function preflightPipeline(
   userId: string,
 ): Promise<string | null> {
   if (command === "scan" || command === "scan:fallback") {
-    const positive = await db.filterKeyword.count({
-      where: { userId, kind: "positive" },
-    });
-    if (positive === 0) {
-      return (
-        "Scan skipped — no title-filter keywords configured.\n" +
-        'Add at least one "Include" keyword in the Keywords panel, then try again.'
-      );
-    }
     const profile = await safe(() => getProfile(userId));
     const matching = validateMatchingReadiness(profile);
     if (!matching.ok) {

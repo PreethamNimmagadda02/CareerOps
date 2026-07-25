@@ -1,19 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { preflightPipeline } from "../web/lib/preflight.ts";
-import { db } from "../src/lib/db";
 import { getProfile } from "../src/lib/profile-store";
 import { getCV } from "../src/lib/cv-store";
 import type { Profile } from "../src/lib/profile-store";
 import type { CV } from "../src/lib/cv-store";
 
-vi.mock("../src/lib/db", () => ({
-  db: { filterKeyword: { count: vi.fn() } },
-}));
 vi.mock("../src/lib/profile-store", () => ({ getProfile: vi.fn() }));
 vi.mock("../src/lib/cv-store", () => ({ getCV: vi.fn() }));
 
-const countMock = db.filterKeyword.count as unknown as ReturnType<typeof vi.fn>;
 const getProfileMock = getProfile as unknown as ReturnType<typeof vi.fn>;
 const getCVMock = getCV as unknown as ReturnType<typeof vi.fn>;
 
@@ -53,23 +48,12 @@ const fullCV: CV = {
 beforeEach(() => vi.clearAllMocks());
 
 describe("preflightPipeline — scan", () => {
-  it("blocks scan when the user has no positive keywords", async () => {
-    countMock.mockResolvedValueOnce(0);
-    const msg = await preflightPipeline("scan", "user-1");
-    expect(msg).toMatch(/Scan skipped/);
-    expect(countMock).toHaveBeenCalledWith({
-      where: { userId: "user-1", kind: "positive" },
-    });
-  });
-
-  it("allows scan when keywords and job matching preferences exist", async () => {
-    countMock.mockResolvedValueOnce(3);
+  it("allows scan when job matching preferences exist", async () => {
     getProfileMock.mockResolvedValueOnce(fullProfile);
     expect(await preflightPipeline("scan", "user-1")).toBeNull();
   });
 
   it("blocks scan when the profile has no job matching preferences", async () => {
-    countMock.mockResolvedValueOnce(3);
     getProfileMock.mockResolvedValueOnce({ ...fullProfile, matching: undefined });
     const msg = await preflightPipeline("scan", "user-1");
     expect(msg).toMatch(/Scan skipped/);
@@ -77,7 +61,6 @@ describe("preflightPipeline — scan", () => {
   });
 
   it("blocks scan when the user allows no locations at all", async () => {
-    countMock.mockResolvedValueOnce(3);
     getProfileMock.mockResolvedValueOnce({
       ...fullProfile,
       matching: { ...fullProfile.matching, preferred_locations: [], remote_ok: false },
@@ -88,7 +71,7 @@ describe("preflightPipeline — scan", () => {
   });
 
   it("applies the same gate to scan:fallback", async () => {
-    countMock.mockResolvedValueOnce(0);
+    getProfileMock.mockResolvedValueOnce({ ...fullProfile, matching: undefined });
     const msg = await preflightPipeline("scan:fallback", "user-1");
     expect(msg).toMatch(/Scan skipped/);
   });

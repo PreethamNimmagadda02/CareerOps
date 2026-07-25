@@ -2,7 +2,7 @@
 /**
  * career-ops portals — manage scan targets in Postgres.
  *
- * Portals are GLOBAL (shared by all users). Keywords are per-user.
+ * Portals are GLOBAL (shared by all users).
  *
  * Usage:
  *   career-ops-portals list     [--json] [--disabled]
@@ -12,14 +12,10 @@
  *   career-ops-portals delete   --name "Acme"
  *   career-ops-portals enable   --name "Acme"
  *   career-ops-portals disable  --name "Acme"
- *   career-ops-portals keywords list
- *   career-ops-portals keywords add  --kind positive|negative --value "keyword"
- *   career-ops-portals keywords del  --kind positive|negative --value "keyword"
  */
 import { Args } from "../lib/args.js";
 import { db } from "../lib/db.js";
 import { log } from "../lib/logger.js";
-import { resolveOwnerUserId } from "../lib/owner.js";
 import { portalCount } from "../lib/portals-db.js";
 import { slugFromAshby, slugFromLever } from "../lib/scanner.js";
 
@@ -140,53 +136,6 @@ async function cmdDisable(args: Args): Promise<void> {
   log.info(`✅ Disabled "${name}".`);
 }
 
-// ── keywords sub-commands (per-user) ─────────────────────────────────────────
-
-async function cmdKeywords(argv: string[]): Promise<void> {
-  const sub = argv[0];
-  const args = new Args(argv.slice(1));
-
-  // Resolve the owner only when keywords are actually being managed.
-  const userId = await resolveOwnerUserId();
-
-  if (sub === "list" || !sub) {
-    const kws = await db.filterKeyword.findMany({
-      where: { userId },
-      orderBy: [{ kind: "asc" }, { value: "asc" }],
-    });
-    const pos = kws.filter((k) => k.kind === "positive").map((k) => k.value);
-    const neg = kws.filter((k) => k.kind === "negative").map((k) => k.value);
-    log.info(`positive (${pos.length}): ${pos.join(", ")}`);
-    log.info(`negative (${neg.length}): ${neg.join(", ")}`);
-    return;
-  }
-  if (sub === "add") {
-    const kind = required(args, "--kind");
-    if (kind !== "positive" && kind !== "negative") {
-      log.error('❌ --kind must be "positive" or "negative"');
-      process.exit(1);
-    }
-    const value = required(args, "--value");
-    await db.filterKeyword.upsert({
-      where: { userId_kind_value: { userId, kind, value } },
-      update: {},
-      create: { userId, kind, value },
-    });
-    log.info(`✅ Added ${kind} keyword: "${value}"`);
-    return;
-  }
-  if (sub === "del" || sub === "delete") {
-    const kind = required(args, "--kind");
-    const value = required(args, "--value");
-    const deleted = await db.filterKeyword.deleteMany({ where: { userId, kind, value } });
-    if (deleted.count) log.info(`✅ Removed ${kind} keyword: "${value}"`);
-    else log.error(`❌ Keyword "${value}" (${kind}) not found.`);
-    return;
-  }
-  log.error(`Unknown keywords sub-command: ${sub}`);
-  process.exit(1);
-}
-
 // ── router ────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -216,9 +165,6 @@ async function main(): Promise<void> {
     case "disable":
       await cmdDisable(args);
       break;
-    case "keywords":
-      await cmdKeywords(argv.slice(1));
-      break;
     default:
       log.error(
         "Usage: career-ops-portals <command> [options]\n\n" +
@@ -228,10 +174,7 @@ async function main(): Promise<void> {
           "  update   --name X [--url --api]\n" +
           "  delete   --name X\n" +
           "  enable   --name X\n" +
-          "  disable  --name X\n" +
-          "  keywords list                           your title-filter keywords\n" +
-          "  keywords add  --kind positive|negative --value WORD\n" +
-          "  keywords del  --kind positive|negative --value WORD\n",
+          "  disable  --name X\n",
       );
       process.exit(sub ? 1 : 0);
   }

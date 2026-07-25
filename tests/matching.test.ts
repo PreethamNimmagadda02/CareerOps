@@ -5,12 +5,8 @@ import {
   isHighSignal,
   locationMatch,
   normalizeMatchingPrefs,
-  titleMatches,
 } from "../src/lib/matching.js";
 import type { MatchingPrefs } from "../src/lib/profile-store.js";
-
-const POSITIVE = ["ai", "ml", "backend engineer", "software engineer", "platform engineer"];
-const NEGATIVE = [".net", "senior", "staff", "principal", "lead"];
 
 /**
  * A prefs fixture equivalent to what a candidate would enter in the
@@ -27,24 +23,6 @@ const PREFS: MatchingPrefs = normalizeMatchingPrefs({
   preferred_locations: ["india", "bengaluru", "bangalore", "hyderabad", "mumbai"],
   remote_ok: true,
   eligible_locations: ["india"],
-});
-
-describe("titleMatches", () => {
-  it("flags relevant titles", () => {
-    const r = titleMatches("AI Engineer", POSITIVE, NEGATIVE);
-    expect(r.relevant).toBe(true);
-    expect(r.positive).toBe("ai");
-  });
-
-  it("rejects titles hitting a negative keyword", () => {
-    const r = titleMatches("Senior Backend Engineer", POSITIVE, NEGATIVE);
-    expect(r.relevant).toBe(false);
-    expect(r.negative).toBe("senior");
-  });
-
-  it("rejects unrelated titles", () => {
-    expect(titleMatches("Marketing Manager", POSITIVE, NEGATIVE).relevant).toBe(false);
-  });
 });
 
 describe("engineeringMatch", () => {

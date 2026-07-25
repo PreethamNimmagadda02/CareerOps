@@ -22,7 +22,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { MetricsCards } from "@/components/metrics-cards";
 import { usePipeline } from "@/components/pipeline-provider";
 import { LaunchPad } from "@/components/launch-pad";
-import { KeywordsManager } from "@/components/keywords-manager";
 import { ReportModal } from "@/components/report-modal";
 import { RecommendationBadge, ScoreBadge } from "@/components/status-badge";
 import { StatusSelect } from "@/components/status-menu";
@@ -84,7 +83,6 @@ function DashboardInner() {
   const [search, setSearch] = React.useState("");
   const [openReport, setOpenReport] = React.useState<{ num: string; title: string } | null>(null);
   const [savingNum, setSavingNum] = React.useState<string | null>(null);
-  const [keywordsOpen, setKeywordsOpen] = React.useState(false);
   const [expandedNum, setExpandedNum] = React.useState<string | null>(null);
 
   // Metrics + tab counts are aggregated server-side (SQL), so they stay correct
@@ -274,7 +272,6 @@ function DashboardInner() {
         running={running}
         percent={percent}
         progressLabel={progressLabel}
-        onOpenKeywords={() => setKeywordsOpen(true)}
         onRun={launchRun}
       />
 
@@ -430,14 +427,6 @@ function DashboardInner() {
         reportNumber={openReport?.num ?? null}
         title={openReport?.title}
         onClose={() => setOpenReport(null)}
-      />
-
-      <KeywordsManager
-        open={keywordsOpen}
-        onClose={() => {
-          setKeywordsOpen(false);
-          void load();
-        }}
       />
     </div>
   );

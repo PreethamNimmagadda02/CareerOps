@@ -2,9 +2,9 @@
  * Owner resolution for the CLI pipeline.
  *
  * The pipeline (scan / evaluate / portals) is a single-operator process, but the
- * data model is multi-user: every Application / Portal / FilterKeyword belongs to
- * exactly one `User`. To bridge the two, every CLI run resolves the *owner* whose
- * data it should read and write.
+ * data model is multi-user: every Application belongs to exactly one `User`. To
+ * bridge the two, every CLI run resolves the *owner* whose data it should read
+ * and write.
  *
  * Resolution order:
  *   1. `CAREER_OPS_USER_ID`    — an existing User id (used by the web dashboard,

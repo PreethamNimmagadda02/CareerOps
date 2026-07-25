@@ -95,3 +95,32 @@ export async function postingCorpusStatus(): Promise<{ active: number; lastSeenA
   ]);
   return { active, lastSeenAt: latest?.lastSeenAt ?? null };
 }
+
+/**
+ * Active postings still missing a cached JD, oldest-discovered first — so a
+ * capped prefetch pass drains the backlog in FIFO order across runs instead
+ * of always refetching the same recent postings.
+ */
+export async function getPostingsNeedingJD(limit: number): Promise<{ url: string }[]> {
+  return db.posting.findMany({
+    where: { active: true, jd: null },
+    orderBy: { firstSeenAt: "asc" },
+    take: limit,
+    select: { url: true },
+  });
+}
+
+/**
+ * Cache a successfully-extracted JD for a posting. Callers should only pass a
+ * real extraction (never a failure sentinel) — leaving `jd` null on failure
+ * lets the next scan or evaluate's live-fetch fallback simply retry.
+ */
+export async function setPostingJD(url: string, jd: string): Promise<void> {
+  await db.posting.update({ where: { url }, data: { jd, jdFetchedAt: new Date() } });
+}
+
+/** Cached JD text for a posting, or null if not yet fetched. */
+export async function getPostingJD(url: string): Promise<string | null> {
+  const row = await db.posting.findUnique({ where: { url }, select: { jd: true } });
+  return row?.jd ?? null;
+}

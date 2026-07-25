@@ -36,11 +36,10 @@ model User {
   /// See `nextReportNumber()` in src/lib/tracker.ts.
   reportSeq       Int       @default(0)
 
-  accounts       Account[]
-  sessions       Session[]
-  applications   Application[]
-  filterKeywords FilterKeyword[]
-  jobs           Job[]
+  accounts     Account[]
+  sessions     Session[]
+  applications Application[]
+  jobs         Job[]
 }
 
 model Account {
@@ -137,19 +136,6 @@ model Portal {
   enabled    Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-}
-
-/// Title-filter keywords (formerly `title_filter.positive` / `.negative`).
-model FilterKeyword {
-  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId String
-  kind   String // "positive" | "negative"
-  value  String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, kind, value])
-  @@index([userId])
 }
 
 /// A discovered job posting — GLOBAL, shared across all users. The scheduled

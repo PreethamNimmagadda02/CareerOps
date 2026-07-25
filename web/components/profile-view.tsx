@@ -624,6 +624,7 @@ export function ProfileView() {
   const [draftVisaStatus, setDraftVisaStatus] = React.useState("");
   // matching (drives the job-scan matchers — expanded via buildMatchingPrefs)
   const [draftTitles, setDraftTitles] = React.useState<string[]>([]);
+  const [draftAvoid, setDraftAvoid] = React.useState<string[]>([]);
   const [draftPrefLocations, setDraftPrefLocations] = React.useState<string[]>([]);
   const [draftEligibleLocations, setDraftEligibleLocations] = React.useState<string[]>([]);
   const [draftRemoteOk, setDraftRemoteOk] = React.useState(true);
@@ -647,6 +648,14 @@ export function ProfileView() {
   }, []);
 
   React.useEffect(() => { void load(); }, [load]);
+
+  // Deep-link support (e.g. `/profile#section-matching` from the dashboard's
+  // "Adjust keywords" link) — open directly on the linked section instead of
+  // always defaulting to the first one.
+  React.useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (SECTION_NAV.some((s) => s.id === id)) setActiveSection(id);
+  }, []);
 
   // Only one section is rendered at a time (tab-style navigation). Whenever
   // the active tab changes: reset scroll to the top of the page, and make
@@ -729,6 +738,11 @@ export function ProfileView() {
   function startMatching() {
     const m = profile?.matching ?? {};
     setDraftTitles(m.include_titles ?? []);
+    // Union of exclude_titles/seniority_exclusions — buildMatchingPrefs always
+    // mirrors "avoid" into both, so they're the same list in practice. Prefill
+    // from whatever's already saved so a save that only touches, say,
+    // locations doesn't silently wipe the avoid list back to empty.
+    setDraftAvoid([...new Set([...(m.exclude_titles ?? []), ...(m.seniority_exclusions ?? [])])]);
     // Load eligible locations if present (new field).
     setDraftEligibleLocations(m.eligible_locations ?? []);
     setDraftPrefLocations(m.preferred_locations ?? []);
@@ -1013,6 +1027,7 @@ export function ProfileView() {
             profile: {
               matching: buildMatchingPrefs({
                 titles: draftTitles,
+                avoid: draftAvoid,
                 locations: draftPrefLocations,
                 remoteOk: draftRemoteOk,
                 eligibleLocations: draftEligibleLocations,
@@ -1033,7 +1048,7 @@ export function ProfileView() {
               <p className="mb-2 text-xs font-semibold text-muted-foreground">Roles</p>
               <div className="space-y-3">
                 <ChipsField label="Job titles you want" values={isEditing("matching") ? draftTitles : (p.matching?.include_titles ?? [])} editing={isEditing("matching")} onChange={setDraftTitles} placeholder="Start typing a title…" autocomplete="job-titles" />
-
+                <ChipsField label="Avoid these roles" values={isEditing("matching") ? draftAvoid : [...new Set([...(p.matching?.exclude_titles ?? []), ...(p.matching?.seniority_exclusions ?? [])])]} editing={isEditing("matching")} onChange={setDraftAvoid} placeholder="e.g. senior, staff, sales, recruiter…" autocomplete="job-titles" />
               </div>
             </div>
 

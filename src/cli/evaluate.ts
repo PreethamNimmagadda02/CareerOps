@@ -11,7 +11,8 @@
  *                       [--provider zen|nvidia|<custom>] [--model NAME]
  *                       [--concurrency N]
  */
-import { chromium } from "playwright";
+import "dotenv/config";
+import { chromium, type Browser } from "playwright";
 
 import { Args } from "../lib/args.js";
 import { loadCandidateContext } from "../lib/candidate-loader.js";
@@ -22,6 +23,7 @@ import { callLLM, resolveProvider } from "../lib/llm.js";
 import { log } from "../lib/logger.js";
 import { buildPrompt } from "../lib/prompt.js";
 import { parseEvaluation } from "../lib/evaluation.js";
+import { getPostingJD, setPostingJD } from "../lib/postings.js";
 import { nextReportNumber, getApplications, updateTracker, writeReport } from "../lib/tracker.js";
 import { getProfile } from "../lib/profile-store.js";
 import { getCV } from "../lib/cv-store.js";
@@ -110,7 +112,17 @@ async function main(): Promise<void> {
   for (const j of targets) log.info(`   #${j.num}  ${j.company} — ${j.role}`);
   log.info("");
 
-  const browser = await chromium.launch({ headless: true });
+  // Check the global scan's JD cache (Posting.jd) before deciding whether a
+  // browser is even needed — most postings should already be cached by the
+  // time a user evaluates them, since the shared scan prefetches JDs.
+  const cachedJD = new Map<string, string | null>();
+  await Promise.all(
+    targets.map(async (job) => {
+      if (job.url) cachedJD.set(job.url, await getPostingJD(job.url));
+    }),
+  );
+  const needsBrowser = targets.some((job) => job.url && !cachedJD.get(job.url));
+  const browser = needsBrowser ? await chromium.launch({ headless: true }) : null;
   const date = today();
   const results = { evaluated: 0, skipped: 0, errors: 0 };
   let completed = 0;
@@ -135,9 +147,21 @@ async function main(): Promise<void> {
             }
             log.info(`${tag} 🔗 ${url}`);
 
-            log.info(`${tag} 📄 Fetching JD...`);
-            const jdText = await fetchJD(browser, url);
-            log.info(`${tag} 📄 ${isJdOk(jdText) ? "✓" : "⚠️  partial"} (${jdText.length} chars)`);
+            const cached = cachedJD.get(url);
+            let jdText: string;
+            if (cached) {
+              jdText = cached;
+              log.info(`${tag} 📄 using cached JD (${jdText.length} chars)`);
+            } else {
+              log.info(`${tag} 📄 Fetching JD...`);
+              // `needsBrowser` guarantees a live browser exists whenever some
+              // target has a cache miss (this branch only runs on a miss).
+              jdText = await fetchJD(browser as Browser, url);
+              log.info(`${tag} 📄 ${isJdOk(jdText) ? "✓" : "⚠️  partial"} (${jdText.length} chars)`);
+              if (isJdOk(jdText)) {
+                await setPostingJD(url, jdText).catch(() => {});
+              }
+            }
 
             if (dryRun) {
               log.info(`${tag} 🧪 Dry-run: skipping AI call.`);
@@ -221,7 +245,7 @@ async function main(): Promise<void> {
       ),
     );
   } finally {
-    await browser.close();
+    if (browser) await browser.close();
   }
 
   log.rule("═");

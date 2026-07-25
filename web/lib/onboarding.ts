@@ -1,7 +1,10 @@
 import { db } from "../../src/lib/db";
 import { getProfile } from "../../src/lib/profile-store";
 import { getCV } from "../../src/lib/cv-store";
-import { validateCandidateReadiness } from "../../src/lib/profile-validation";
+import {
+  validateCandidateReadiness,
+  validateMatchingReadiness,
+} from "../../src/lib/profile-validation";
 import type { OnboardingState, OnboardingStep } from "./types";
 
 async function safe<T>(fn: () => Promise<T>): Promise<T | null> {
@@ -49,11 +52,10 @@ export async function markOnboardingComplete(userId: string): Promise<void> {
  * triggering a pre-flight failure.
  */
 export async function getOnboardingState(userId: string): Promise<OnboardingState> {
-  const [profile, cv, positiveKeywords, totalRoles, evaluatedRoles, strongRows, scoreAgg] =
+  const [profile, cv, totalRoles, evaluatedRoles, strongRows, scoreAgg] =
     await Promise.all([
       safe(() => getProfile(userId)),
       safe(() => getCV(userId)),
-      db.filterKeyword.count({ where: { userId, kind: "positive" } }),
       db.application.count({ where: { userId } }),
       // Scores are stored as strings like "4.2/5"; "/5" reliably marks a scored row.
       db.application.count({ where: { userId, score: { contains: "/5" } } }),
@@ -81,7 +83,10 @@ export async function getOnboardingState(userId: string): Promise<OnboardingStat
   const topScore = scoreAgg._max.scoreNumeric ?? null;
 
   const profileDone = readiness.ok;
-  const keywordsDone = positiveKeywords > 0;
+  const m = profile?.matching;
+  const roleIndicatorCount =
+    (m?.role_domains?.length ?? 0) + (m?.role_nouns?.length ?? 0) + (m?.include_titles?.length ?? 0);
+  const keywordsDone = validateMatchingReadiness(profile).ok;
   const scanDone = totalRoles > 0;
   // "Done" means EVERY scanned role has a real score, not just one — otherwise
   // the progress bar (and a stale/killed evaluate job's own exit) would read
@@ -98,7 +103,7 @@ export async function getOnboardingState(userId: string): Promise<OnboardingStat
 
   return {
     profile: { done: profileDone, missing: readiness.missing },
-    keywords: { done: keywordsDone, count: positiveKeywords },
+    keywords: { done: keywordsDone, count: roleIndicatorCount },
     scan: { done: scanDone, count: totalRoles },
     evaluate: { done: evaluateDone, count: evaluatedRoles, strong: strongMatches },
     topScore,

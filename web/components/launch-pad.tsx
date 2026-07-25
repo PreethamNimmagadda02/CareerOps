@@ -16,7 +16,6 @@ import {
   Radar,
   RotateCw,
   Sparkles,
-  Tags,
   UserRound,
 } from "lucide-react";
 
@@ -26,8 +25,16 @@ import { Confetti } from "@/components/ui/confetti";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import type { OnboardingState, OnboardingStep } from "@/lib/types";
+import type { OnboardingState } from "@/lib/types";
 import type { PipelineCommand } from "@/lib/pipeline";
+
+/**
+ * The dashboard collapses `OnboardingState`'s 4 backend gates (profile,
+ * keywords, scan, evaluate) into 3 visible steps — "keywords" (Job Matching
+ * prefs) is folded into "profile" since both now live on the same profile
+ * page, with nothing left on the dashboard to separately manage.
+ */
+type DashboardStep = "profile" | "scan" | "evaluate";
 
 interface LaunchPadProps {
   onboarding: OnboardingState | null;
@@ -39,30 +46,27 @@ interface LaunchPadProps {
    * runs keep the plain spinner. */
   percent: number | null;
   progressLabel: string | null;
-  onOpenKeywords: () => void;
   onRun: (command: PipelineCommand) => void;
 }
 
-const ICONS: Record<OnboardingStep, React.ComponentType<{ className?: string }>> = {
+const ICONS: Record<DashboardStep, React.ComponentType<{ className?: string }>> = {
   profile: UserRound,
-  keywords: Tags,
   scan: Radar,
   evaluate: Sparkles,
 };
 
-const COPY: Record<OnboardingStep, { title: string; help: string }> = {
+const COPY: Record<DashboardStep, { title: string; help: string }> = {
   profile: { title: "Add your profile", help: "Upload your résumé — we fill in the rest." },
-  keywords: { title: "Pick target roles", help: "Add keywords so we scan the right titles." },
   scan: { title: "Find open roles", help: "Search job boards for roles that match." },
   evaluate: { title: "Score your matches", help: "Rate each role against your CV." },
 };
 
-const ORDER: OnboardingStep[] = ["profile", "keywords", "scan", "evaluate"];
+const ORDER: DashboardStep[] = ["profile", "scan", "evaluate"];
 
 type StepStatus = "done" | "current" | "todo" | "locked";
 
 /** Which step a running pipeline command belongs to. */
-function runningStep(running: PipelineCommand | null): OnboardingStep | null {
+function runningStep(running: PipelineCommand | null): DashboardStep | null {
   if (!running) return null;
   if (running === "scan" || running === "scan:fallback") return "scan";
   if (running.startsWith("evaluate")) return "evaluate";
@@ -105,7 +109,7 @@ function RunProgress({
 }
 
 interface StepView {
-  key: OnboardingStep;
+  key: DashboardStep;
   index: number;
   status: StepStatus;
   done: boolean;
@@ -117,17 +121,21 @@ interface StepView {
 
 function buildSteps(o: OnboardingState, running: PipelineCommand | null): StepView[] {
   const active = runningStep(running);
+  // The backend's "keywords" gate (Job Matching prefs) has no dashboard
+  // surface of its own anymore — it's folded into "profile", so the profile
+  // step isn't done (and is the one the user should act on) until both are.
+  const uiNextStep = o.nextStep === "keywords" ? "profile" : o.nextStep;
 
   return ORDER.map((key, index) => {
-    const done = o[key].done;
+    const done = key === "profile" ? o.profile.done && o.keywords.done : o[key].done;
 
     let locked = false;
     let lockedReason: string | null = null;
-    if (key === "scan" && !o.keywords.done) {
+    if (key === "scan" && !done && (!o.profile.done || !o.keywords.done)) {
       locked = true;
-      lockedReason = "Add a keyword first";
+      lockedReason = "Complete your profile first";
     } else if (key === "evaluate") {
-      if (!o.profile.done) {
+      if (!o.profile.done || !o.keywords.done) {
         locked = true;
         lockedReason = "Complete your profile first";
       } else if (!o.scan.done) {
@@ -139,13 +147,12 @@ function buildSteps(o: OnboardingState, running: PipelineCommand | null): StepVi
     let status: StepStatus;
     if (done) status = "done";
     else if (locked) status = "locked";
-    else if (o.nextStep === key) status = "current";
+    else if (uiNextStep === key) status = "current";
     else status = "todo";
 
     let summary: string | null = null;
     if (done) {
       if (key === "profile") summary = "Ready";
-      else if (key === "keywords") summary = `${o.keywords.count} keyword${o.keywords.count === 1 ? "" : "s"}`;
       else if (key === "scan") summary = `${o.scan.count} role${o.scan.count === 1 ? "" : "s"}`;
       else summary = `${o.evaluate.count} scored`;
     }
@@ -155,17 +162,13 @@ function buildSteps(o: OnboardingState, running: PipelineCommand | null): StepVi
         ? done
           ? "Edit"
           : "Set up profile"
-        : key === "keywords"
+        : key === "scan"
           ? done
-            ? "Edit"
-            : "Add keywords"
-          : key === "scan"
-            ? done
-              ? "Scan again"
-              : "Run scan"
-            : done
-              ? "Evaluate again"
-              : "Evaluate roles";
+            ? "Scan again"
+            : "Run scan"
+          : done
+            ? "Evaluate again"
+            : "Evaluate roles";
 
     return {
       key,
@@ -212,12 +215,10 @@ function Indicator({ step }: { step: StepView }) {
 function StepAction({
   step,
   busyAny,
-  onOpenKeywords,
   onRun,
 }: {
   step: StepView;
   busyAny: boolean;
-  onOpenKeywords: () => void;
   onRun: (command: PipelineCommand) => void;
 }) {
   // Locked steps explain why instead of offering an action.
@@ -234,16 +235,15 @@ function StepAction({
   const StepIcon =
     step.key === "profile"
       ? Pencil
-      : step.key === "keywords"
-        ? Tags
-        : step.done
-          ? RotateCw
-          : step.key === "scan"
-            ? Radar
-            : Sparkles;
+      : step.done
+        ? RotateCw
+        : step.key === "scan"
+          ? Radar
+          : Sparkles;
   const icon = <StepIcon className="h-3.5 w-3.5" />;
 
-  // Profile is a navigation; everything else is an in-place action.
+  // Profile (which now also covers Job Matching prefs) is a navigation;
+  // everything else is an in-place action.
   if (step.key === "profile") {
     return (
       <Link
@@ -259,12 +259,7 @@ function StepAction({
     );
   }
 
-  const onClick =
-    step.key === "keywords"
-      ? onOpenKeywords
-      : step.key === "scan"
-        ? () => onRun("scan:fallback")
-        : () => onRun("evaluate:all");
+  const onClick = step.key === "scan" ? () => onRun("scan:fallback") : () => onRun("evaluate:all");
 
   const isPipeline = step.key === "scan" || step.key === "evaluate";
   const disabled = isPipeline && (busyAny || step.busy);
@@ -315,7 +310,6 @@ export function LaunchPad({
   running,
   percent,
   progressLabel,
-  onOpenKeywords,
   onRun,
 }: LaunchPadProps) {
   const [open, setOpen] = React.useState(false);
@@ -391,9 +385,6 @@ export function LaunchPad({
             <Link href="/profile" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
               <MapPin className="h-3.5 w-3.5" /> Widen locations
             </Link>
-            <Button variant="outline" size="sm" onClick={onOpenKeywords}>
-              <Tags className="h-3.5 w-3.5" /> Adjust keywords
-            </Button>
             <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
               {runningStep(running) === "scan" ? (
                 <Spinner className="h-3.5 w-3.5" />
@@ -465,9 +456,6 @@ export function LaunchPad({
             <Button variant="outline" size="sm" onClick={() => onRun("evaluate:all")} disabled={busyAny}>
               {runningStep(running) === "evaluate" ? <Spinner className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
               Evaluate
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onOpenKeywords}>
-              <Tags className="h-3.5 w-3.5" /> Keywords
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setOpen(true)} title="Show setup steps">
               <ChevronDown className="h-4 w-4" /> Steps
@@ -556,7 +544,7 @@ export function LaunchPad({
                 </div>
               </div>
               <div className="shrink-0">
-                <StepAction step={step} busyAny={busyAny} onOpenKeywords={onOpenKeywords} onRun={onRun} />
+                <StepAction step={step} busyAny={busyAny} onRun={onRun} />
               </div>
             </div>
           );
