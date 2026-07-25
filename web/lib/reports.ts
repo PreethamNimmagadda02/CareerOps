@@ -26,14 +26,23 @@ export interface ReportSummary {
 }
 
 function resolveMinioClient(): S3Client {
-  const endpoint = (process.env.MINIO_ENDPOINT || "http://localhost:9000").replace(/\/$/, "");
-  const accessKeyId = process.env.MINIO_ACCESS_KEY || "admin";
-  const secretAccessKey = process.env.MINIO_SECRET_KEY || "careerops123";
+  const endpoint = (process.env.MINIO_ENDPOINT ?? "").replace(/\/$/, "");
+  const accessKeyId = process.env.MINIO_ACCESS_KEY ?? "";
+  const secretAccessKey = process.env.MINIO_SECRET_KEY ?? "";
+
+  // Fall back to native AWS SDK credentials (IAM Task Role) if no explicit keys/endpoint are provided
+  if (!endpoint && !accessKeyId && !secretAccessKey) {
+    if (process.env.AWS_REGION || process.env.AWS_EXECUTION_ENV) {
+      return new S3Client({
+        region: process.env.AWS_REGION || "us-east-1",
+      });
+    }
+  }
 
   return new S3Client({
-    endpoint,
+    endpoint: endpoint || "http://localhost:9000",
     region: "us-east-1",
-    credentials: { accessKeyId, secretAccessKey },
+    credentials: { accessKeyId: accessKeyId || "admin", secretAccessKey: secretAccessKey || "careerops123" },
     forcePathStyle: true,
   });
 }
