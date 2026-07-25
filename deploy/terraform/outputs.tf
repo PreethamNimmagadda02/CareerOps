@@ -45,6 +45,16 @@ output "dynamo_init_task_definition" {
   value       = aws_ecs_task_definition.dynamo_init.arn
 }
 
+output "bastion_public_ip" {
+  description = "Public IP of the SSH bastion — use as the SSH Tunnel host in your Postgres client"
+  value       = aws_instance.bastion.public_ip
+}
+
+output "bastion_ssh_key_path" {
+  description = "Local path to the bastion's private SSH key"
+  value       = local_sensitive_file.bastion_private_key.filename
+}
+
 output "update_oauth_redirect_uris" {
   description = "Add these callback URLs to your Google/GitHub OAuth apps"
   value = {

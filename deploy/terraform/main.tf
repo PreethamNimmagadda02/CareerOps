@@ -5,6 +5,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.4"
+    }
   }
 
   # Optional: use S3 backend for shared state. Uncomment after first apply.
@@ -178,7 +186,7 @@ resource "aws_security_group" "db" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.app.id, aws_security_group.worker.id]
+    security_groups = [aws_security_group.app.id, aws_security_group.worker.id, aws_security_group.bastion.id]
   }
 
   egress {
