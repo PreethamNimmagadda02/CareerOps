@@ -33,6 +33,7 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+graphify-out/
 
 # OS
 .DS_Store
@@ -42,20 +43,30 @@ coverage/
 # Claude Code local
 .claude/settings.local.json
 .claude/memory/
+.remember/
 
 
 .env
 /src/generated/prisma
 data/scan-results.json
 
-# repowise — ignore caches, sessions, jobs, secrets & vector DB
-# Keep: config.yaml, wiki.db, state.json, knowledge-graph.json, mcp.json
+# repowise — ignore caches, sessions, jobs, secrets, vector DB, and local runtime state
+# Keep: config.yaml, state.json, knowledge-graph.json, mcp.json
 .repowise/.env
 .repowise/*.pkl
 .repowise/lancedb/
 .repowise/sessions/
 .repowise/omissions/
 .repowise/jobs/
+.repowise/.augment-session.json
+.repowise/.augment-warned
+.repowise/.update.lock
+.repowise/.update.pending
+.repowise/.update.queued
+.repowise/wiki.db-shm
+.repowise/wiki.db-wal
+.repowise/serve.lock.json
+.repowise/wiki.db
 
 # Terraform — never commit secrets or state
 deploy/terraform/terraform.tfvars
