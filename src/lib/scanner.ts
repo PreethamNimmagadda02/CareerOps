@@ -319,7 +319,7 @@ export async function scanCompanyBrowser(browser: Browser, company: Company): Pr
         if (candidateIsBetter) byHref.set(href, candidate);
       }
 
-      return [...byHref.values()].slice(0, 80).map(({ fromAnchorText, ...row }) => row);
+      return [...byHref.values()].slice(0, 80).map(({ fromAnchorText: _fromAnchorText, ...row }) => row);
     }, company.name);
 
     // A linked-out ATS board (e.g. a custom domain embedding a Greenhouse

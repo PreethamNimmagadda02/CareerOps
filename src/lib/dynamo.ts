@@ -51,3 +51,22 @@ function createClient(): DynamoDBDocumentClient {
 const g = globalThis as typeof globalThis & { _dynamoClient?: DynamoDBDocumentClient };
 
 export const ddb: DynamoDBDocumentClient = g._dynamoClient ?? (g._dynamoClient = createClient());
+
+export function buildUpdateExpression(fields: Record<string, unknown>) {
+  const keys = Object.keys(fields);
+  if (keys.length === 0) return undefined;
+
+  const expr = keys.map((_k, i) => `#f${i} = :v${i}`).join(", ");
+  const names = Object.fromEntries(keys.map((k, i) => [`#f${i}`, k]));
+  const values = Object.fromEntries(keys.map((k, i) => [`:v${i}`, fields[k]])) as Record<
+    string,
+    unknown
+  >;
+  values[":ts"] = new Date().toISOString();
+
+  return {
+    UpdateExpression: `SET ${expr}, updatedAt = :ts`,
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+  };
+}

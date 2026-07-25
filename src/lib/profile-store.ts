@@ -10,7 +10,7 @@
  */
 
 import { GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { ddb, TABLE_PROFILE as TABLE } from "./dynamo.js";
+import { ddb, TABLE_PROFILE as TABLE, buildUpdateExpression } from "./dynamo.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,24 +159,14 @@ export async function patchProfile(
   userId: string,
   fields: Partial<Omit<Profile, "updatedAt">>,
 ): Promise<void> {
-  const keys = Object.keys(fields) as (keyof typeof fields)[];
-  if (keys.length === 0) return;
-
-  const expr = keys.map((_k, i) => `#f${i} = :v${i}`).join(", ");
-  const names = Object.fromEntries(keys.map((k, i) => [`#f${i}`, k as string]));
-  const values = Object.fromEntries(keys.map((k, i) => [`:v${i}`, fields[k]])) as Record<
-    string,
-    unknown
-  >;
-  values[":ts"] = new Date().toISOString();
+  const params = buildUpdateExpression(fields);
+  if (!params) return;
 
   await ddb.send(
     new UpdateCommand({
       TableName: TABLE,
       Key: { PK: pk(userId), SK },
-      UpdateExpression: `SET ${expr}, updatedAt = :ts`,
-      ExpressionAttributeNames: names,
-      ExpressionAttributeValues: values,
+      ...params,
     }),
   );
 }
