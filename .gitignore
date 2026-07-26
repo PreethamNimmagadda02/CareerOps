@@ -6,6 +6,8 @@ data/pipeline.md
 data/scan-history.tsv
 output/*
 !output/.gitkeep
+logs/*
+!logs/.gitkeep
 batch/logs/*
 !batch/logs/.gitkeep
 batch/batch-state.tsv

@@ -29,7 +29,6 @@ Multi-user authentication and metadata.
 
 **Relations:**
 - `accounts` — OAuth Account records
-- `sessions` — Session tokens
 - `applications` — Application rows owned by this user
 - `filterKeywords` — Title-filter keywords for this user
 
@@ -116,21 +115,7 @@ OAuth account linkage, managed by NextAuth.
 **Indexes:**
 - `(provider, providerAccountId)` — UNIQUE
 
-### Session (Auth.js)
-Session tokens, managed by NextAuth.
 
-**Fields:**
-- `id` (String, PK)
-- `sessionToken` (String, unique)
-- `userId` (String, FK)
-- `expires` (DateTime)
-
-**Relations:**
-- `user` — Associated User
-
-**Indexes:**
-- `sessionToken` — UNIQUE
-- `userId` — For session lookup
 
 ## Enums
 

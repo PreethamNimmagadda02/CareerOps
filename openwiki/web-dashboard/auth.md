@@ -4,11 +4,11 @@ The web dashboard uses NextAuth v5 (also called Auth.js) for OAuth authenticatio
 
 ## Overview
 
-**Purpose:** Secure user authentication via OAuth, storing sessions in Postgres.
+**Purpose:** Secure user authentication via OAuth, using JWT for sessions.
 
 **Providers:** Google, GitHub, or custom OpenID providers.
 
-**Session Storage:** Postgres `User`, `Account`, `Session` tables (via Prisma).
+**Session Storage:** JWT cookies (no database session table). Postgres `User` and `Account` tables used for account linking.
 
 ## Quick Start
 
@@ -135,7 +135,7 @@ AUTH_GITHUB_SECRET=<from GitHub Settings>
 4. User authenticates with Google
 5. Google redirects to /api/auth/callback/google?code=...
 6. NextAuth exchanges code for access_token
-7. NextAuth creates session (stored in Postgres)
+7. NextAuth creates session (stored in JWT cookie)
 8. Redirect to dashboard
 ```
 
@@ -144,7 +144,7 @@ AUTH_GITHUB_SECRET=<from GitHub Settings>
 ```
 1. User has session token in HTTP-only cookie
 2. Request to /api/applications
-3. NextAuth validates session token against Postgres
+3. NextAuth validates session token JWT
 4. Endpoint retrieves userId from session
 5. Database query filtered by userId
 6. Response sent (only this user's data)
@@ -154,9 +154,8 @@ AUTH_GITHUB_SECRET=<from GitHub Settings>
 
 ```
 1. User clicks "Sign out"
-2. Deletes session from Postgres
-3. Clears session cookie
-4. Redirects to login page
+2. Clears session cookie
+3. Redirects to login page
 ```
 
 ## Session Management
@@ -236,7 +235,6 @@ model User {
   createdAt DateTime  @default(now())
   
   accounts  Account[]
-  sessions  Session[]
   // ...
 }
 ```
@@ -263,7 +261,7 @@ This prevents linking; users must use the same provider each time.
 // Delete user and all associated data
 await db.user.delete({
   where: { id: userId },
-  // Cascades delete Account, Session, Application, FilterKeyword
+  // Cascades delete Account, Application, FilterKeyword
 });
 ```
 

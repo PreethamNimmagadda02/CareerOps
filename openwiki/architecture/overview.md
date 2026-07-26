@@ -200,7 +200,7 @@ Multi-user Postgres schema with Auth.js tables.
 **Core tables:**
 
 - **User** — Account info, resume/profile storage references
-- **Account, Session** — Auth.js OAuth state
+- **Account** — Auth.js OAuth state
 - **Application** — Job applications (indexed by userId + url, status flow)
 - **Portal** — Scan targets (company careers pages, APIs)
 - **FilterKeyword** — Title-filter keywords (positive/negative, scoped to userId)
@@ -214,7 +214,7 @@ See [Storage & Data Models](../storage/overview.md) for full schema documentatio
 ### Web Dashboard: Viewing Applications
 
 ```
-1. User logs in (OAuth via Auth.js) → nextauth session created
+1. User logs in (OAuth via Auth.js) → nextauth session created (JWT)
 2. GET /api/applications?userId=...
 3. Web calls db.application.findMany({ where: { userId } })
 4. Enrichment: fetch report summaries from MinIO (if reportPath set)
