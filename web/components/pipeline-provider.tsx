@@ -32,12 +32,41 @@ interface PipelineContextValue {
   progressLabel: string | null;
 }
 
-const PipelineContext = React.createContext<PipelineContextValue | null>(null);
+/** Everything except the raw log — see the two-context note on the provider. */
+type PipelineStatus = Omit<PipelineContextValue, "log">;
 
-export function usePipeline(): PipelineContextValue {
-  const ctx = React.useContext(PipelineContext);
-  if (!ctx) throw new Error("usePipeline must be used within a PipelineProvider");
+/**
+ * State is split across two contexts on purpose.
+ *
+ * The captured `log` is replaced wholesale on every poll tick (~1.5s) for the
+ * whole duration of a run. Held in one context alongside `running`/`percent`,
+ * that re-created value re-renders every consumer on every tick — including
+ * the command center, which renders the full application table and never reads
+ * `log` at all. Splitting means log churn only re-renders the one component
+ * that actually wants it (the onboarding activity feed).
+ *
+ * `PipelineStatusContext`'s value is memoized on primitives (`running`,
+ * `percent`, `progressLabel`, …), so it stays referentially stable across the
+ * polls where progress hasn't actually advanced.
+ */
+const PipelineStatusContext = React.createContext<PipelineStatus | null>(null);
+const PipelineLogContext = React.createContext<string>("");
+
+/**
+ * Subscribe to run status only. Prefer this over `usePipeline` unless the
+ * component genuinely renders the log — it skips the per-tick re-render.
+ */
+export function usePipelineStatus(): PipelineStatus {
+  const ctx = React.useContext(PipelineStatusContext);
+  if (!ctx) throw new Error("usePipelineStatus must be used within a PipelineProvider");
   return ctx;
+}
+
+/** Status plus the raw log. Re-renders on every poll tick while a run is live. */
+export function usePipeline(): PipelineContextValue {
+  const status = usePipelineStatus();
+  const log = React.useContext(PipelineLogContext);
+  return React.useMemo(() => ({ ...status, log }), [status, log]);
 }
 
 function commandLabel(command: PipelineCommand): string {
@@ -45,6 +74,9 @@ function commandLabel(command: PipelineCommand): string {
 }
 
 const POLL_INTERVAL_MS = 1500;
+
+/** Module-level so it never destabilizes the memoized status value. */
+const noop = () => {};
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -97,7 +129,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
           if (res.status === 404) break;
           if (!res.ok) continue;
           const job = (await res.json()) as JobStatusResponse;
-          setLog(job.log ?? "");
+          // Skip the write when the worker hasn't emitted anything new: an
+          // identical string still counts as a state change and would re-render
+          // every log consumer on each tick of an otherwise-quiet run.
+          const nextLog = job.log ?? "";
+          setLog((prev) => (prev === nextLog ? prev : nextLog));
           if (job.done) {
             final = job;
             break;
@@ -200,30 +236,29 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     };
   }, [attach]);
 
-  const value = React.useMemo<PipelineContextValue>(() => {
-    const tel = parseScanTelemetry(log);
-    const percent =
-      running !== null && tel.progressTotal !== null && tel.progressDone !== null
-        ? Math.round((tel.progressDone / tel.progressTotal) * 100)
-        : null;
-    const progressLabel =
-      running !== null &&
-      tel.progressTotal !== null &&
-      tel.progressDone !== null &&
-      tel.progressUnit !== null
-        ? `${tel.progressDone} of ${tel.progressTotal} ${tel.progressUnit}`
-        : null;
-    return {
-      running,
-      log,
-      run,
-      cancel,
-      openConsole: () => {},
-      hasLog: log.length > 0,
-      percent,
-      progressLabel,
-    };
-  }, [running, log, run, cancel]);
+  // Derived from the log, but reduced to primitives before they reach the
+  // status context — so a log tick that doesn't advance progress produces the
+  // same values and leaves the memo below referentially stable.
+  const tel = React.useMemo(() => parseScanTelemetry(log), [log]);
+  const hasProgress = tel.progressTotal !== null && tel.progressDone !== null;
+  const percent =
+    running !== null && hasProgress
+      ? Math.round((tel.progressDone! / tel.progressTotal!) * 100)
+      : null;
+  const progressLabel =
+    running !== null && hasProgress && tel.progressUnit !== null
+      ? `${tel.progressDone} of ${tel.progressTotal} ${tel.progressUnit}`
+      : null;
+  const hasLog = log.length > 0;
 
-  return <PipelineContext.Provider value={value}>{children}</PipelineContext.Provider>;
+  const status = React.useMemo<PipelineStatus>(
+    () => ({ running, run, cancel, openConsole: noop, hasLog, percent, progressLabel }),
+    [running, run, cancel, hasLog, percent, progressLabel],
+  );
+
+  return (
+    <PipelineStatusContext.Provider value={status}>
+      <PipelineLogContext.Provider value={log}>{children}</PipelineLogContext.Provider>
+    </PipelineStatusContext.Provider>
+  );
 }

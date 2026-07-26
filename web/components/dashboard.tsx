@@ -20,7 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { MetricsCards } from "@/components/metrics-cards";
-import { usePipeline } from "@/components/pipeline-provider";
+import { usePipelineStatus } from "@/components/pipeline-provider";
 import { LaunchPad } from "@/components/launch-pad";
 import { ReportModal } from "@/components/report-modal";
 import { RecommendationBadge, ScoreBadge } from "@/components/status-badge";
@@ -32,6 +32,9 @@ import type { PipelineCommand } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
 
 type SortMode = "score" | "date" | "company" | "status";
+
+/** How stale the loaded data must be before a window refocus refetches it. */
+const REFRESH_STALE_MS = 30_000;
 
 const TABS = [
   { key: "all", label: "All" },
@@ -66,7 +69,9 @@ export function Dashboard() {
 }
 
 function DashboardInner() {
-  const { run, running, percent, progressLabel } = usePipeline();
+  // Status only — the table must not re-render on every poll tick of a run's
+  // log (see the two-context note in pipeline-provider).
+  const { run, running, percent, progressLabel } = usePipelineStatus();
   const toast = useToast();
 
   const [apps, setApps] = React.useState<Application[]>([]);
@@ -84,6 +89,8 @@ function DashboardInner() {
   const [openReport, setOpenReport] = React.useState<{ num: string; title: string } | null>(null);
   const [savingNum, setSavingNum] = React.useState<string | null>(null);
   const [expandedNum, setExpandedNum] = React.useState<string | null>(null);
+  /** Epoch ms of the last successful load — gates the on-focus refresh. */
+  const lastLoadedAtRef = React.useRef(0);
 
   // Metrics + tab counts are aggregated server-side (SQL), so they stay correct
   // and cheap regardless of how many application rows are actually loaded below.
@@ -99,8 +106,10 @@ function DashboardInner() {
     }
   }, []);
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
+  const load = React.useCallback(async ({ background = false } = {}) => {
+    // A background refresh keeps the current table on screen and leaves the
+    // Refresh button alone — only a cold load is allowed to show placeholders.
+    if (!background) setLoading(true);
     setError(null);
     try {
       const [appsRes, onbRes] = await Promise.all([
@@ -117,10 +126,11 @@ function DashboardInner() {
         const onbData = await onbRes.json();
         setOnboarding(onbData.onboarding as OnboardingState);
       }
+      lastLoadedAtRef.current = Date.now();
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [refreshMetrics]);
 
@@ -148,11 +158,21 @@ function DashboardInner() {
 
   // Keep the "next step" accurate after the user edits their profile on the
   // /profile route and navigates/tabs back.
+  //
+  // Reading a job posting in another tab and flicking back is the core loop of
+  // this app, so an unconditional refetch here fired three requests every few
+  // seconds and briefly disabled the toolbar each time. Refresh in the
+  // background, no more than once per REFRESH_STALE_MS, and never while a run
+  // is live — that run's own `onDone` already reloads.
   React.useEffect(() => {
-    const onFocus = () => void load();
+    const onFocus = () => {
+      if (running) return;
+      if (Date.now() - lastLoadedAtRef.current < REFRESH_STALE_MS) return;
+      void load({ background: true });
+    };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [load]);
+  }, [load, running]);
 
   const launchRun = React.useCallback(
     (command: PipelineCommand) => run(command, { onDone: load }),
@@ -259,7 +279,7 @@ function DashboardInner() {
             Discover, score, and track every role — all in one place.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
           {loading ? <Spinner className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
           Refresh
         </Button>
