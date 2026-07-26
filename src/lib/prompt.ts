@@ -68,7 +68,9 @@ Rate each dimension 1–5:
 - Domain Fit: X/5 — reason
 
 **OVERALL_SCORE: X.X/5**
-(Tech 35% + Level 20% + Location 15% + Growth 15% + Domain 15%)
+Weight Technical Fit and Level Match most heavily — can they do the job, and is
+it pitched at their level. Compute the weighted average exactly:
+(Tech 35% + Level 30% + Location 15% + Growth 10% + Domain 10%)
 
 ## RECOMMENDATION
 APPLY NOW | APPLY WITH TWEAKS | MONITOR | SKIP — one sentence.`;

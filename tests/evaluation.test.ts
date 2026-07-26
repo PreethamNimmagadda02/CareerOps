@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DIMENSION_WEIGHT_PCT,
   parseArchetype,
   parseComp,
   parseDimensions,
@@ -8,6 +9,7 @@ import {
   parseGaps,
   parseRecommendation,
 } from "../src/lib/evaluation.js";
+import { buildPrompt } from "../src/lib/prompt.js";
 
 const REPORT = `# Evaluation: Acme — Senior AI Engineer
 
@@ -63,11 +65,42 @@ const REPORT = `# Evaluation: Acme — Senior AI Engineer
 - Domain Fit: 4/5 — adjacent experience.
 
 **OVERALL_SCORE: 4.3/5**
-(Tech 35% + Level 20% + Location 15% + Growth 15% + Domain 15%)
+(Tech 35% + Level 30% + Location 15% + Growth 10% + Domain 10%)
 
 ## RECOMMENDATION
 **APPLY NOW** — top-quartile fit; tailor the CV summary first.
 `;
+
+describe("dimension weights", () => {
+  it("sum to 100%", () => {
+    expect(DIMENSION_WEIGHT_PCT.reduce((t, d) => t + d.pct, 0)).toBe(100);
+  });
+
+  it("rank Technical Fit and Level Match above every other dimension", () => {
+    const pct = Object.fromEntries(DIMENSION_WEIGHT_PCT.map((d) => [d.label, d.pct]));
+    const rest = DIMENSION_WEIGHT_PCT.filter(
+      (d) => d.label !== "Technical Fit" && d.label !== "Level Match",
+    ).map((d) => d.pct);
+    expect(Math.min(pct["Technical Fit"]!, pct["Level Match"]!)).toBeGreaterThan(Math.max(...rest));
+  });
+
+  // The model computes the overall score from the percentages baked into the
+  // prompt string, while the UI renders the weights held in evaluation.ts.
+  // Nothing links the two at runtime, so drift here would have the UI reporting
+  // a weighting the score was never calculated with.
+  it("match the percentages written into the evaluation prompt", () => {
+    const prompt = buildPrompt({ cv: "", profileYml: "", jdText: "", company: "X", role: "Y" });
+    const short: Record<string, string> = {
+      "Technical Fit": "Tech",
+      "Level Match": "Level",
+      "Location/Remote": "Location",
+      "Growth Potential": "Growth",
+      "Domain Fit": "Domain",
+    };
+    const expected = DIMENSION_WEIGHT_PCT.map((d) => `${short[d.label]} ${d.pct}%`).join(" + ");
+    expect(prompt).toContain(`(${expected})`);
+  });
+});
 
 describe("parseDimensions", () => {
   it("parses all five dimensions with reasons", () => {

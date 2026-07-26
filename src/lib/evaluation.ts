@@ -36,14 +36,31 @@ export interface EvaluationInsights {
   gaps: string[];
 }
 
-/** The five scored dimensions from the SCORE BREAKDOWN prompt section. */
+/**
+ * The five scored dimensions from the SCORE BREAKDOWN prompt section.
+ *
+ * These weights are DISPLAY-ONLY — the overall score is computed by the model,
+ * using the percentages written into the prompt itself (see `buildPrompt` in
+ * ./prompt.ts). The two lists must therefore stay in lockstep: changing one
+ * without the other makes the UI advertise a weighting the score wasn't
+ * actually calculated with. `tests/evaluation.test.ts` asserts they agree.
+ *
+ * Technical Fit (35%) and Level Match (30%) dominate: whether the candidate can
+ * do the job, and whether it is pitched at their seniority, decides more than
+ * the softer, more speculative Growth and Domain reads (10% each).
+ */
 const DIMENSIONS: ReadonlyArray<{ key: string; label: string; pattern: string; weight: number }> = [
   { key: "technical", label: "Technical Fit", pattern: "Technical\\s+Fit", weight: 0.35 },
-  { key: "level", label: "Level Match", pattern: "Level\\s+Match", weight: 0.2 },
+  { key: "level", label: "Level Match", pattern: "Level\\s+Match", weight: 0.30 },
   { key: "location", label: "Location/Remote", pattern: "Location\\s*/?\\s*Remote|Location", weight: 0.15 },
-  { key: "growth", label: "Growth Potential", pattern: "Growth\\s+Potential", weight: 0.15 },
-  { key: "domain", label: "Domain Fit", pattern: "Domain\\s+Fit", weight: 0.15 },
+  { key: "growth", label: "Growth Potential", pattern: "Growth\\s+Potential", weight: 0.1 },
+  { key: "domain", label: "Domain Fit", pattern: "Domain\\s+Fit", weight: 0.1 },
 ];
+
+/** Dimension weights as whole percentages, for the prompt text and tests. */
+export const DIMENSION_WEIGHT_PCT: ReadonlyArray<{ label: string; pct: number }> = DIMENSIONS.map(
+  (d) => ({ label: d.label, pct: Math.round(d.weight * 100) }),
+);
 
 /** The seven canonical role archetypes from the prompt. */
 const ARCHETYPES = [
@@ -109,7 +126,7 @@ export function parseDimensions(text: string): ScoreDimension[] {
     // ("- Technical Fit: 4/5 — reason", "**Technical Fit** 4 / 5 …").
     const inlineRe = new RegExp(
       `(?:${dim.pattern})\\s*\\*{0,2}[:|\\s]*\\*{0,2}\\s*(\\d(?:\\.\\d+)?)\\s*/\\s*5` +
-        `(?:\\s*\\*{0,2}\\s*[—–:|-]\\s*(.+?)(?:\\||$))?`,
+      `(?:\\s*\\*{0,2}\\s*[—–:|-]\\s*(.+?)(?:\\||$))?`,
       "im",
     );
 
