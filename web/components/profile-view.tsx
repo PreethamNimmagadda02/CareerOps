@@ -9,6 +9,8 @@ import {
   Download,
   ExternalLink,
   FileText,
+  FolderGit2,
+  GraduationCap,
   MapPin,
   Pencil,
   Plus,
@@ -50,7 +52,7 @@ interface MatchingData {
 
 interface ProfileData {
   candidate?: { full_name?: string; email?: string; phone?: string; location?: string; linkedin?: string; portfolio_url?: string; github?: string; twitter?: string };
-  target_roles?: { primary?: string[]; archetypes?: Array<{ name: string; level: string; fit: string }> };
+  target_roles?: { primary?: string[]; archetypes?: Array<{ name: string; level: string; fit: string }>; avoid?: string[] };
   narrative?: { headline?: string; exit_story?: string; superpowers?: string[]; proof_points?: Array<{ name: string; url?: string; hero_metric: string }> };
   compensation?: { target_range?: string; currency?: string; minimum?: string; location_flexibility?: string };
   location?: { city?: string; country?: string; timezone?: string; visa_status?: string; onsite_availability?: string };
@@ -61,7 +63,10 @@ interface CvData {
   summary?: string;
   skills?: Array<{ category: string; items: string[] }>;
   experience?: Array<{ company: string; role: string; location: string; period: string; highlights: string[] }>;
-
+  education?: Array<{ institution: string; degree: string; field: string; period: string; details: string }>;
+  certifications?: Array<{ name: string; issuer: string; year: string }>;
+  projects?: Array<{ name: string; description: string; url: string; highlights: string[] }>;
+  languages?: Array<{ language: string; proficiency: string }>;
 }
 
 // ── Profile completeness ─────────────────────────────────────────────────────
@@ -128,6 +133,8 @@ const SECTION_NAV: { id: string; label: string }[] = [
   { id: "section-matching", label: "Job matching" },
   { id: "section-experience", label: "Experience" },
   { id: "section-skills", label: "Skills" },
+  { id: "section-education", label: "Education" },
+  { id: "section-projects", label: "Projects" },
 ];
 
 // Icons for the quick nav – matches the Section icons used below.
@@ -138,6 +145,8 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   "section-matching": <Target className="h-4 w-4" />,
   "section-experience": <Briefcase className="h-4 w-4" />,
   "section-skills": <Zap className="h-4 w-4" />,
+  "section-education": <GraduationCap className="h-4 w-4" />,
+  "section-projects": <FolderGit2 className="h-4 w-4" />,
 };
 
 // ── Primitives ─────────────────────────────────────────────────────────────────
@@ -572,9 +581,15 @@ type Archetype = { name: string; level: string; fit: string };
 type ProofPoint = { name: string; url: string; hero_metric: string };
 type Experience = { company: string; role: string; location: string; period: string; highlights: string[] };
 type SkillGroup = { category: string; items: string[] };
+type Education = { institution: string; degree: string; field: string; period: string; details: string };
+type Certification = { name: string; issuer: string; year: string };
+type Project = { name: string; description: string; url: string; highlights: string[] };
+type Language = { language: string; proficiency: string };
 
 // ── section edit states ────────────────────────────────────────────────────
-type SectionKey = "account" | "personal" | "career" | "work" | "matching" | "experience" | "skills";
+type SectionKey =
+  | "account" | "personal" | "career" | "work" | "matching"
+  | "experience" | "skills" | "education" | "projects";
 
 const SECTION_LABEL: Record<SectionKey, string> = {
   account: "Account",
@@ -584,6 +599,8 @@ const SECTION_LABEL: Record<SectionKey, string> = {
   matching: "Job matching",
   experience: "Work experience",
   skills: "Skills",
+  education: "Education & certifications",
+  projects: "Projects",
 };
 
 export function ProfileView() {
@@ -608,6 +625,8 @@ export function ProfileView() {
   const [draftLinkedin, setDraftLinkedin] = React.useState("");
   const [draftGithub, setDraftGithub] = React.useState("");
   const [draftPortfolio, setDraftPortfolio] = React.useState("");
+  const [draftTwitter, setDraftTwitter] = React.useState("");
+  const [draftContactEmail, setDraftContactEmail] = React.useState("");
   // career
   const [draftHeadline, setDraftHeadline] = React.useState("");
   const [draftExitStory, setDraftExitStory] = React.useState("");
@@ -631,6 +650,10 @@ export function ProfileView() {
   // cv
   const [draftExperience, setDraftExperience] = React.useState<Experience[]>([]);
   const [draftSkills, setDraftSkills] = React.useState<SkillGroup[]>([]);
+  const [draftLanguages, setDraftLanguages] = React.useState<Language[]>([]);
+  const [draftEducation, setDraftEducation] = React.useState<Education[]>([]);
+  const [draftCertifications, setDraftCertifications] = React.useState<Certification[]>([]);
+  const [draftProjects, setDraftProjects] = React.useState<Project[]>([]);
 
   // ── load ───────────────────────────────────────────────────────────────────
 
@@ -712,6 +735,8 @@ export function ProfileView() {
     setDraftFullName(c.full_name ?? ""); setDraftPhone(c.phone ?? "");
     setDraftLocation(c.location ?? ""); setDraftLinkedin(c.linkedin ?? "");
     setDraftGithub(c.github ?? ""); setDraftPortfolio(c.portfolio_url ?? "");
+    setDraftTwitter(c.twitter ?? "");
+    setDraftContactEmail(c.email ?? "");
     startEdit("personal");
   }
   function startCareer() {
@@ -755,7 +780,17 @@ export function ProfileView() {
   }
   function startSkills() {
     setDraftSkills((cv?.skills ?? []).map(s => ({ category: s.category, items: [...s.items] })));
+    setDraftLanguages((cv?.languages ?? []).map(l => ({ ...l })));
     startEdit("skills");
+  }
+  function startEducation() {
+    setDraftEducation((cv?.education ?? []).map(e => ({ ...e })));
+    setDraftCertifications((cv?.certifications ?? []).map(x => ({ ...x })));
+    startEdit("education");
+  }
+  function startProjects() {
+    setDraftProjects((cv?.projects ?? []).map(x => ({ ...x, highlights: [...x.highlights] })));
+    startEdit("projects");
   }
 
   // ── renders ────────────────────────────────────────────────────────────────
@@ -876,7 +911,7 @@ export function ProfileView() {
           <Section id="section-account" title="Personal Info" icon={<UserIcon className="h-4 w-4" />}
             editing={isEditing("account") || isEditing("personal")} saving={isSaving("account") || isSaving("personal")} error={sectionError("account") || sectionError("personal")}
             onEdit={() => { startAccount(); startPersonal(); }}
-            onSave={() => { save("account", { name: draftFullName }); save("personal", { profile: { candidate: { ...(p.candidate ?? {}), full_name: draftFullName, phone: draftPhone, location: draftLocation, linkedin: draftLinkedin, github: draftGithub, portfolio_url: draftPortfolio } } }); }}
+            onSave={() => { save("account", { name: draftFullName }); save("personal", { profile: { candidate: { ...(p.candidate ?? {}), full_name: draftFullName, phone: draftPhone, location: draftLocation, linkedin: draftLinkedin, github: draftGithub, portfolio_url: draftPortfolio, twitter: draftTwitter, email: draftContactEmail } } }); }}
             onCancel={() => { cancelEdit("account"); cancelEdit("personal"); }}>
             <div className="space-y-5">
               <div className="flex items-start gap-4">
@@ -895,6 +930,11 @@ export function ProfileView() {
                 <Field label="LinkedIn" value={isEditing("personal") ? draftLinkedin : (p.candidate?.linkedin ?? "")} editing={isEditing("personal")} onChange={setDraftLinkedin} placeholder="https://linkedin.com/in/..." type="url" />
                 <Field label="GitHub" value={isEditing("personal") ? draftGithub : (p.candidate?.github ?? "")} editing={isEditing("personal")} onChange={setDraftGithub} placeholder="https://github.com/..." type="url" />
                 <Field label="Portfolio / website" value={isEditing("personal") ? draftPortfolio : (p.candidate?.portfolio_url ?? "")} editing={isEditing("personal")} onChange={setDraftPortfolio} placeholder="https://..." type="url" />
+                <Field label="X / Twitter" value={isEditing("personal") ? draftTwitter : (p.candidate?.twitter ?? "")} editing={isEditing("personal")} onChange={setDraftTwitter} placeholder="https://x.com/..." type="url" />
+                {/* Distinct from the read-only account email above: this is the
+                    address pulled off the résumé and printed on generated CVs
+                    (src/lib/candidate-loader.ts). */}
+                <Field label="Contact email (on your CV)" value={isEditing("personal") ? draftContactEmail : (p.candidate?.email ?? "")} editing={isEditing("personal")} onChange={setDraftContactEmail} placeholder="jane@example.com" type="email" />
               </div>
             </div>
           </Section>
@@ -934,8 +974,9 @@ export function ProfileView() {
               {(isEditing("career") ? draftArchetypes : (p.target_roles?.archetypes ?? [])).map((a, i) => (
                 <EntryCard key={i} editing={isEditing("career")} onRemove={() => setDraftArchetypes(d => d.filter((_, j) => j !== i))}>
                   {isEditing("career") ? (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                       <input value={(a as Archetype).name} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name (e.g. Backend Engineer)" className={inputCls} />
+                      <input value={(a as Archetype).level} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, level: e.target.value } : x))} placeholder="Level (e.g. Senior)" className={inputCls} />
                       <select value={(a as Archetype).fit} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, fit: e.target.value } : x))} className={inputCls}>
                         <option value="primary">Primary</option>
                         <option value="secondary">Secondary</option>
@@ -943,7 +984,11 @@ export function ProfileView() {
                       </select>
                     </div>
                   ) : (
-                    <p className="text-sm"><span className="font-medium">{(a as { name: string }).name}</span>{" · "}<span className="text-muted-foreground capitalize">{(a as { fit: string }).fit}</span></p>
+                    <p className="text-sm">
+                      <span className="font-medium">{(a as Archetype).name}</span>
+                      {(a as Archetype).level ? <span className="text-muted-foreground">{" · "}{(a as Archetype).level}</span> : null}
+                      <span className="text-muted-foreground">{" · "}<span className="capitalize">{(a as Archetype).fit}</span></span>
+                    </p>
                   )}
                 </EntryCard>
               ))}
@@ -1049,6 +1094,11 @@ export function ProfileView() {
               <div className="space-y-3">
                 <ChipsField label="Job titles you want" values={isEditing("matching") ? draftTitles : (p.matching?.include_titles ?? [])} editing={isEditing("matching")} onChange={setDraftTitles} placeholder="Start typing a title…" autocomplete="job-titles" />
                 <ChipsField label="Avoid these roles" values={isEditing("matching") ? draftAvoid : [...new Set([...(p.matching?.exclude_titles ?? []), ...(p.matching?.seniority_exclusions ?? [])])]} editing={isEditing("matching")} onChange={setDraftAvoid} placeholder="e.g. senior, staff, sales, recruiter…" autocomplete="job-titles" />
+                {!isEditing("matching") && (p.matching?.include_titles?.length ?? 0) > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Both lists are inferred from your résumé — edit them to add anything we missed.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1153,7 +1203,7 @@ export function ProfileView() {
         <Section id="section-skills" title="Skills" icon={<Zap className="h-4 w-4" />}
           editing={isEditing("skills")} saving={isSaving("skills")} error={sectionError("skills")}
           onEdit={startSkills}
-          onSave={() => save("skills", { cv: { skills: draftSkills } })}
+          onSave={() => save("skills", { cv: { skills: draftSkills, languages: draftLanguages } })}
           onCancel={() => cancelEdit("skills")}>
           <div className="space-y-3">
             {(isEditing("skills") ? draftSkills : (c.skills ?? [])).map((sg, i) => (
@@ -1173,6 +1223,132 @@ export function ProfileView() {
             ))}
             {isEditing("skills") && <AddButton onClick={() => setDraftSkills(d => [...d, { category: "", items: [] }])} label="Add skill group" />}
             {!isEditing("skills") && (c.skills ?? []).length === 0 && <p className="text-sm text-muted-foreground">No skills added yet.</p>}
+
+            {/* Languages — grouped here rather than given their own nav entry. */}
+            <div className="space-y-2 pt-2">
+              <label className="text-xs font-medium text-muted-foreground">Languages</label>
+              {(isEditing("skills") ? draftLanguages : (c.languages ?? [])).map((lg, i) => (
+                <EntryCard key={i} editing={isEditing("skills")} onRemove={() => setDraftLanguages(d => d.filter((_, j) => j !== i))}>
+                  {isEditing("skills") ? (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <input value={lg.language} onChange={e => setDraftLanguages(d => d.map((x, j) => j === i ? { ...x, language: e.target.value } : x))} placeholder="Language (e.g. Spanish)" className={inputCls} />
+                      <input value={lg.proficiency} onChange={e => setDraftLanguages(d => d.map((x, j) => j === i ? { ...x, proficiency: e.target.value } : x))} placeholder="Proficiency (e.g. Fluent)" className={inputCls} />
+                    </div>
+                  ) : (
+                    <p className="text-sm">
+                      <span className="font-medium">{lg.language}</span>
+                      {lg.proficiency ? <span className="text-muted-foreground">{" · "}{lg.proficiency}</span> : null}
+                    </p>
+                  )}
+                </EntryCard>
+              ))}
+              {isEditing("skills") && <AddButton onClick={() => setDraftLanguages(d => [...d, { language: "", proficiency: "" }])} label="Add language" />}
+              {!isEditing("skills") && (c.languages ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {/* ── CV: Education & certifications ── */}
+      {activeSection === "section-education" && (
+        <Section id="section-education" title="Education & Certifications" icon={<GraduationCap className="h-4 w-4" />}
+          editing={isEditing("education")} saving={isSaving("education")} error={sectionError("education")}
+          onEdit={startEducation}
+          onSave={() => save("education", { cv: { education: draftEducation, certifications: draftCertifications } })}
+          onCancel={() => cancelEdit("education")}>
+          <div className="space-y-5">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground">Education</p>
+              {(isEditing("education") ? draftEducation : (c.education ?? [])).map((ed, i) => (
+                <EntryCard key={i} editing={isEditing("education")} onRemove={() => setDraftEducation(d => d.filter((_, j) => j !== i))}>
+                  {isEditing("education") ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <input value={ed.institution} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, institution: e.target.value } : x))} placeholder="Institution" className={inputCls} />
+                        <input value={ed.degree} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, degree: e.target.value } : x))} placeholder="Degree (e.g. B.Tech)" className={inputCls} />
+                        <input value={ed.field} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, field: e.target.value } : x))} placeholder="Field of study" className={inputCls} />
+                        <input value={ed.period} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, period: e.target.value } : x))} placeholder="Period (e.g. 2018 – 2022)" className={inputCls} />
+                      </div>
+                      <textarea value={ed.details} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, details: e.target.value } : x))} placeholder="Details (GPA, honours, coursework…)" rows={2} className={cn(inputCls, "h-auto py-1.5")} />
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="font-medium">{ed.institution}</p>
+                        <p className="text-xs text-muted-foreground">{ed.period}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{[ed.degree, ed.field].filter(Boolean).join(", ")}</p>
+                      {ed.details ? <p className="text-sm text-muted-foreground">{ed.details}</p> : null}
+                    </div>
+                  )}
+                </EntryCard>
+              ))}
+              {isEditing("education") && <AddButton onClick={() => setDraftEducation(d => [...d, { institution: "", degree: "", field: "", period: "", details: "" }])} label="Add education" />}
+              {!isEditing("education") && (c.education ?? []).length === 0 && <p className="text-sm text-muted-foreground">No education added yet.</p>}
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground">Certifications</p>
+              {(isEditing("education") ? draftCertifications : (c.certifications ?? [])).map((ct, i) => (
+                <EntryCard key={i} editing={isEditing("education")} onRemove={() => setDraftCertifications(d => d.filter((_, j) => j !== i))}>
+                  {isEditing("education") ? (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      <input value={ct.name} onChange={e => setDraftCertifications(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name" className={inputCls} />
+                      <input value={ct.issuer} onChange={e => setDraftCertifications(d => d.map((x, j) => j === i ? { ...x, issuer: e.target.value } : x))} placeholder="Issuer" className={inputCls} />
+                      <input value={ct.year} onChange={e => setDraftCertifications(d => d.map((x, j) => j === i ? { ...x, year: e.target.value } : x))} placeholder="Year" className={inputCls} />
+                    </div>
+                  ) : (
+                    <p className="text-sm">
+                      <span className="font-medium">{ct.name}</span>
+                      <span className="text-muted-foreground">{[ct.issuer, ct.year].filter(Boolean).map(v => ` · ${v}`).join("")}</span>
+                    </p>
+                  )}
+                </EntryCard>
+              ))}
+              {isEditing("education") && <AddButton onClick={() => setDraftCertifications(d => [...d, { name: "", issuer: "", year: "" }])} label="Add certification" />}
+              {!isEditing("education") && (c.certifications ?? []).length === 0 && <p className="text-sm text-muted-foreground">No certifications added yet.</p>}
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {/* ── CV: Projects ── */}
+      {activeSection === "section-projects" && (
+        <Section id="section-projects" title="Projects" icon={<FolderGit2 className="h-4 w-4" />}
+          editing={isEditing("projects")} saving={isSaving("projects")} error={sectionError("projects")}
+          onEdit={startProjects}
+          onSave={() => save("projects", { cv: { projects: draftProjects } })}
+          onCancel={() => cancelEdit("projects")}>
+          <div className="space-y-3">
+            {(isEditing("projects") ? draftProjects : (c.projects ?? [])).map((pr, i) => (
+              <EntryCard key={i} editing={isEditing("projects")} onRemove={() => setDraftProjects(d => d.filter((_, j) => j !== i))}>
+                {isEditing("projects") ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <input value={pr.name} onChange={e => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Project name" className={inputCls} />
+                      <input value={pr.url} onChange={e => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} placeholder="URL (optional)" type="url" className={inputCls} />
+                    </div>
+                    <textarea value={pr.description} onChange={e => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} placeholder="Short description" rows={2} className={cn(inputCls, "h-auto py-1.5")} />
+                    <ChipsField label="Highlights" values={pr.highlights} editing onChange={v => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, highlights: v } : x))} placeholder="Add a bullet point…" />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="font-medium">{pr.name}</p>
+                      {pr.url ? <a href={pr.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">Link <ExternalLink className="h-3 w-3" /></a> : null}
+                    </div>
+                    {pr.description ? <p className="text-sm text-muted-foreground">{pr.description}</p> : null}
+                    {pr.highlights.length > 0 && (
+                      <ul className="mt-1 space-y-0.5 pl-4">
+                        {pr.highlights.map((h, hi) => <li key={hi} className="list-disc text-sm">{h}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </EntryCard>
+            ))}
+            {isEditing("projects") && <AddButton onClick={() => setDraftProjects(d => [...d, { name: "", description: "", url: "", highlights: [] }])} label="Add project" />}
+            {!isEditing("projects") && (c.projects ?? []).length === 0 && <p className="text-sm text-muted-foreground">No projects added yet.</p>}
           </div>
         </Section>
       )}

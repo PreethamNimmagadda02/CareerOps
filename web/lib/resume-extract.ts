@@ -67,6 +67,7 @@ export interface ExtractedProfile {
   target_roles: {
     primary: string[];
     archetypes: Array<{ name: string; level: string; fit: string }>;
+    avoid?: string[];
   };
   narrative: {
     headline: string; exit_story: string; superpowers: string[];
@@ -110,7 +111,7 @@ export interface ExtractionResult {
 const SCHEMA_HINT = `{
   "profile": {
     "candidate": { "full_name": "", "email": "", "phone": "", "location": "", "linkedin": "", "portfolio_url": "", "github": "", "twitter": "" },
-    "target_roles": { "primary": [], "archetypes": [{ "name": "", "level": "", "fit": "primary|secondary|adjacent" }] },
+    "target_roles": { "primary": [], "archetypes": [{ "name": "", "level": "", "fit": "primary|secondary|adjacent" }], "avoid": [] },
     "narrative": { "headline": "", "exit_story": "", "superpowers": [], "proof_points": [{ "name": "", "url": "", "hero_metric": "" }] },
     "compensation": { "target_range": "", "currency": "", "minimum": "", "location_flexibility": "" },
     "location": { "country": "", "city": "", "timezone": "", "visa_status": "", "onsite_availability": "" }
@@ -178,13 +179,72 @@ export async function structureResume(resumeText: string): Promise<ExtractionRes
     '- "proof_points": standout achievements with a concrete metric where available.',
     "",
     "Roles:",
-    '- "target_roles.primary": 2-4 concise job titles that best match the candidate\'s',
-    "  demonstrated experience — from their most recent role(s), a stated objective, or a",
-    "  theme repeated across roles. Always fill this when the résumé shows any work history.",
-    '- "target_roles.archetypes": 1-3 entries built from target_roles.primary / experience,',
-    '  each with a "level" inferred from years of experience (e.g. "Entry-Level", "Mid",',
-    '  "Senior", "Staff+") and "fit" set to "primary" for the closest match.',
+    '- "target_roles.primary": 3-6 concise job titles the candidate should be matched against.',
+    "  These widen the search, so include more than just the titles they have literally held.",
+    "  Build the list from all three evidence sources — the roles in \"experience\", the work",
+    "  shown in \"projects\", and the tools in \"skills\" — in two passes:",
+    "  a. CORE — the title(s) their day-to-day work actually maps to. Prefer the title implied",
+    "     by the work over the one on the résumé: recurring ETL/Airflow/Spark projects plus",
+    '     Python and SQL is a "Data Engineer" even if every held title said "Software Engineer".',
+    "  b. EQUIVALENTS AND ADJACENTS — other titles the SAME evidence already qualifies them for.",
+    "     Two kinds, both worth listing:",
+    '       • Naming variants of the core role, since employers post it differently —',
+    '         "Backend Engineer" / "Backend Developer" / "Server-Side Engineer".',
+    "       • Neighbouring roles the skills and projects genuinely support —",
+    '         Kubernetes + Terraform + CI/CD → "Platform Engineer", "DevOps Engineer", "Site',
+    '         Reliability Engineer"; PyTorch + model training → "Machine Learning Engineer",',
+    '         "Applied Scientist"; React + Node + TypeScript → "Full Stack Engineer".',
+    "  EVIDENCE RULE: every title needs at least two independent supports (e.g. a skill AND a",
+    "  project or experience bullet). One passing keyword mention is not enough — a résumé that",
+    '  lists Docker once does not make the candidate a "DevOps Engineer". Prefer specific titles',
+    '  over bare generics like "Engineer"; a one-word title matches almost everything.',
+    '  NO SENIORITY PREFIX: write "Data Engineer", not "Senior Data Engineer" or "Staff Data',
+    '  Engineer". Level is captured separately in archetypes[].level and enforced through',
+    "  target_roles.avoid; baking it into the title only narrows the match for no benefit.",
+    "  Always fill this when the résumé shows any work history.",
+    '- "target_roles.archetypes": 2-5 entries covering the distinct role families in',
+    '  target_roles.primary (do not repeat near-identical naming variants), each with a "level"',
+    '  inferred from years of experience (e.g. "Entry-Level", "Mid", "Senior", "Staff+") and a',
+    '  "fit": "primary" for the core role, "secondary" for a strong equivalent, "adjacent" for a',
+    "  neighbouring role reachable with their current skills.",
     '- archetype "fit" MUST be exactly one of: primary, secondary, adjacent.',
+    '- "target_roles.avoid": title keywords the candidate should NOT be matched against.',
+    "  A posting whose title contains ANY of these words is dropped from the scan, so every",
+    "  entry must be a word that only ever appears in roles that are wrong for this candidate.",
+    "",
+    "  Seniority — be exhaustive here, this is the main purpose of the field:",
+    "  1. Total the years of professional experience in \"experience\" (exclude internships)",
+    "     and place the candidate in exactly one band:",
+    "       0-2 yrs → Entry | 2-5 → Mid | 5-8 → Senior | 8-12 → Staff/Principal | 12+ → Leadership",
+    "  2. Emit the marker words for EVERY band the candidate is not in, except the single band",
+    "     directly above theirs (a reasonable stretch). Every band below theirs is always",
+    "     excluded — never leave a lower band off the list. Marker words per band:",
+    '       Entry: "intern", "internship", "junior", "graduate", "trainee", "apprentice"',
+    "       Mid: (none — a mid-level title normally carries no seniority prefix)",
+    '       Senior: "senior", "sr"',
+    '       Staff/Principal: "staff", "principal", "distinguished", "fellow"',
+    '       Leadership: "manager", "head of", "director", "vp", "vice president", "chief", "cto"',
+    '  3. Example — 3 yrs of experience (Mid): avoid ["intern", "internship", "junior",',
+    '     "graduate", "trainee", "apprentice", "staff", "principal", "distinguished", "fellow",',
+    '     "manager", "head of", "director", "vp", "vice president", "chief", "cto"].',
+    '     "senior" is the one band up and is deliberately NOT excluded.',
+    '  4. Example — 10 yrs (Staff/Principal): avoid the Entry, Mid-below markers and "senior"',
+    '     is NOT excluded (it is below but still commonly used for staff-level work); do exclude',
+    '     "intern", "internship", "junior", "graduate", "trainee", "apprentice". Leadership is',
+    "     the one band up, so leave its markers off.",
+    "",
+    "  Beyond seniority, also add:",
+    "  - Management/people-leadership words when experience, projects, and skills are all",
+    "    individual-contributor and technical with no reports or org ownership mentioned.",
+    "  - Words for domains the résumé shows NO evidence in at all. This is the mirror of the",
+    "    evidence rule above: a neighbouring role the skills genuinely support belongs in",
+    "    target_roles.primary, while a domain with zero supporting skills, projects, or",
+    '    experience belongs here — e.g. "sales" for a candidate with no sales or quota-carrying',
+    '    work anywhere, or "recruiter", "support", "qa" for someone who has never done them.',
+    "",
+    "  HARD RULE: never emit a word that also appears in any target_roles.primary title or in",
+    "  the candidate's most recent job title. Excluding such a word would silence the",
+    "  candidate's own target roles. When in doubt about a word, leave it out.",
     "",
     "CV sections:",
     '- "skills": group related skills under sensible categories (e.g. "Languages", "Cloud").',
@@ -329,14 +389,20 @@ export function normalizeProfile(raw: unknown): ExtractedProfile {
       twitter: cleanUrl(c.twitter),
     },
     target_roles: {
-      primary: cleanStrArray(tr.primary, 6),
+      // Primary is the search funnel, not just the held titles — it carries
+      // naming variants and adjacent roles too, so the cap is well above the
+      // 3-6 the prompt asks for.
+      primary: cleanStrArray(tr.primary, 12),
       archetypes: asArray(tr.archetypes)
         .map((a) => {
           const o = rec(a);
           return { name: cleanStr(o.name), level: cleanStr(o.level), fit: cleanFit(o.fit) };
         })
         .filter((a) => a.name)
-        .slice(0, 5),
+        .slice(0, 8),
+      // Cap is generous: a full seniority-ladder exclusion is ~17 words on its
+      // own, before any domain terms.
+      avoid: cleanStrArray(tr.avoid, 30),
     },
     narrative: {
       headline: cleanStr(nar.headline),

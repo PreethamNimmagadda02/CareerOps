@@ -34,6 +34,19 @@ export interface RoleArchetype {
 export interface TargetRoles {
   primary: string[];
   archetypes: RoleArchetype[];
+  /**
+   * Job titles/keywords inferred as a poor fit at résumé-extraction time.
+   *
+   * This is the raw inference, kept for provenance and to seed
+   * `deriveMatchingDefaults`. It is NOT the live list: `buildMatchingPrefs`
+   * filters it (dropping keywords that collide with the candidate's own
+   * titles) into `MatchingPrefs.exclude_titles`, and that is what the scan
+   * honours and what the "Avoid these roles" field in the Job Matching UI
+   * reads and writes. Re-deriving matching from this field would discard any
+   * edit the user made there, so read `matching.exclude_titles` when you want
+   * to know what is actually being excluded.
+   */
+  avoid?: string[];
 }
 
 export interface ProofPoint {

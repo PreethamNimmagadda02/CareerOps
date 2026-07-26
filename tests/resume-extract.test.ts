@@ -142,6 +142,52 @@ describe("deriveMatchingDefaults", () => {
     expect(m.include_titles).toEqual(["founder"]);
   });
 
+  it("mirrors target_roles.avoid into exclude_titles and seniority_exclusions", () => {
+    const m = deriveMatchingDefaults(
+      makeInput({
+        target_roles: { primary: ["Backend Engineer"], archetypes: [], avoid: ["Director", "Sales"] },
+      }),
+    );
+    expect(m.exclude_titles).toEqual(["director", "sales"]);
+    expect(m.seniority_exclusions).toEqual(["director", "sales"]);
+  });
+
+  it("carries a wide inferred title list into include_titles, domains, and nouns", () => {
+    // `primary` holds naming variants and adjacent roles, not just held titles.
+    const m = deriveMatchingDefaults(
+      makeInput({
+        target_roles: {
+          primary: ["Data Engineer", "Analytics Engineer", "Platform Engineer"],
+          archetypes: [{ name: "Machine Learning Engineer", level: "Mid", fit: "adjacent" }],
+        },
+      }),
+    );
+    expect(m.include_titles).toEqual([
+      "data engineer",
+      "analytics engineer",
+      "platform engineer",
+      "machine learning engineer",
+    ]);
+    expect(m.role_domains.sort()).toEqual(["analytics", "data", "machine learning", "platform"]);
+    expect(m.role_nouns).toEqual(["engineer"]);
+  });
+
+  it("drops an inferred avoid keyword that collides with a target or archetype title", () => {
+    // The extraction prompt forbids this overlap, but the model is not a
+    // guarantee — and an overlap would veto the candidate's own roles.
+    const m = deriveMatchingDefaults(
+      makeInput({
+        target_roles: {
+          primary: ["Staff Software Engineer"],
+          archetypes: [{ name: "Principal Engineer", level: "Staff+", fit: "secondary" }],
+          avoid: ["staff", "principal", "intern", "vp"],
+        },
+      }),
+    );
+    expect(m.exclude_titles).toEqual(["intern", "vp"]);
+    expect(m.include_titles).toContain("staff software engineer");
+  });
+
   it("derives preferred locations from candidate.location, city, and country", () => {
     const m = deriveMatchingDefaults(
       makeInput({
@@ -240,6 +286,18 @@ describe("normalizeProfile — consistency & coercion", () => {
     expect(p.target_roles.archetypes).toEqual([
       { name: "Backend Engineer", level: "Mid", fit: "primary" },
     ]);
+  });
+
+  it("coerces target_roles.avoid from a delimited string and dedupes", () => {
+    const p = normalizeProfile({
+      target_roles: { avoid: "Sales, Recruiter; Recruiter" },
+    });
+    expect(p.target_roles.avoid).toEqual(["Sales", "Recruiter"]);
+  });
+
+  it("defaults target_roles.avoid to an empty array when absent", () => {
+    const p = normalizeProfile({ target_roles: { primary: ["Backend Engineer"] } });
+    expect(p.target_roles.avoid).toEqual([]);
   });
 
   it("never lets the model's matching guess through — matching is always derived", () => {

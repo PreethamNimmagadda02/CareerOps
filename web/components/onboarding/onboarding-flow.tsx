@@ -881,6 +881,11 @@ function ExtractedFields({
   const titles: string[] = p?.matching?.include_titles?.length
     ? p.matching.include_titles
     : (p?.target_roles?.primary ?? []);
+  // Read from `matching`, not `target_roles.avoid`: the former is what the scan
+  // actually excludes, after `buildMatchingPrefs` drops any inferred keyword
+  // that collided with one of the candidate's own target titles. Showing the
+  // raw inference would promise an exclusion that isn't in effect.
+  const avoid: string[] = arr(p?.matching?.exclude_titles);
   const level: string = p?.target_roles?.archetypes?.[0]?.level ?? "";
   const supers: string[] = arr(p?.narrative?.superpowers);
   const city: string = p?.location?.city || p?.candidate?.location || "";
@@ -910,6 +915,7 @@ function ExtractedFields({
   if (nonEmpty(name)) add("Name", name);
   if (nonEmpty(headline)) add("Headline", headline);
   if (titles.length) add("Target titles", <Chips items={titles.slice(0, 4)} tone="primary" />);
+  if (avoid.length) add("Not matching", <Chips items={avoid.slice(0, 6)} />);
   if (nonEmpty(level)) add("Seniority", level);
   if (skills.length) add("Skills", <Chips items={skills.slice(0, 8)} />);
   if (supers.length) add("Strengths", <Chips items={supers.slice(0, 3)} />);
