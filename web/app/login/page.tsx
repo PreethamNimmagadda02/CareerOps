@@ -41,7 +41,7 @@ export default async function LoginPage({
           <div className="animate-fade-in-up space-y-5">
             <Wordmark size="lg" />
             <h1 className="max-w-xl font-display text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">
-              Your next role, <span className="brand-text">found and scored</span> for you.
+              Your next role, <span className="brand-text">hunted and evaluated</span> for you.
             </h1>
             <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
               Upload your CV once. CareerOps scans the boards, grades every role

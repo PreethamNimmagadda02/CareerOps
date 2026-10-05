@@ -15,6 +15,9 @@ export default auth((req) => {
   const isLoginPage = nextUrl.pathname === "/login";
 
   if (!isLoggedIn && !isLoginPage) {
+    if (nextUrl.pathname.startsWith("/api/")) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const url = new URL("/login", nextUrl.origin);
     url.searchParams.set("callbackUrl", nextUrl.pathname + nextUrl.search);
     return Response.redirect(url);
