@@ -73,4 +73,11 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = true
 
   tags = { Name = "${var.app_name}-bastion" }
+
+  # Both of these otherwise force a replacement on the next apply: `most_recent`
+  # above resolves to a newer AMI over time, and a stopped instance (stopped to
+  # save cost when no tunnel is needed) reports no public IP.
+  lifecycle {
+    ignore_changes = [ami, associate_public_ip_address]
+  }
 }

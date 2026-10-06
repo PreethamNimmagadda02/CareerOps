@@ -12,7 +12,7 @@
       "command": "repowise",
       "args": [
         "mcp",
-        "/Users/preethamnimmagadda/Desktop/CarrerOps",
+        "/Users/preethamnimmagadda/Documents/My Projects/CarrerOps",
         "--transport",
         "stdio"
       ],
