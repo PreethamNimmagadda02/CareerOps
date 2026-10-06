@@ -84,3 +84,6 @@ deploy/terraform/*.tfstate.backup
 deploy/terraform/.terraform.lock.hcl
 deploy/terraform/*.pem
 deploy/terraform/*.tfplan
+# A saved plan embeds every variable in plaintext, secrets included.
+deploy/terraform/tfplan
+deploy/terraform/.terraform.tfstate.lock.info
