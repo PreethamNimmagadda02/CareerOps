@@ -69,7 +69,7 @@ CareerOps supports OpenAI-compatible LLM providers. Configuration is flexible:
 
 - **Provider:** `nvidia`
 - **Base URL:** `https://integrate.api.nvidia.com/v1`
-- **Default Model:** `openai/gpt-oss-120b` (free, high quality)
+- **Default Model:** `nvidia/nemotron-3-super-120b-a12b` (free, high quality)
 - **Auth:** `NVIDIA_API_KEY` environment variable
 - **Cost:** Free (quota-based)
 
@@ -79,7 +79,7 @@ Setup:
 # 2. Set in .env:
 NVIDIA_API_KEY=nvapi-xxxxx
 CAREER_OPS_PROVIDER=nvidia
-CAREER_OPS_MODEL=openai/gpt-oss-120b
+CAREER_OPS_MODEL=nvidia/nemotron-3-super-120b-a12b
 ```
 
 #### Zen (OpenCode)
@@ -314,7 +314,7 @@ npm run dynamo:profile  # Reads from /config/profile.yml and uploads
 
 | Provider | Model | Cost |
 |----------|-------|------|
-| NVIDIA | `openai/gpt-oss-120b` | Free (quota) |
+| NVIDIA | `nvidia/nemotron-3-super-120b-a12b` | Free (quota) |
 | Zen | `deepseek-v4-flash-free` | ~$0.01 |
 | Custom | Varies | Varies |
 

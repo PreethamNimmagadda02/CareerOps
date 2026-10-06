@@ -14,9 +14,22 @@ const BUILTIN_PROVIDERS: Record<string, ProviderConfig> = {
   },
   nvidia: {
     baseURL: "https://integrate.api.nvidia.com/v1",
-    defaultModel: "openai/gpt-oss-120b",
+    defaultModel: "nvidia/nemotron-3-super-120b-a12b",
     authEnvVar: "NVIDIA_API_KEY",
   },
+};
+
+/**
+ * Extra request-body fields a specific model needs, keyed by model id.
+ *
+ * Nemotron 3 Super reasons by default, and reasoning tokens count against
+ * `max_tokens`: on the résumé prompt it spent 5,962 of 6,000 thinking and the
+ * JSON answer was cut off after 111 characters. With thinking off the same
+ * request finishes in ~10s. Keyed by model rather than provider because other
+ * NVIDIA-hosted models aren't known to accept this flag.
+ */
+const MODEL_EXTRA_BODY: Record<string, Record<string, unknown>> = {
+  "nvidia/nemotron-3-super-120b-a12b": { chat_template_kwargs: { enable_thinking: false } },
 };
 
 /** Read and parse `~/.config/opencode/opencode.jsonc`, stripping comments. */
@@ -116,6 +129,7 @@ export async function callLLM(opts: {
         messages: [{ role: "user", content: opts.prompt }],
         temperature: opts.temperature ?? 0.3,
         max_tokens: opts.maxTokens ?? 4096,
+        ...MODEL_EXTRA_BODY[opts.model],
       });
       return resp.choices[0]?.message?.content || "";
     } catch (err) {

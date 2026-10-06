@@ -61,6 +61,13 @@ FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 
+# curl is what the ECS container health check runs (deploy/terraform/ecs.tf).
+# The Playwright base image shipped it; node:*-slim does not, and
+# `playwright install --with-deps` doesn't pull it in either.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+
 # Install root production dependencies
 COPY package.json package-lock.json ./
 COPY prisma.config.ts ./

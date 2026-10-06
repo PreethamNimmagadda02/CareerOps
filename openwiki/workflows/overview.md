@@ -91,7 +91,7 @@ npm run evaluate -- --dry-run # Fetch JDs only, skip LLM and write
 - `src/lib/candidate-loader.ts` — CV/profile loading
 
 **LLM Providers:**
-- `nvidia` (default) — NVIDIA NIM, `openai/gpt-oss-120b`
+- `nvidia` (default) — NVIDIA NIM, `nvidia/nemotron-3-super-120b-a12b`
 - `zen` — OpenCode, `deepseek-v4-flash-free`
 - Custom — Configured in `~/.config/opencode/opencode.jsonc`
 

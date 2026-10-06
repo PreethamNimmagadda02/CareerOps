@@ -65,7 +65,7 @@ and then any custom providers in `~/.config/opencode/opencode.jsonc`.
 
 | Provider | Base URL | Default model | Auth env var |
 |---|---|---|---|
-| `nvidia` (default) | `https://integrate.api.nvidia.com/v1` | `openai/gpt-oss-120b` | `NVIDIA_API_KEY` |
+| `nvidia` (default) | `https://integrate.api.nvidia.com/v1` | `nvidia/nemotron-3-super-120b-a12b` | `NVIDIA_API_KEY` |
 | `zen` | `https://opencode.ai/zen/v1` | `deepseek-v4-flash-free` | `OPENCODE_API_KEY` |
 
 Override at runtime:
