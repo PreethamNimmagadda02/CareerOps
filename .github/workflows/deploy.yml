@@ -145,8 +145,7 @@ jobs:
 
       - name: Print app URL
         run: |
-          ALB_DNS=$(aws elbv2 describe-load-balancers \
-            --names $APP_NAME-alb \
-            --query "LoadBalancers[0].DNSName" \
+          APP_URL=$(aws apigatewayv2 get-apis \
+            --query "Items[?Name=='$APP_NAME-app'].ApiEndpoint | [0]" \
             --output text)
-          echo "✅ Deployed to: http://$ALB_DNS"
+          echo "✅ Deployed to: $APP_URL"

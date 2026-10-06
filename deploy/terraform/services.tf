@@ -31,26 +31,11 @@ resource "aws_db_instance" "postgres" {
   tags = { Name = "${var.app_name}-postgres" }
 }
 
-# ── ElastiCache Redis ────────────────────────────────────────────────────────────
-resource "aws_elasticache_subnet_group" "main" {
-  name       = "${var.app_name}-redis-subnet-group"
-  subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
-}
-
-resource "aws_elasticache_cluster" "redis" {
-  cluster_id           = "${var.app_name}-redis"
-  engine               = "redis"
-  node_type            = "cache.t3.micro"
-  num_cache_nodes      = 1
-  parameter_group_name = "default.redis7"
-  engine_version       = "7.0"
-  port                 = 6379
-
-  subnet_group_name  = aws_elasticache_subnet_group.main.name
-  security_group_ids = [aws_security_group.redis.id]
-
-  tags = { Name = "${var.app_name}-redis" }
-}
+# ── Redis (not provisioned) ──────────────────────────────────────────────────────
+# The app treats REDIS_URL as optional: without it, rate limits and the
+# job-title cache live in process memory and the worker finds new jobs by
+# polling. That is only correct while a single web task runs — bring back an
+# ElastiCache cluster (and REDIS_URL) before scaling the web service past one.
 
 # ── S3 bucket (replaces MinIO) ──────────────────────────────────────────────────
 resource "aws_s3_bucket" "reports" {
@@ -133,7 +118,6 @@ resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
   secret_string = jsonencode({
     DATABASE_URL         = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.address}:5432/${var.db_name}?schema=public"
-    REDIS_URL            = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379"
     AUTH_SECRET          = var.auth_secret
     AUTH_GOOGLE_ID       = var.auth_google_id
     AUTH_GOOGLE_SECRET   = var.auth_google_secret

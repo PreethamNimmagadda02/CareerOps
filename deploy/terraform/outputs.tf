@@ -1,3 +1,8 @@
+output "app_url" {
+  description = "Public HTTPS URL of the app (API Gateway)"
+  value       = aws_apigatewayv2_api.app.api_endpoint
+}
+
 output "alb_dns_name" {
   description = "Public URL of the Application Load Balancer (your app URL)"
   value       = "http://${aws_lb.main.dns_name}"
@@ -16,12 +21,6 @@ output "ecs_cluster_name" {
 output "rds_endpoint" {
   description = "RDS PostgreSQL endpoint (internal, not publicly accessible)"
   value       = aws_db_instance.postgres.address
-  sensitive   = true
-}
-
-output "redis_endpoint" {
-  description = "ElastiCache Redis endpoint (internal)"
-  value       = aws_elasticache_cluster.redis.cache_nodes[0].address
   sensitive   = true
 }
 
@@ -53,7 +52,7 @@ output "bastion_instance_id" {
 output "update_oauth_redirect_uris" {
   description = "Add these callback URLs to your Google/GitHub OAuth apps"
   value = {
-    google = "http://${aws_lb.main.dns_name}/api/auth/callback/google"
-    github = "http://${aws_lb.main.dns_name}/api/auth/callback/github"
+    google = "${aws_apigatewayv2_api.app.api_endpoint}/api/auth/callback/google"
+    github = "${aws_apigatewayv2_api.app.api_endpoint}/api/auth/callback/github"
   }
 }

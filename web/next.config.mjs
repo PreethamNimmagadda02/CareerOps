@@ -14,7 +14,7 @@ const nextConfig = {
   serverExternalPackages: ["unpdf", "mammoth", "ioredis"],
   experimental: {
     serverActions: {
-      bodySizeLimit: "11mb", // cover resume uploads up to 10 MB
+      bodySizeLimit: "9mb", // cover resume uploads up to 8 MB
     },
   },
   webpack(config) {

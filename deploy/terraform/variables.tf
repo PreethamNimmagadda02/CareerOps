@@ -96,13 +96,13 @@ variable "career_ops_user_email" {
 variable "app_cpu" {
   description = "CPU units for web app task (256 = 0.25 vCPU)"
   type        = number
-  default     = 512
+  default     = 256
 }
 
 variable "app_memory" {
   description = "Memory (MB) for web app task"
   type        = number
-  default     = 1024
+  default     = 512
 }
 
 variable "worker_cpu" {

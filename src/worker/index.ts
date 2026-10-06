@@ -25,6 +25,10 @@
  *   WORKER_HEARTBEAT_MS  log-flush / cancel-check cadence (default 2000)
  *   WORKER_STALE_MS      Running heartbeat age before reclaim (default 120000)
  *   REDIS_URL            enables the job-queued nudge (optional)
+ *   ECS_CLUSTER_NAME, WORKER_SERVICE_NAME
+ *                        set both to let this worker scale itself to zero when
+ *                        idle (optional; see ../lib/worker-scaling.ts)
+ *   WORKER_IDLE_SHUTDOWN_MS  idle time before that scale-down (default 600000)
  */
 import { EventEmitter } from "node:events";
 import { spawn } from "node:child_process";
@@ -36,12 +40,14 @@ import { db } from "../lib/db.js";
 import { subscribeJobQueued } from "../lib/job-signal.js";
 import {
   claimNextJob,
+  countPendingJobs,
   finishJob,
   heartbeatJob,
   reclaimStaleJobs,
 } from "../lib/jobs.js";
 import { log } from "../lib/logger.js";
 import { isPipelineCommand, resolveCommandProcess } from "../lib/pipeline-commands.js";
+import { scaleToZeroIfDrained, workerScalingEnabled } from "../lib/worker-scaling.js";
 
 const CONCURRENCY = Math.max(1, Number(process.env.WORKER_CONCURRENCY ?? 2));
 const POLL_INTERVAL_MS = Number(process.env.WORKER_POLL_MS ?? 2000);
@@ -51,8 +57,16 @@ const STALE_MS = Number(process.env.WORKER_STALE_MS ?? 120_000);
 // long-running job occupying slot 0. A fraction of STALE_MS keeps reclaim
 // responsive without polling the table needlessly often.
 const RECLAIM_INTERVAL_MS = Number(process.env.WORKER_RECLAIM_MS ?? Math.max(15_000, STALE_MS / 4));
+// Scale-to-zero (see ../lib/worker-scaling.ts): how long this worker must have
+// had nothing to do before it asks ECS to stop it. Long enough to stay warm
+// between the jobs of one sitting, since the next start is a ~1 min cold start.
+const IDLE_SHUTDOWN_MS = Number(process.env.WORKER_IDLE_SHUTDOWN_MS ?? 600_000);
 
 let shuttingDown = false;
+// Tracked for the idle watchdog: jobs in flight in this process, and when it
+// last had one (or started).
+let activeJobs = 0;
+let lastActivityAt = Date.now();
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -203,12 +217,35 @@ async function workLoop(slot: number): Promise<void> {
       }
       idlePollMs = POLL_INTERVAL_MS;
       log.info(`▶️  [slot ${slot}] job ${job.id} — ${job.command} (user ${job.userId})`);
-      await runJob(job, slot);
+      activeJobs += 1;
+      try {
+        await runJob(job, slot);
+      } finally {
+        activeJobs -= 1;
+        lastActivityAt = Date.now();
+      }
       log.info(`🏁 [slot ${slot}] job ${job.id} done`);
     } catch (err) {
       log.error(`[slot ${slot}] loop error: ${(err as Error).message}`);
       await sleep(POLL_INTERVAL_MS);
     }
+  }
+}
+
+/**
+ * Ask ECS to stop this worker once it has been idle for IDLE_SHUTDOWN_MS and
+ * nothing is Queued or Running anywhere. ECS then sends SIGTERM, which takes
+ * the normal graceful-shutdown path below.
+ */
+async function stopIfIdle(): Promise<void> {
+  if (shuttingDown || activeJobs > 0) return;
+  if (Date.now() - lastActivityAt < IDLE_SHUTDOWN_MS) return;
+  try {
+    if (await scaleToZeroIfDrained(countPendingJobs)) {
+      log.info(`💤 idle for ${Math.round(IDLE_SHUTDOWN_MS / 1000)}s — asked ECS to stop this worker`);
+    }
+  } catch (err) {
+    log.warn(`[idle] scale-down failed, will retry: ${(err as Error).message}`);
   }
 }
 
@@ -234,8 +271,13 @@ async function main(): Promise<void> {
     );
   }, RECLAIM_INTERVAL_MS);
 
+  const idleTimer = workerScalingEnabled()
+    ? setInterval(() => void stopIfIdle(), Math.min(30_000, IDLE_SHUTDOWN_MS))
+    : undefined;
+
   await Promise.all(Array.from({ length: CONCURRENCY }, (_, i) => workLoop(i)));
   clearInterval(reclaimTimer);
+  clearInterval(idleTimer);
   await db.$disconnect();
   log.info("👋 worker stopped");
 }

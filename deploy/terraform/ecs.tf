@@ -109,10 +109,15 @@ resource "aws_ecs_cluster" "main" {
   }
 }
 
+# Makes FARGATE_SPOT available to services in this cluster (used by the worker).
+resource "aws_ecs_cluster_capacity_providers" "main" {
+  cluster_name       = aws_ecs_cluster.main.name
+  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+}
+
 # ── Shared environment variables injected into all task definitions ──────────────
 locals {
   db_url    = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.address}:5432/${var.db_name}?schema=public"
-  redis_url = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379"
 
   common_env = [
     { name = "NODE_ENV", value = "production" },
@@ -129,7 +134,8 @@ locals {
   secret_arn = aws_secretsmanager_secret.app.arn
   common_secrets = [
     { name = "DATABASE_URL", valueFrom = "${local.secret_arn}:DATABASE_URL::" },
-    { name = "REDIS_URL", valueFrom = "${local.secret_arn}:REDIS_URL::" },
+    # No REDIS_URL: with a single web task the app's in-memory fallback and the
+    # worker's polling loop cover everything Redis did, so it isn't provisioned.
     { name = "AUTH_SECRET", valueFrom = "${local.secret_arn}:AUTH_SECRET::" },
     { name = "AUTH_GOOGLE_ID", valueFrom = "${local.secret_arn}:AUTH_GOOGLE_ID::" },
     { name = "AUTH_GOOGLE_SECRET", valueFrom = "${local.secret_arn}:AUTH_GOOGLE_SECRET::" },
@@ -159,6 +165,10 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = var.app_memory
   execution_role_arn       = aws_iam_role.ecs_execution.arn
   task_role_arn            = aws_iam_role.ecs_task.arn
+
+  # The service below pins its revision and is moved to a new one by hand, so
+  # the revision it is still running must not be deregistered underneath it.
+  skip_destroy = true
 
   container_definitions = jsonencode([{
     name      = "app"
@@ -201,6 +211,12 @@ resource "aws_ecs_service" "app" {
     container_port   = 3000
   }
 
+  service_registries {
+    registry_arn   = aws_service_discovery_service.app.arn
+    container_name = "app"
+    container_port = 3000
+  }
+
   depends_on = [aws_lb_listener.http]
 
   lifecycle {
@@ -217,6 +233,8 @@ resource "aws_ecs_task_definition" "worker" {
   memory                   = var.worker_memory
   execution_role_arn       = aws_iam_role.ecs_execution.arn
   task_role_arn            = aws_iam_role.ecs_task.arn
+
+  skip_destroy = true # same reason as the app task definition
 
   container_definitions = jsonencode([{
     name      = "worker"
@@ -236,7 +254,16 @@ resource "aws_ecs_service" "worker" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.worker.arn
   desired_count   = 1
-  launch_type     = "FARGATE"
+
+  # Spot is ~70% cheaper and the worker sits idle most of the time. AWS can
+  # reclaim the task with two minutes' notice; ECS starts a replacement and the
+  # worker's stale-job reclaim picks up anything that was mid-run.
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+  }
+
+  depends_on = [aws_ecs_cluster_capacity_providers.main]
 
   network_configuration {
     subnets          = [aws_subnet.public_a.id]
@@ -245,8 +272,24 @@ resource "aws_ecs_service" "worker" {
   }
 
   lifecycle {
-    ignore_changes = [task_definition]
+    # desired_count is driven at runtime: the app sets it to 1 when a job is
+    # queued and the worker sets it back to 0 once idle (src/lib/worker-scaling.ts).
+    ignore_changes = [task_definition, desired_count]
   }
+}
+
+# Lets tasks start the worker when a job is queued and stop it when idle.
+resource "aws_iam_role_policy" "ecs_task_worker_scaling" {
+  name = "worker-scaling"
+  role = aws_iam_role.ecs_task.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ecs:UpdateService"]
+      Resource = aws_ecs_service.worker.id
+    }]
+  })
 }
 
 # ── Migrate Task (one-shot, run via ECS RunTask in CI) ───────────────────────────

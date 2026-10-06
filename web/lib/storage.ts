@@ -13,7 +13,9 @@ import {
 } from "@aws-sdk/client-s3";
 
 const BUCKET = process.env.MINIO_BUCKET ?? "careerops";
-const MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB
+// Kept under API Gateway's 10 MB request cap (the multipart envelope adds to
+// the file size) so an oversized file gets this app's error, not the gateway's.
+const MAX_RESUME_BYTES = 8 * 1024 * 1024; // 8 MB
 
 export const RESUME_MAX_BYTES = MAX_RESUME_BYTES;
 

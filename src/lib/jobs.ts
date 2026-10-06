@@ -17,6 +17,7 @@ import type { Job, JobStatus } from "@prisma/client";
 import { db } from "./db.js";
 import { notifyJobQueued } from "./job-signal.js";
 import { type PipelineCommand } from "./pipeline-commands.js";
+import { ensureWorkerRunning } from "./worker-scaling.js";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -48,7 +49,17 @@ export function capLog(log: string): string {
 export async function enqueueJob(userId: string, command: PipelineCommand): Promise<Job> {
   const job = await db.job.create({ data: { userId, command } });
   await notifyJobQueued();
+  // No-op unless the worker is scaled to zero when idle (see worker-scaling.ts).
+  await ensureWorkerRunning();
   return job;
+}
+
+/**
+ * How many jobs still need a worker: Queued, or Running anywhere — including a
+ * Running row whose worker died and which is waiting to be reclaimed.
+ */
+export async function countPendingJobs(): Promise<number> {
+  return db.job.count({ where: { status: { in: ["Queued", "Running"] } } });
 }
 
 /**

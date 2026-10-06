@@ -541,7 +541,7 @@ function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: 
         {uploading ? <Spinner className="h-7 w-7 text-primary" /> : <Upload className="h-7 w-7 text-muted-foreground" />}
         <div>
           <p className="text-sm font-medium">{uploading ? "Uploading…" : "Click or drag to upload"}</p>
-          <p className="text-xs text-muted-foreground">PDF · DOC · DOCX · Max 10 MB · auto-fills your profile</p>
+          <p className="text-xs text-muted-foreground">PDF · DOC · DOCX · Max 8 MB · auto-fills your profile</p>
         </div>
       </div>
       {resumeKey && (
