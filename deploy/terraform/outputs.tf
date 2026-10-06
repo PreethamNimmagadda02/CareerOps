@@ -3,11 +3,6 @@ output "app_url" {
   value       = aws_apigatewayv2_api.app.api_endpoint
 }
 
-output "alb_dns_name" {
-  description = "Public URL of the Application Load Balancer (your app URL)"
-  value       = "http://${aws_lb.main.dns_name}"
-}
-
 output "ecr_repository_url" {
   description = "ECR repository URL — used in docker push commands"
   value       = aws_ecr_repository.app.repository_url

@@ -103,46 +103,12 @@ resource "aws_route_table_association" "public_b" {
 }
 
 # ── Security Groups ─────────────────────────────────────────────────────────────
-resource "aws_security_group" "alb" {
-  name        = "${var.app_name}-alb-sg"
-  description = "Allow HTTP/HTTPS from the internet"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "${var.app_name}-alb-sg" }
-}
-
 resource "aws_security_group" "app" {
   name        = "${var.app_name}-app-sg"
+  # The description predates API Gateway replacing the ALB. It is left as-is
+  # because AWS can't edit it in place — changing it would replace the group.
   description = "ECS app tasks - allow traffic from ALB"
   vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port       = 3000
-    to_port         = 3000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
 
   ingress {
     from_port       = 3000

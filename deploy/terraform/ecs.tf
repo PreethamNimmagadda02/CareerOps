@@ -130,6 +130,15 @@ locals {
     { name = "MINIO_BUCKET", value = aws_s3_bucket.reports.bucket },
   ]
 
+  # Lets the app start the worker when a job is queued, and the worker stop
+  # itself when idle (src/lib/worker-scaling.ts). The service name is spelled
+  # out rather than referenced: the worker's own task definition carries it,
+  # and a reference to its service would be a dependency cycle.
+  worker_scaling_env = [
+    { name = "ECS_CLUSTER_NAME", value = aws_ecs_cluster.main.name },
+    { name = "WORKER_SERVICE_NAME", value = "${var.app_name}-worker" },
+  ]
+
   # Secrets injected at container start from Secrets Manager
   secret_arn = aws_secretsmanager_secret.app.arn
   common_secrets = [
@@ -175,8 +184,8 @@ resource "aws_ecs_task_definition" "app" {
     image     = "${aws_ecr_repository.app.repository_url}:latest"
     essential = true
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
-    environment  = concat(local.common_env, [
-      { name = "AUTH_URL", value = "http://${aws_lb.main.dns_name}" },
+    environment  = concat(local.common_env, local.worker_scaling_env, [
+      { name = "AUTH_URL", value = aws_apigatewayv2_api.app.api_endpoint },
       { name = "AUTH_TRUST_HOST", value = "true" },
       { name = "DATABASE_POOL_MAX", value = "5" },
     ])
@@ -205,19 +214,12 @@ resource "aws_ecs_service" "app" {
     assign_public_ip = true
   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app.arn
-    container_name   = "app"
-    container_port   = 3000
-  }
-
+  # No load balancer: API Gateway finds the task through Cloud Map (apigw.tf).
   service_registries {
     registry_arn   = aws_service_discovery_service.app.arn
     container_name = "app"
     container_port = 3000
   }
-
-  depends_on = [aws_lb_listener.http]
 
   lifecycle {
     ignore_changes = [task_definition] # CI/CD handles updates
@@ -241,8 +243,11 @@ resource "aws_ecs_task_definition" "worker" {
     image     = "${aws_ecr_repository.app.repository_url}:latest"
     essential = true
     command   = ["run", "worker:prod"]
-    environment = concat(local.common_env, [
+    environment = concat(local.common_env, local.worker_scaling_env, [
       { name = "WORKER_CONCURRENCY", value = "2" },
+      # Stay up 10 minutes after the last job so a sitting's follow-up jobs
+      # don't each pay the ~1 minute cold start.
+      { name = "WORKER_IDLE_SHUTDOWN_MS", value = "600000" },
     ])
     secrets          = local.common_secrets
     logConfiguration = local.log_config

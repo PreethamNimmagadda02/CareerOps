@@ -3,26 +3,30 @@
 ## Architecture
 
 ```
-Internet → ALB (port 80) → ECS Fargate (Next.js app)
-                                ↓
-                         RDS PostgreSQL 16
-                         ElastiCache Redis 7
-                         S3 bucket (reports)
-                         DynamoDB (CV + Profiles)
+Internet → API Gateway (HTTPS) → VPC link → ECS Fargate (Next.js app)
+                                                 ↓
+                                          RDS PostgreSQL 16
+                                          S3 bucket (reports)
+                                          DynamoDB (CV + Profiles)
 
-ECS Fargate (worker)     ← background job processor
-EventBridge (every 6h)  → ECS Fargate (scan-portals, one-shot)
+ECS Fargate Spot (worker) ← background jobs; started when a job is queued,
+                            stops itself after 10 idle minutes
+EventBridge (every 6h)   → ECS Fargate (scan-portals, one-shot)
 ```
 
-**Estimated monthly cost (minimal):** ~$60–75/month
+There is no load balancer and no Redis. API Gateway's HTTP API has no hourly
+charge and provides HTTPS; it caps requests at 30 seconds and 10 MB. The app
+runs without Redis as long as there is a single web task.
+
+**Estimated monthly cost (minimal, Sydney):** ~$45/month
 | Service | Size | ~Cost |
 |---|---|---|
-| ALB | - | ~$16 |
-| ECS Fargate (app + worker) | 0.5–1 vCPU | ~$20 |
-| RDS PostgreSQL | db.t3.micro | ~$15 |
-| ElastiCache Redis | cache.t3.micro | ~$12 |
-| S3 + DynamoDB | on-demand | ~$2 |
-| CloudWatch Logs | 14-day retention | ~$3 |
+| RDS PostgreSQL | db.t3.micro, 20 GB | ~$23 |
+| ECS Fargate (app) | 0.25 vCPU, 0.5 GB | ~$11 |
+| Public IPv4 address (app task) | 1 | ~$4 |
+| ECS Fargate Spot (worker, scans) | 1 vCPU, 2 GB, on demand | ~$3 |
+| API Gateway, S3, DynamoDB, Secrets, ECR | on-demand | ~$2 |
+| CloudWatch Logs | 14-day retention | ~$1 |
 
 ---
 
@@ -86,7 +90,7 @@ terraform apply
 
 Type `yes` when prompted. This takes ~10–15 minutes (RDS takes the longest).
 
-When complete, note the outputs — especially `alb_dns_name` and `ecr_repository_url`.
+When complete, note the outputs — especially `app_url` and `ecr_repository_url`.
 
 ---
 
@@ -174,7 +178,7 @@ aws ecs wait services-stable --cluster careerops --services careerops-app
 ## Phase 5 — Access Your App
 
 ```bash
-cd deploy/terraform && terraform output alb_dns_name
+cd deploy/terraform && terraform output app_url
 ```
 
 Open the URL in your browser. You should see the CareerOps login page.
@@ -187,8 +191,8 @@ Go to your OAuth provider dashboards and add the callback URLs:
 
 ```
 # From terraform output update_oauth_redirect_uris
-Google:  http://<ALB_DNS>/api/auth/callback/google
-GitHub:  http://<ALB_DNS>/api/auth/callback/github
+Google:  <APP_URL>/api/auth/callback/google
+GitHub:  <APP_URL>/api/auth/callback/github
 ```
 
 ---
@@ -269,6 +273,6 @@ terraform destroy
 |---|---|---|
 | Task keeps restarting | Out of memory | Increase `app_memory` in `terraform.tfvars` + `terraform apply` |
 | `DATABASE_URL` connection refused | DB not in same VPC | Check security group rules — ECS must be in same VPC |
-| OAuth redirect mismatch | Callback URL wrong | Update provider OAuth app with exact ALB URL |
+| OAuth redirect mismatch | Callback URL wrong | Update provider OAuth app with the exact `app_url` |
 | S3 `AccessDenied` | IAM task role missing policy | Re-run `terraform apply` |
 | DynamoDB `ResourceNotFoundException` | Tables not created | Run `careerops-dynamo-init` task again |
