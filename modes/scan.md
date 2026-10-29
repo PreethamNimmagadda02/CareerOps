@@ -40,14 +40,14 @@ The DB contains:
 Use Apify actors to scrape job boards at scale. This level is the broadest — it searches LinkedIn, Google Jobs, Indeed, and other aggregators that Playwright alone can't access (login walls, anti-bot).
 
 **Workflow:**
-1. Use `search-actors` tool to find job scraping actors (e.g., `bebity/google-jobs-scraper`, `curious_coder/linkedin-jobs-search-scraper`, `misceres/indeed-scraper`)
+1. Use `search-actors` tool to find job scraping actors (e.g., `johnvc/Google-Jobs-Scraper`, `curious_coder/linkedin-jobs-search-scraper`, `misceres/indeed-scraper`)
 2. Use `add-actor` to register the best actor as a tool
 3. Call the actor with search parameters from `portals.yml` (`title_filter.positive` keywords + location)
 4. Parse results → extract `{title, url, company, location, posted_date}`
 5. Feed into the same title filter + dedup pipeline as other levels
 
 **Recommended Apify actors for job scanning:**
-- `bebity/google-jobs-scraper` — Google Jobs (free, fast, broad coverage)
+- `johnvc/Google-Jobs-Scraper` — Google Jobs (input `query` + `location`; rows give `title`, `company_name`, `location`, `share_link`, `detected_extensions`)
 - `curious_coder/linkedin-jobs-search-scraper` — LinkedIn Jobs (no login needed)
 - `misceres/indeed-scraper` — Indeed listings
 - `apify/google-search-scraper` — Google SERPs with `site:` filters (replaces Level 3 WebSearch)
