@@ -1,167 +1,87 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
+/**
+ * Tailwind is kept for layout utilities only; every color, font, radius and
+ * shadow below is a thin alias over an Astryx theme token, so utility classes
+ * stay on-system and follow light/dark mode automatically (Astryx tokens are
+ * `light-dark()` pairs). `color-mix` keeps `/opacity` modifiers working.
+ */
+const token = (name: string) =>
+  `color-mix(in srgb, var(${name}) calc(<alpha-value> * 100%), transparent)`;
+
 const config: Config = {
-  darkMode: "class",
-  content: [
-    "./app/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./lib/**/*.{ts,tsx}",
-  ],
+  // Astryx drives dark mode through `data-theme` on <html>.
+  darkMode: ["selector", '[data-theme="dark"]'],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
-        mono: [
-          "ui-monospace",
-          "SFMono-Regular",
-          "SF Mono",
-          "Menlo",
-          "Consolas",
-          "monospace",
-        ],
+        sans: ["var(--font-family-body)", "system-ui", "sans-serif"],
+        display: ["var(--font-family-heading)", "var(--font-family-body)", "system-ui", "sans-serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "SF Mono", "Menlo", "Consolas", "monospace"],
       },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: token("--color-border"),
+        input: token("--color-border-emphasized"),
+        ring: token("--color-accent"),
+        background: token("--color-background-body"),
+        surface: token("--color-background-surface"),
+        foreground: token("--color-text-primary"),
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: token("--color-accent"),
+          foreground: token("--color-on-accent"),
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: token("--color-background-muted"),
+          foreground: token("--color-text-primary"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: token("--color-background-muted"),
+          foreground: token("--color-text-secondary"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: token("--color-background-muted"),
+          foreground: token("--color-text-primary"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: token("--color-error"),
+          foreground: token("--color-on-error"),
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: token("--color-background-card"),
+          foreground: token("--color-text-primary"),
         },
-        // Catppuccin-inspired accent palette (matches the Go TUI).
-        ctp: {
-          green: "hsl(var(--ctp-green))",
-          yellow: "hsl(var(--ctp-yellow))",
-          red: "hsl(var(--ctp-red))",
-          blue: "hsl(var(--ctp-blue))",
-          sky: "hsl(var(--ctp-sky))",
-          mauve: "hsl(var(--ctp-mauve))",
-        },
+        success: token("--color-text-success"),
+        warning: token("--color-text-warning"),
+        info: token("--color-text-info"),
+      },
+      borderColor: {
+        DEFAULT: token("--color-border"),
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "var(--radius-inner)",
+        md: "var(--radius-element)",
+        lg: "var(--radius-container)",
+      },
+      boxShadow: {
+        sm: "var(--shadow-low)",
+        md: "var(--shadow-med)",
+        lg: "var(--shadow-high)",
       },
       keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
         "fade-in": {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
         "fade-in-up": {
-          from: { opacity: "0", transform: "translateY(6px)" },
+          from: { opacity: "0", transform: "translateY(4px)" },
           to: { opacity: "1", transform: "translateY(0)" },
-        },
-        "scale-in": {
-          from: { opacity: "0", transform: "scale(0.96)" },
-          to: { opacity: "1", transform: "scale(1)" },
-        },
-        "toast-in": {
-          from: { opacity: "0", transform: "translateY(-8px) scale(0.98)" },
-          to: { opacity: "1", transform: "translateY(0) scale(1)" },
-        },
-        "slide-up": {
-          from: { opacity: "0", transform: "translateY(14px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
-        shimmer: {
-          from: { backgroundPosition: "200% 0" },
-          to: { backgroundPosition: "-200% 0" },
-        },
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-6px)" },
-        },
-        "pulse-dot": {
-          "0%, 100%": { opacity: "1", transform: "scale(1)" },
-          "50%": { opacity: "0.5", transform: "scale(0.8)" },
-        },
-        sweep: {
-          to: { transform: "rotate(360deg)" },
-        },
-        "confetti-fall": {
-          "0%": { opacity: "0", transform: "translate3d(0,0,0) rotate(0deg)" },
-          "8%": { opacity: "1" },
-          "100%": {
-            opacity: "0",
-            transform:
-              "translate3d(var(--cx,0), var(--cy,120px), 0) rotate(var(--cr,540deg))",
-          },
-        },
-        "blip-in": {
-          "0%": { opacity: "0", transform: "scale(0)" },
-          "45%": { opacity: "1", transform: "scale(1.25)" },
-          "100%": { opacity: "0.9", transform: "scale(1)" },
-        },
-        "count-flash": {
-          "0%": { color: "hsl(var(--primary))", transform: "translateY(-2px) scale(1.12)" },
-          "100%": { color: "inherit", transform: "translateY(0) scale(1)" },
-        },
-        "ticker-in": {
-          from: { opacity: "0", transform: "translateY(8px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
-        "ring-pulse": {
-          "0%": { opacity: "0.7", transform: "scale(0.85)" },
-          "70%": { opacity: "0", transform: "scale(1.6)" },
-          "100%": { opacity: "0", transform: "scale(1.6)" },
-        },
-        attention: {
-          "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.5)" },
-          "70%": { boxShadow: "0 0 0 8px hsl(var(--primary) / 0)" },
-          "100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.2s ease-out",
-        "fade-in-up": "fade-in-up 0.3s ease-out both",
-        "scale-in": "scale-in 0.15s ease-out",
-        "toast-in": "toast-in 0.25s cubic-bezier(0.21, 1.02, 0.73, 1) both",
-        "slide-up": "slide-up 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) both",
-        shimmer: "shimmer 2s linear infinite",
-        float: "float 5s ease-in-out infinite",
-        "pulse-dot": "pulse-dot 1.6s ease-in-out infinite",
-        sweep: "sweep 2.4s linear infinite",
-        "confetti-fall": "confetti-fall 2.6s cubic-bezier(0.2,0.6,0.35,1) forwards",
-        "blip-in": "blip-in 0.5s cubic-bezier(0.21,1.02,0.73,1) both",
-        "count-flash": "count-flash 0.6s ease-out",
-        "ticker-in": "ticker-in 0.35s cubic-bezier(0.21,1.02,0.73,1) both",
-        "ring-pulse": "ring-pulse 1.8s ease-out infinite",
-        attention: "attention 1.8s cubic-bezier(0.4,0,0.6,1) infinite",
+        "fade-in-up": "fade-in-up 0.25s ease-out both",
       },
     },
   },

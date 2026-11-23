@@ -53,14 +53,23 @@ export interface Metrics {
   scored: number;
 }
 
-/** Counts backing the dashboard's filter tabs, computed server-side in SQL. */
+/**
+ * Counts backing the dashboard's filter tabs, computed server-side in SQL.
+ * The groups don't overlap — apply + review + progress + skip + rejected
+ * always adds up to `all` — so the numbers on the tabs never disagree.
+ */
 export interface TabCounts {
   all: number;
+  /** Not acted on yet, and our advice is to apply now. */
   apply: number;
-  evaluated: number;
-  applied: number;
-  interview: number;
+  /** Not acted on yet, any other advice (or not checked yet). */
+  review: number;
+  /** Applied, heard back, interviewing or offer. */
+  progress: number;
+  /** Marked "Not for me" (skipped or archived). */
   skip: number;
+  /** Not selected by the employer. */
+  rejected: number;
 }
 
 /** The four sequential gates a user clears to activate the pipeline. */

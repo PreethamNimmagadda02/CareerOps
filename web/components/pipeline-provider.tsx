@@ -3,12 +3,18 @@
 import * as React from "react";
 
 import { useToast } from "@/components/ui/toast";
+import { friendlyError } from "@/lib/errors";
 import { parseScanTelemetry } from "@/lib/scan-telemetry";
 import type { PipelineCommand } from "@/lib/pipeline";
 
+export type RunOutcome = "Succeeded" | "Failed" | "Canceled" | null;
+
 interface RunOptions {
-  /** Fired once the run finishes (success or error) — e.g. to refresh data. */
-  onDone?: () => void;
+  /** Fired once the run finishes (success or error) — e.g. to refresh data.
+   * Receives the terminal status (null if the job vanished). */
+  onDone?: (outcome: RunOutcome) => void;
+  /** Skip the success toast — for a run that immediately chains another. */
+  quietSuccess?: boolean;
 }
 
 interface PipelineContextValue {
@@ -70,7 +76,7 @@ export function usePipeline(): PipelineContextValue {
 }
 
 function commandLabel(command: PipelineCommand): string {
-  return command === "scan" || command === "scan:fallback" ? "Scan" : "Evaluation";
+  return command === "scan" || command === "scan:fallback" ? "Job search" : "Fit check";
 }
 
 const POLL_INTERVAL_MS = 1500;
@@ -146,13 +152,28 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         setRunning(null);
 
         if (final?.status === "Succeeded") {
-          toast.success(`${label} complete`, "Your roles are up to date.");
+          if (!opts?.quietSuccess) {
+            toast.success(
+              command.startsWith("evaluate") ? "Your jobs are checked" : `${label} finished`,
+              command.startsWith("evaluate")
+                ? "Each new job now shows how well it fits you."
+                : "Your job list is up to date.",
+            );
+          }
         } else if (final?.status === "Canceled") {
-          toast.info(`${label} canceled`, "The run was stopped.");
+          toast.info(`${label} stopped`, "Nothing else will change.");
         } else if (final) {
-          toast.error(`${label} failed`, final.error ?? "Please try again.");
+          // The worker's own error text is for logs, not people.
+          toast.error(
+            `${label} didn't finish`,
+            "Something went wrong on our side. Please try again in a few minutes.",
+          );
         }
-        opts?.onDone?.();
+        opts?.onDone?.(
+          final?.status === "Succeeded" || final?.status === "Failed" || final?.status === "Canceled"
+            ? final.status
+            : null,
+        );
       })();
     },
     [toast],
@@ -176,7 +197,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         } catch (err) {
           runningRef.current = null;
           setRunning(null);
-          toast.error(`${label} failed`, (err as Error).message);
+          toast.error(`${label} didn't start`, friendlyError(err));
           return;
         }
         const data = (await res.json().catch(() => ({}))) as { jobId?: string; error?: string };
@@ -184,19 +205,32 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         if (res.status === 422) {
           runningRef.current = null;
           setRunning(null);
-          toast.info(`${label} skipped`, data.error);
+          // The server explains what's missing in developer terms; say it
+          // plainly and point at the one place to fix it.
+          const isScan = command.startsWith("scan");
+          toast.info(
+            `${label} not started`,
+            isScan
+              ? "First tell us what jobs you're looking for in My profile."
+              : "Your profile is missing a few details. Finish it in My profile first.",
+            {
+              label: "Go to my profile",
+              onClick: () =>
+                window.location.assign(isScan ? "/profile#section-matching" : "/profile"),
+            },
+          );
           return;
         }
         if (res.status === 429) {
           runningRef.current = null;
           setRunning(null);
-          toast.info("Slow down", data.error);
+          toast.info("Please wait a moment", "You just started one. Try again in a minute.");
           return;
         }
         if (!res.ok || !data.jobId) {
           runningRef.current = null;
           setRunning(null);
-          toast.error(`${label} failed`, data.error ?? "Could not queue the run.");
+          toast.error(`${label} didn't start`, "Please try again in a moment.");
           return;
         }
 

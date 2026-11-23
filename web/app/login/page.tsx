@@ -1,135 +1,140 @@
-import { CheckCircle2, FileUp, MousePointerClick, Radar, Zap } from "lucide-react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 
 import { enabledProviders } from "@/auth.config";
 import { LoginForm } from "@/components/login-form";
-import { BRAND, Logo, Wordmark } from "@/components/brand";
-import { LandingPreview } from "@/components/landing-preview";
+import { Wordmark } from "@/components/brand";
+import { ExampleJob, PrivacyNote } from "@/components/login-showcase";
 
 export const metadata = {
   title: "Sign in",
 };
 
-const STEPS = [
-  { icon: FileUp, title: "Upload your CV", text: "Your profile fills itself in." },
-  { icon: Radar, title: "Scan job boards", text: "Matching roles found for you." },
-  { icon: MousePointerClick, title: "Apply to the best", text: "AI scores tell you where to aim." },
-] as const;
+type LoginSearchParams = { callbackUrl?: string | string[]; error?: string | string[] };
 
-const CARD_POINTS = [
-  "Upload your CV — profile auto-filled",
-  "AI scores every role against you",
-  "One dashboard, zero spreadsheets",
-] as const;
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+/**
+ * Auth.js sends people back here as `/login?error=<type>` (both `pages.signIn`
+ * and `pages.error` point at this page). Only its client-safe types ever reach
+ * the URL; anything else arrives as "Configuration". Pressing Cancel on
+ * Google's or GitHub's consent screen comes back as `OAuthCallbackError`, and a
+ * sign-in the app itself refuses as `AccessDenied`.
+ */
+function signInProblem(code: string): string {
+  switch (code) {
+    case "AccessDenied":
+    case "OAuthCallbackError":
+      return "Signing in was cancelled. Try again when you're ready.";
+    case "OAuthAccountNotLinked":
+    case "AccountNotLinked":
+      return "This email is already linked to a different way of signing in. Please use the one you used before.";
+    case "Configuration":
+      return "Signing in isn't working right now. Please try again later.";
+    default:
+      return "We couldn't sign you in. Please try again.";
+  }
+}
+
+const HOW_IT_WORKS = [
+  "Add your résumé",
+  "We find jobs and check how well each fits",
+  "You keep track of where you are",
+];
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<LoginSearchParams>;
 }) {
-  const { callbackUrl } = await searchParams;
+  const params = await searchParams;
+  const callbackUrl = first(params.callbackUrl) || "/";
+  const errorCode = first(params.error);
+  const problem = errorCode ? signInProblem(errorCode) : null;
+  // Told to use the way they signed in before — show every way straight away.
+  const showOtherWays = errorCode === "OAuthAccountNotLinked" || errorCode === "AccountNotLinked";
+
+  const card = <SignInCard callbackUrl={callbackUrl} problem={problem} showOtherWays={showOtherWays} />;
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      {/* Ambient backdrop: dot grid + brand light wash */}
-      <div className="bg-grid pointer-events-none absolute inset-0" />
-      <div className="pointer-events-none absolute -top-48 left-1/4 h-[28rem] w-[46rem] -translate-x-1/2 rounded-full bg-[hsl(var(--brand-from))] opacity-[0.08] blur-3xl" />
-      <div className="pointer-events-none absolute -top-32 right-[-10rem] h-[24rem] w-[40rem] rounded-full bg-[hsl(var(--brand-to))] opacity-[0.10] blur-3xl" />
+    <main className="min-h-dvh">
+      <div className="mx-auto grid min-h-dvh w-full max-w-5xl items-center gap-10 px-4 py-10 sm:px-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-16">
+        <VStack gap={8}>
+          <Wordmark size="lg" />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center gap-10 px-4 py-10 sm:px-8 lg:grid lg:grid-cols-[1.15fr_minmax(0,25rem)] lg:items-center lg:gap-16">
-        {/* ── Value panel ─────────────────────────────────────────────── */}
-        <section className="flex flex-col gap-8">
-          <div className="animate-fade-in-up space-y-5">
-            <Wordmark size="lg" />
-            <h1 className="max-w-xl font-display text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">
-              Your next role, <span className="brand-text">hunted and evaluated</span> for you.
-            </h1>
-            <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
-              Upload your CV once. CareerOps scans the boards, grades every role
-              against your experience, and tracks each application — so you only
-              spend time on the jobs worth having.
-            </p>
-          </div>
+          <VStack gap={3}>
+            <Heading level={1} type="display-2" textWrap="balance">
+              Find jobs that fit you.
+            </Heading>
+            <Text type="large" color="secondary" textWrap="pretty" className="max-w-[34rem]">
+              Upload your résumé once. We find open jobs, tell you how well each one fits, and keep
+              track of your applications — all in one place.
+            </Text>
+          </VStack>
 
-          {/* Sign-in card surfaces here on mobile — value above, action immediately after. */}
-          <div className="lg:hidden">
-            <SignInCard providers={enabledProviders} callbackUrl={callbackUrl || "/"} />
-          </div>
+          <HowItWorks />
 
-          {/* Live product demo — self-running & pointer-reactive. */}
-          <div className="animate-fade-in-up [animation-delay:150ms]">
-            <LandingPreview />
-          </div>
+          {/* On small screens the sign-in card comes right after the pitch. */}
+          <div className="lg:hidden">{card}</div>
 
-          {/* How it works — three beats, one glance. */}
-          <div className="max-w-xl animate-fade-in-up [animation-delay:300ms]">
-            <ol className="grid gap-3 sm:grid-cols-3">
-              {STEPS.map(({ icon: Icon, title, text }, i) => (
-                <li
-                  key={title}
-                  className="group rounded-xl border border-border/70 bg-card/50 p-3.5 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-lg"
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="brand-gradient flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-bold text-white transition-transform duration-200 group-hover:scale-110">
-                      {i + 1}
-                    </span>
-                    <Icon className="h-4 w-4 text-muted-foreground transition-colors duration-200 group-hover:text-primary" />
-                  </div>
-                  <p className="font-display text-sm font-semibold">{title}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{text}</p>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Zap className="h-3.5 w-3.5 text-ctp-yellow" />
-              Setup takes about a minute — your CV does most of the work.
-            </p>
-          </div>
-        </section>
+          <ExampleJob />
+        </VStack>
 
-        {/* ── Sign-in card (desktop) ──────────────────────────────────── */}
-        <section className="hidden lg:block">
-          <SignInCard providers={enabledProviders} callbackUrl={callbackUrl || "/"} />
-        </section>
+        <div className="hidden lg:block">{card}</div>
       </div>
     </main>
   );
 }
 
-function SignInCard({
-  providers,
-  callbackUrl,
-}: {
-  providers: { id: string; name: string }[];
-  callbackUrl: string;
-}) {
+/** Three calm, numbered steps: what happens after signing in. */
+function HowItWorks() {
   return (
-    <div className="brand-glow relative w-full animate-fade-in-up space-y-6 rounded-2xl border border-border bg-card/70 p-7 backdrop-blur [animation-delay:100ms]">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <Logo className="h-11 w-11" />
-        <div className="space-y-1">
-          <h2 className="font-display text-xl font-bold tracking-tight">
-            Get started — it&apos;s free
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            One click to sign in. No forms, no credit card.
-          </p>
-        </div>
-      </div>
-
-      <LoginForm providers={providers} callbackUrl={callbackUrl} />
-
-      <ul className="space-y-2">
-        {CARD_POINTS.map((point) => (
-          <li key={point} className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-ctp-green" />
-            {point}
+    <VStack gap={3}>
+      <Text weight="semibold" id="how-it-works">
+        How it works
+      </Text>
+      <ol aria-labelledby="how-it-works" className="flex flex-col gap-3">
+        {HOW_IT_WORKS.map((step, i) => (
+          <li key={step} className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Text weight="semibold" color="inherit" hasTabularNumbers>
+                {i + 1}
+              </Text>
+            </span>
+            <Text>{step}</Text>
           </li>
         ))}
-      </ul>
+      </ol>
+    </VStack>
+  );
+}
 
-      <p className="text-center text-xs text-muted-foreground/80">
-        {BRAND.tagline}. Your data stays private to you — no spam, ever.
-      </p>
-    </div>
+function SignInCard({
+  callbackUrl,
+  problem,
+  showOtherWays,
+}: {
+  callbackUrl: string;
+  problem: string | null;
+  showOtherWays: boolean;
+}) {
+  return (
+    <Card padding={6} elevation="low">
+      <VStack gap={5}>
+        <VStack gap={1}>
+          <Heading level={2}>Sign in</Heading>
+          <Text color="secondary">New here? Signing in creates your free account.</Text>
+        </VStack>
+
+        {problem && <Banner status="error" role="alert" title={problem} collapsible={false} />}
+
+        <LoginForm providers={enabledProviders} callbackUrl={callbackUrl} isOtherWaysOpen={showOtherWays} />
+
+        <PrivacyNote />
+      </VStack>
+    </Card>
   );
 }

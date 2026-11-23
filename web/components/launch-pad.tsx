@@ -1,31 +1,19 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  ListChecks,
-  Lock,
-  MapPin,
-  PartyPopper,
-  Pencil,
-  Radar,
-  RotateCw,
-  Sparkles,
-  UserRound,
-} from "lucide-react";
+import { ArrowDown, ArrowRight, Check, ListChecks, Lock, MapPin, Search, Square } from "lucide-react";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { ProgressBar } from "@astryxdesign/core/ProgressBar";
+import { Skeleton } from "@astryxdesign/core/Skeleton";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Confetti } from "@/components/ui/confetti";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
-import type { OnboardingState } from "@/lib/types";
+import { matchText } from "@/lib/labels";
+import type { Application, OnboardingState } from "@/lib/types";
 import type { PipelineCommand } from "@/lib/pipeline";
 
 /**
@@ -41,24 +29,37 @@ interface LaunchPadProps {
   loading: boolean;
   /** The pipeline command currently running, if any. */
   running: PipelineCommand | null;
-  /** 0–100 live progress for the current run, or null before telemetry
-   * exists. Only ever rendered when `onboarding.complete` — pre-completion
-   * runs keep the plain spinner. */
+  /** 0–100 live progress for the current run, or null before telemetry exists. */
   percent: number | null;
   progressLabel: string | null;
-  onRun: (command: PipelineCommand) => void;
+  /** Search for jobs, then check how well the new ones fit. */
+  onFindJobs: () => void;
+  /** Check how well any not-yet-checked jobs fit. */
+  onCheckJobs: () => void;
+  /** Stop the current run. */
+  onStop: () => void;
+  /** The best-fitting job loaded so far — named in the "new best match" card. */
+  bestJob: Application | null;
+  /** Open (expand + scroll to) a job in the list. */
+  onShowJob: (num: string) => void;
 }
 
-const ICONS: Record<DashboardStep, React.ComponentType<{ className?: string }>> = {
-  profile: UserRound,
-  scan: Radar,
-  evaluate: Sparkles,
-};
-
-const COPY: Record<DashboardStep, { title: string; help: string }> = {
-  profile: { title: "Add your profile", help: "Upload your résumé — we fill in the rest." },
-  scan: { title: "Find open roles", help: "Search job boards for roles that match." },
-  evaluate: { title: "Score your matches", help: "Rate each role against your CV." },
+const COPY: Record<DashboardStep, { title: string; help: string; doneText: (o: OnboardingState) => string }> = {
+  profile: {
+    title: "Add your résumé and what you're looking for",
+    help: "We'll fill in most of it from your résumé.",
+    doneText: () => "Done",
+  },
+  scan: {
+    title: "Find open jobs",
+    help: "We search job sites, then check how well each job fits you.",
+    doneText: (o) => `Done — ${o.scan.count} job${o.scan.count === 1 ? "" : "s"} found`,
+  },
+  evaluate: {
+    title: "See how well each job fits",
+    help: "We compare every job with your résumé.",
+    doneText: (o) => `Done — ${o.evaluate.count} checked`,
+  },
 };
 
 const ORDER: DashboardStep[] = ["profile", "scan", "evaluate"];
@@ -73,49 +74,12 @@ function runningStep(running: PipelineCommand | null): DashboardStep | null {
   return null;
 }
 
-/**
- * Live percent bar for a post-onboarding re-run, reusing the same
- * brand-gradient bar onboarding's goal-gradient bar uses
- * (onboarding-flow.tsx:630-635) for visual consistency. Self-suppresses
- * (renders nothing) until real per-item telemetry exists, so callers don't
- * need their own null-guards beyond "is something running".
- */
-function RunProgress({
-  percent,
-  progressLabel,
-}: {
-  percent: number | null;
-  progressLabel: string | null;
-}) {
-  if (percent === null || progressLabel === null) return null;
-  return (
-    <div className="mt-1.5 max-w-[220px]">
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-        <div
-          className="brand-gradient h-full rounded-full transition-all duration-700 ease-out"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-      <p
-        className={cn(
-          "mt-1 truncate text-[0.68rem] text-muted-foreground",
-          percent >= 80 && "font-medium text-primary",
-        )}
-      >
-        {progressLabel} · {percent}%
-      </p>
-    </div>
-  );
-}
-
 interface StepView {
   key: DashboardStep;
   index: number;
   status: StepStatus;
   done: boolean;
-  summary: string | null;
   lockedReason: string | null;
-  ctaLabel: string;
   busy: boolean;
 }
 
@@ -133,14 +97,14 @@ function buildSteps(o: OnboardingState, running: PipelineCommand | null): StepVi
     let lockedReason: string | null = null;
     if (key === "scan" && !done && (!o.profile.done || !o.keywords.done)) {
       locked = true;
-      lockedReason = "Complete your profile first";
+      lockedReason = "Available after step 1";
     } else if (key === "evaluate") {
       if (!o.profile.done || !o.keywords.done) {
         locked = true;
-        lockedReason = "Complete your profile first";
+        lockedReason = "Available after step 1";
       } else if (!o.scan.done) {
         locked = true;
-        lockedReason = "Find roles with a scan first";
+        lockedReason = "Available after step 2";
       }
     }
 
@@ -150,159 +114,78 @@ function buildSteps(o: OnboardingState, running: PipelineCommand | null): StepVi
     else if (uiNextStep === key) status = "current";
     else status = "todo";
 
-    let summary: string | null = null;
-    if (done) {
-      if (key === "profile") summary = "Ready";
-      else if (key === "scan") summary = `${o.scan.count} role${o.scan.count === 1 ? "" : "s"}`;
-      else summary = `${o.evaluate.count} scored`;
-    }
-
-    const ctaLabel =
-      key === "profile"
-        ? done
-          ? "Edit"
-          : "Set up profile"
-        : key === "scan"
-          ? done
-            ? "Scan again"
-            : "Run scan"
-          : done
-            ? "Evaluate again"
-            : "Evaluate roles";
-
-    return {
-      key,
-      index,
-      status,
-      done,
-      summary,
-      lockedReason,
-      ctaLabel,
-      busy: active === key,
-    };
+    return { key, index, status, done, lockedReason, busy: active === key };
   });
 }
 
-function Indicator({ step }: { step: StepView }) {
-  const base = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold";
-  if (step.busy) {
-    return (
-      <span className={cn(base, "bg-primary/15 text-primary")}>
-        <Spinner className="h-4 w-4" />
-      </span>
-    );
-  }
+/** Step marker: number, check (done) or lock — always with words beside it. */
+function StepMarker({ step }: { step: StepView }) {
+  const base = "flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold";
   if (step.status === "done") {
     return (
-      <span className={cn(base, "bg-ctp-green/20 text-ctp-green")}>
-        <Check className="h-4 w-4" />
+      <span className={`${base} bg-primary text-primary-foreground`} aria-hidden="true">
+        <Icon icon={Check} size="md" />
       </span>
     );
   }
   if (step.status === "locked") {
     return (
-      <span className={cn(base, "border border-border text-muted-foreground")}>
-        <Lock className="h-3.5 w-3.5" />
+      <span className={`${base} border border-input text-muted-foreground`} aria-hidden="true">
+        <Icon icon={Lock} size="sm" />
       </span>
     );
   }
-  if (step.status === "current") {
-    return <span className={cn(base, "brand-gradient text-white")}>{step.index + 1}</span>;
-  }
-  return <span className={cn(base, "border border-border text-muted-foreground")}>{step.index + 1}</span>;
+  return (
+    <span
+      className={`${base} border-2 ${step.status === "current" ? "border-primary text-primary" : "border-input text-muted-foreground"}`}
+      aria-hidden="true"
+    >
+      {step.index + 1}
+    </span>
+  );
 }
 
-function StepAction({
-  step,
-  busyAny,
-  onRun,
+/** Live progress plus the way out, while a search or fit check runs. */
+function RunningCard({
+  running,
+  percent,
+  progressLabel,
+  onStop,
 }: {
-  step: StepView;
-  busyAny: boolean;
-  onRun: (command: PipelineCommand) => void;
+  running: PipelineCommand;
+  percent: number | null;
+  progressLabel: string | null;
+  onStop: () => void;
 }) {
-  // Locked steps explain why instead of offering an action.
-  if (step.status === "locked") {
-    return (
-      <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex" title={step.lockedReason ?? undefined}>
-        <Lock className="h-3 w-3" /> {step.lockedReason}
-      </span>
-    );
-  }
-
-  const primary = step.status === "current";
-  // The leading glyph for each step's button (re-run steps get a refresh arrow).
-  const StepIcon =
-    step.key === "profile"
-      ? Pencil
-      : step.done
-        ? RotateCw
-        : step.key === "scan"
-          ? Radar
-          : Sparkles;
-  const icon = <StepIcon className="h-3.5 w-3.5" />;
-
-  // Profile (which now also covers Job Matching prefs) is a navigation;
-  // everything else is an in-place action.
-  if (step.key === "profile") {
-    return (
-      <Link
-        href="/profile"
-        className={cn(
-          buttonVariants({ variant: primary ? "default" : step.done ? "ghost" : "outline", size: "sm" }),
-        )}
-      >
-        {step.done ? icon : null}
-        {step.ctaLabel}
-        {primary && <ArrowRight className="h-3.5 w-3.5" />}
-      </Link>
-    );
-  }
-
-  const onClick = step.key === "scan" ? () => onRun("scan:fallback") : () => onRun("evaluate:all");
-
-  const isPipeline = step.key === "scan" || step.key === "evaluate";
-  const disabled = isPipeline && (busyAny || step.busy);
-
+  const searching = runningStep(running) === "scan";
+  const title = searching ? "Looking for new jobs…" : "Checking how well each job fits…";
   return (
-    <Button
-      variant={primary ? "default" : step.done ? "ghost" : "outline"}
-      size="sm"
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {step.busy ? <Spinner className="h-3.5 w-3.5" /> : icon}
-      {step.busy ? (step.key === "scan" ? "Scanning…" : "Evaluating…") : step.ctaLabel}
-      {primary && !step.busy && <ArrowRight className="h-3.5 w-3.5" />}
-    </Button>
+    <Card padding={6}>
+      <VStack gap={4}>
+        <HStack gap={3} vAlign="center" hAlign="between" wrap="wrap">
+          <VStack gap={1} className="min-w-0 flex-1 basis-72">
+            <Heading level={2}>{title}</Heading>
+            <Text color="secondary">
+              {searching
+                ? "When the search is done, we'll check how well each new job fits you."
+                : progressLabel
+                  ? `${progressLabel}.`
+                  : "This usually takes a few minutes."}{" "}
+              You can leave this page — we&apos;ll keep working.
+            </Text>
+          </VStack>
+          <Button label="Stop" variant="secondary" icon={<Icon icon={Square} />} onClick={onStop} />
+        </HStack>
+        <ProgressBar label={title} isLabelHidden value={percent ?? 0} isIndeterminate={percent === null} />
+      </VStack>
+    </Card>
   );
 }
 
 // The highest score we've already celebrated for this user, persisted so the
-// reveal fires once per new personal best (a re-scan that surfaces a stronger
-// role re-triggers it) rather than on every dashboard load.
+// "new best match" message shows once per new personal best (a re-scan that
+// surfaces a stronger role shows it again) rather than on every load.
 const REVEAL_KEY = "careerops:reveal-topscore";
-
-/** Ease-out count-up from 0 → target over `duration` ms. The reward animation. */
-function useCountUp(target: number | null, duration = 800): number {
-  const [value, setValue] = React.useState(0);
-  React.useEffect(() => {
-    if (target == null) return;
-    let raf = 0;
-    let start: number | null = null;
-    const tick = (t: number) => {
-      if (start == null) start = t;
-      const p = Math.min(1, (t - start) / duration);
-      const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
-      setValue(target * eased);
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else setValue(target);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
-  return value;
-}
 
 export function LaunchPad({
   onboarding,
@@ -310,246 +193,278 @@ export function LaunchPad({
   running,
   percent,
   progressLabel,
-  onRun,
+  onFindJobs,
+  onCheckJobs,
+  onStop,
+  bestJob,
+  onShowJob,
 }: LaunchPadProps) {
-  const [open, setOpen] = React.useState(false);
-  // Read synchronously on the client (LaunchPad only renders after the
-  // dashboard's client-side onboarding fetch, so `window` is always defined
-  // here — the guard just keeps any SSR path safe).
-  const [seenScore, setSeenScore] = React.useState<number | null>(() => {
-    if (typeof window === "undefined") return null;
-    const raw = window.localStorage.getItem(REVEAL_KEY);
-    return raw == null ? null : Number(raw);
-  });
-  // Hooks must run unconditionally, so drive the count-up before any early
-  // return; it's only rendered in the reveal branch below.
-  const revealScore = useCountUp(onboarding?.topScore ?? null);
+  // Read after mount (not in the state initializer) so the server and first
+  // client render agree — avoids a hydration mismatch flashing the wrong card.
+  const [seenScore, setSeenScore] = React.useState<number | null | undefined>(undefined);
+  React.useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(REVEAL_KEY);
+      setSeenScore(raw == null ? null : Number(raw));
+    } catch {
+      setSeenScore(null);
+    }
+  }, []);
 
-  if (!onboarding) {
-    if (!loading) return null;
+  if (!onboarding || seenScore === undefined) {
+    if (!loading && onboarding === null) return null;
     return (
-      <Card className="p-5">
-        <Skeleton className="mb-4 h-4 w-40" />
-        <div className="space-y-2">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
+      <Card padding={6}>
+        <VStack gap={3}>
+          <Skeleton height={28} width="45%" />
+          <Skeleton height={20} width="70%" />
+          <Skeleton height={56} width={200} />
+        </VStack>
       </Card>
     );
   }
 
   const steps = buildSteps(onboarding, running);
-  const doneCount = steps.filter((s) => s.done).length;
   const busyAny = running !== null;
   const strong = onboarding.evaluate.strong;
-  // A strong match we haven't celebrated yet — fires once per new personal best.
+  const unchecked = Math.max(0, onboarding.scan.count - onboarding.evaluate.count);
   const hasNewBest =
     onboarding.topScore != null && (seenScore == null || onboarding.topScore > seenScore);
 
-  const dismissReveal = () => {
-    if (onboarding.topScore != null && typeof window !== "undefined") {
-      window.localStorage.setItem(REVEAL_KEY, String(onboarding.topScore));
+  const rememberBest = () => {
+    if (onboarding.topScore != null) {
+      try {
+        window.localStorage.setItem(REVEAL_KEY, String(onboarding.topScore));
+      } catch {
+        /* storage unavailable — the message just shows again next time */
+      }
     }
     setSeenScore(onboarding.topScore);
   };
 
-  // ── Complete + collapsed: reframe / reveal / steady state (in priority order). ──
-  if (onboarding.complete && !open) {
-    // R5 — Weak-scan reframe: setup is done, but nothing cleared the bar.
-    // For a career-switcher, "0 matches" reads as "I'm unqualified" — so frame
-    // the empty result as the product doing its job (screening out noise), and
-    // always offer a way to widen the net rather than a dead end.
+  // ── Set up: one calm card with the one thing to do next. ──
+  if (onboarding.complete) {
+    if (running) {
+      return <RunningCard running={running} percent={percent} progressLabel={progressLabel} onStop={onStop} />;
+    }
+
+    // A new best match: name the job and take them straight to it. The job
+    // itself is in the list below (marked "Your best match"), so this card
+    // only points at it rather than showing it a second time.
+    if (hasNewBest && bestJob && strong > 0) {
+      const others = Math.max(0, strong - 1);
+      const match = matchText(bestJob.score);
+      return (
+        <Card padding={6}>
+          <HStack gap={4} vAlign="center" hAlign="between" wrap="wrap">
+            <VStack gap={1} className="min-w-0 flex-1 basis-72">
+              <Heading level={2}>You have a new best match</Heading>
+              <Text>
+                <Text weight="semibold">{bestJob.role}</Text> at {bestJob.company}
+                {match && bestJob.score != null
+                  ? ` — ${match.label.toLowerCase()}, ${bestJob.score.toFixed(1)} out of 5.`
+                  : "."}
+              </Text>
+              {others > 0 && (
+                <Text color="secondary">
+                  Plus {others} more good match{others === 1 ? "" : "es"} in your list.
+                </Text>
+              )}
+            </VStack>
+            <Button
+              label="Show me this job"
+              variant="primary"
+              size="lg"
+              endContent={<Icon icon={ArrowDown} />}
+              onClick={() => {
+                rememberBest();
+                onShowJob(bestJob.num);
+              }}
+            />
+          </HStack>
+        </Card>
+      );
+    }
+
+    // Nothing cleared the bar: say so kindly and offer the fix, never a dead end.
     if (strong === 0) {
       return (
-        <Card className="animate-fade-in-up p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ctp-yellow/20">
-                <Radar className="h-5 w-5 text-ctp-yellow" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold">Nothing cleared your bar yet — and that&apos;s the point.</p>
-                <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
-                  We screened {onboarding.scan.count} role{onboarding.scan.count === 1 ? "" : "s"}; none were
-                  strong matches. We&apos;d rather show you zero great roles than a pile of mediocre ones —
-                  widen the net and we&apos;ll keep looking.
-                </p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(true)} title="Show setup steps">
-              <ChevronDown className="h-4 w-4" /> Steps
-            </Button>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Link href="/profile" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
-              <MapPin className="h-3.5 w-3.5" /> Widen locations
-            </Link>
-            <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
-              {runningStep(running) === "scan" ? (
-                <Spinner className="h-3.5 w-3.5" />
-              ) : (
-                <RotateCw className="h-3.5 w-3.5" />
-              )}
-              Scan again
-            </Button>
-          </div>
-          <RunProgress percent={percent} progressLabel={progressLabel} />
+        <Card padding={6}>
+          <VStack gap={4}>
+            <VStack gap={1}>
+              <Heading level={2}>No strong matches yet</Heading>
+              <Text color="secondary" className="max-w-[40rem]">
+                We checked {onboarding.scan.count} job{onboarding.scan.count === 1 ? "" : "s"}, but none fit
+                you well enough to recommend. Adding more places you&apos;d work — or allowing remote jobs —
+                usually helps.
+              </Text>
+            </VStack>
+            <HStack gap={3} wrap="wrap">
+              <Button
+                label="Add more cities or allow remote jobs"
+                href="/profile?from=nomatch#section-matching"
+                variant="primary"
+                size="lg"
+                icon={<Icon icon={MapPin} />}
+              />
+              <Button
+                label="Find new jobs"
+                variant="secondary"
+                size="lg"
+                icon={<Icon icon={Search} />}
+                onClick={onFindJobs}
+              />
+            </HStack>
+          </VStack>
         </Card>
       );
     }
 
-    // R4 — Reveal payoff: end the activation flow on a peak, not a to-do list.
-    // The score counts up from 0 as the dopamine hit. (A real social-proof line
-    // — "beats X% of applicants for roles like this" — belongs here too, but is
-    // gated on a benchmark data source that doesn't exist yet; omitted rather
-    // than faked.)
-    if (hasNewBest) {
-      const top = onboarding.topScore as number;
+    // Some jobs were found but not checked yet (e.g. a search finished while away).
+    if (unchecked > 0) {
       return (
-        <Card className="animate-fade-in-up overflow-hidden p-5">
-          <Confetti fire count={70} />
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="brand-gradient flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl text-white">
-              <span className="text-xl font-bold tabular-nums leading-none">{revealScore.toFixed(1)}</span>
-              <span className="text-[10px] font-medium opacity-80">/ 5</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <PartyPopper className="h-4 w-4 text-primary" />
-                <p className="font-display text-sm font-semibold">
-                  We found {strong} role{strong === 1 ? "" : "s"} that fit you.
-                </p>
-              </div>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Your top match scores {top.toFixed(1)}/5. Take a look — the rest are in your pipeline below.
-              </p>
-            </div>
-            <Button size="sm" onClick={dismissReveal} className="shrink-0">
-              See my matches <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+        <Card padding={6}>
+          <HStack gap={4} vAlign="center" hAlign="between" wrap="wrap">
+            <VStack gap={1} className="min-w-0 flex-1 basis-72">
+              <Heading level={2}>
+                {unchecked} job{unchecked === 1 ? " isn't" : "s aren't"} checked yet
+              </Heading>
+              <Text color="secondary">
+                We&apos;ll compare {unchecked === 1 ? "it" : "them"} with your résumé.
+              </Text>
+            </VStack>
+            <Button
+              label={unchecked === 1 ? "Check it now" : "Check them now"}
+              variant="primary"
+              size="lg"
+              icon={<Icon icon={ListChecks} />}
+              onClick={onCheckJobs}
+            />
+          </HStack>
         </Card>
       );
     }
 
-    // Steady state: everything's set up → slim status strip.
+    // Everyday state: the one thing to do next.
     return (
-      <Card className="animate-fade-in-up p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ctp-green/20">
-              <CheckCircle2 className="h-5 w-5 text-ctp-green" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold">You&apos;re all set</p>
-              <p className="text-xs text-muted-foreground">
-                {onboarding.scan.count} roles · {onboarding.evaluate.count} scored · re-run anytime
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => onRun("scan:fallback")} disabled={busyAny}>
-              {runningStep(running) === "scan" ? <Spinner className="h-3.5 w-3.5" /> : <Radar className="h-3.5 w-3.5" />}
-              Scan
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onRun("evaluate:all")} disabled={busyAny}>
-              {runningStep(running) === "evaluate" ? <Spinner className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
-              Evaluate
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(true)} title="Show setup steps">
-              <ChevronDown className="h-4 w-4" /> Steps
-            </Button>
-          </div>
-        </div>
-        <RunProgress percent={percent} progressLabel={progressLabel} />
+      <Card padding={6}>
+        <HStack gap={4} vAlign="center" hAlign="between" wrap="wrap">
+          <VStack gap={1} className="min-w-0 flex-1 basis-72">
+            <Heading level={2}>Look for new jobs</Heading>
+            <Text color="secondary">
+              New jobs are posted every day. We&apos;ll check how well each one fits you.
+            </Text>
+          </VStack>
+          <Button
+            label="Find new jobs"
+            variant="primary"
+            size="lg"
+            icon={<Icon icon={Search} />}
+            onClick={onFindJobs}
+          />
+        </HStack>
       </Card>
     );
   }
 
-  // ── Activation state: guided checklist with a single highlighted next step. ──
-  const headline = onboarding.complete
-    ? "Setup complete"
-    : onboarding.nextStep === "profile"
-      ? "Let's set up your job search"
-      : "Finish setup to see your matches";
-
+  // ── Setting up: three numbered steps, only the next one is highlighted. ──
+  const doneCount = steps.filter((s) => s.done).length;
   return (
-    <Card className="animate-fade-in-up p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <ListChecks className="h-4 w-4 text-primary" />
-          <div>
-            <h2 className="font-display text-sm font-semibold">{headline}</h2>
-            <p className="text-xs text-muted-foreground">
-              {onboarding.complete
-                ? "Re-run any step, or collapse this panel."
-                : "Do the highlighted step next — the rest unlock as you go."}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
-              <div
-                className="brand-gradient h-full rounded-full transition-all duration-500"
-                style={{ width: `${(doneCount / steps.length) * 100}%` }}
-              />
-            </div>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {doneCount}/{steps.length}
-            </span>
-          </div>
-          {onboarding.complete && (
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)} title="Collapse">
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
+    <Card padding={6}>
+      <VStack gap={5}>
+        <VStack gap={1}>
+          <Heading level={2}>Get set up in three steps</Heading>
+          <Text color="secondary">
+            {doneCount} of {steps.length} done
+          </Text>
+        </VStack>
 
-      <div className="space-y-1.5">
-        {steps.map((step) => {
-          const Icon = ICONS[step.key];
-          return (
-            <div
+        <VStack as="ol" gap={0}>
+          {steps.map((step) => (
+            <li
               key={step.key}
-              className={cn(
-                "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
-                step.status === "current"
-                  ? "border-primary/40 bg-primary/5 shadow-[0_0_24px_-12px_hsl(var(--brand-to)/0.6)]"
-                  : "border-transparent",
-                step.status === "locked" && "opacity-60",
-              )}
+              className="flex flex-wrap items-center gap-4 border-t border-border py-5 first:border-t-0 first:pt-0"
             >
-              <Indicator step={step} />
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <Icon className={cn("h-4 w-4 shrink-0", step.done ? "text-ctp-green" : "text-muted-foreground")} />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium">{COPY[step.key].title}</span>
-                    {step.summary && <span className="text-xs text-ctp-green">{step.summary}</span>}
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {step.status === "locked" ? step.lockedReason : COPY[step.key].help}
-                  </p>
-                  {/* Not gated on onboarding.complete: `onboarding` is a snapshot
-                      fetched once on load/onDone, so during the very run that
-                      would flip it true (e.g. the first evaluate that clears the
-                      last N/A score) it's still stale-false for the run's whole
-                      duration — which silently hid the bar for exactly the
-                      pre-completion runs a user watches most closely. `step.busy`
-                      alone is what actually means "this step is running now". */}
-                  {step.busy && <RunProgress percent={percent} progressLabel={progressLabel} />}
-                </div>
-              </div>
-              <div className="shrink-0">
-                <StepAction step={step} busyAny={busyAny} onRun={onRun} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              <StepMarker step={step} />
+              <VStack gap={0.5} className="min-w-0 flex-1 basis-56">
+                <Text weight="semibold" color={step.status === "locked" ? "secondary" : "primary"}>
+                  {COPY[step.key].title}
+                </Text>
+                <Text color="secondary">
+                  {step.done
+                    ? COPY[step.key].doneText(onboarding)
+                    : step.status === "locked"
+                      ? step.lockedReason
+                      : COPY[step.key].help}
+                </Text>
+              </VStack>
+              <StepAction step={step} busyAny={busyAny} onFindJobs={onFindJobs} onCheckJobs={onCheckJobs} />
+            </li>
+          ))}
+        </VStack>
+
+        {running && (
+          <ProgressBar
+            label={runningStep(running) === "scan" ? "Looking for jobs…" : "Checking how well each job fits…"}
+            value={percent ?? 0}
+            isIndeterminate={percent === null}
+          />
+        )}
+      </VStack>
     </Card>
+  );
+}
+
+function StepAction({
+  step,
+  busyAny,
+  onFindJobs,
+  onCheckJobs,
+}: {
+  step: StepView;
+  busyAny: boolean;
+  onFindJobs: () => void;
+  onCheckJobs: () => void;
+}) {
+  if (step.status === "locked") return null;
+  const primary = step.status === "current";
+  const variant = primary ? "primary" : "secondary";
+  const size = primary ? "lg" : "md";
+
+  // Profile (which also covers job search settings) is a navigation; the rest
+  // are in-place actions.
+  if (step.key === "profile") {
+    return (
+      <Button
+        label={step.done ? "Edit profile" : "Set up my profile"}
+        href="/profile"
+        variant={variant}
+        size={size}
+        endContent={primary ? <Icon icon={ArrowRight} /> : undefined}
+      />
+    );
+  }
+
+  const isScan = step.key === "scan";
+  return (
+    <Button
+      label={
+        step.busy
+          ? isScan
+            ? "Looking for jobs…"
+            : "Checking…"
+          : isScan
+            ? step.done
+              ? "Find new jobs"
+              : "Find jobs"
+            : "Check how well they fit"
+      }
+      variant={variant}
+      size={size}
+      icon={<Icon icon={isScan ? Search : ListChecks} />}
+      isLoading={step.busy}
+      isDisabled={busyAny && !step.busy}
+      onClick={isScan ? onFindJobs : onCheckJobs}
+    />
   );
 }

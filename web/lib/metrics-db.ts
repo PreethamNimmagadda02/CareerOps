@@ -45,7 +45,7 @@ export interface DashboardMetrics {
 // survive the JS template literal and reach Postgres as a real regex.
 
 export async function readDashboardMetrics(userId: string): Promise<DashboardMetrics> {
-  const [byStatusGroups, scoreAgg, pdfCount, applyCountRows, evaluatedTabCountRows, topMatchesRows] =
+  const [byStatusGroups, scoreAgg, pdfCount, applyCountRows, topMatchesRows] =
     await Promise.all([
       db.application.groupBy({
         by: ["status"],
@@ -59,24 +59,18 @@ export async function readDashboardMetrics(userId: string): Promise<DashboardMet
         _count: { _all: true },
       }),
       db.application.count({ where: { userId, pdf: { contains: "✅" } } }),
-      // "Apply now" tab: not skipped, and either an explicit APPLY_NOW verdict
-      // or (no verdict yet) a strong effective score ≥ 4 — the SQL form of
-      // dashboard `inTab`, legacy-score fallback included.
+      // "Apply now" tab: not yet acted on (still To review), and either an
+      // explicit APPLY_NOW verdict or (no verdict yet) a strong effective
+      // score ≥ 4 — the SQL form of dashboard `inTab`, legacy-score fallback
+      // included.
       db.$queryRaw<Array<{ count: bigint }>>`
         SELECT count(*) AS count FROM "Application"
-        WHERE "userId" = ${userId} AND status <> 'SKIP'::"AppStatus"
+        WHERE "userId" = ${userId} AND status = 'Evaluated'::"AppStatus"
           AND (
             recommendation = 'APPLY_NOW'
             OR (recommendation IS NULL
                 AND COALESCE("scoreNumeric", (substring(score from '(\\d+\\.?\\d*)/5'))::float) >= 4)
           )
-      `,
-      // "Evaluated" tab: an Evaluated row that actually has a score or verdict.
-      db.$queryRaw<Array<{ count: bigint }>>`
-        SELECT count(*) AS count FROM "Application"
-        WHERE "userId" = ${userId} AND status = 'Evaluated'::"AppStatus"
-          AND (COALESCE("scoreNumeric", (substring(score from '(\\d+\\.?\\d*)/5'))::float) IS NOT NULL
-               OR recommendation IS NOT NULL)
       `,
       // "Top matches" card: score strictly > 4
       db.$queryRaw<Array<{ count: bigint }>>`
@@ -86,7 +80,6 @@ export async function readDashboardMetrics(userId: string): Promise<DashboardMet
       `,
     ]);
   const applyCount = Number(applyCountRows[0]?.count ?? 0n);
-  const evaluatedTabCount = Number(evaluatedTabCountRows[0]?.count ?? 0n);
   const topMatchesCount = Number(topMatchesRows[0]?.count ?? 0n);
 
   const byStatus: Record<string, number> = {};
@@ -110,13 +103,19 @@ export async function readDashboardMetrics(userId: string): Promise<DashboardMet
     scored: scoreAgg._count._all,
   };
 
+  // Mutually exclusive groups (see TabCounts). "review" is every not-yet-acted
+  // row that isn't an "Apply now" — the same split as dashboard `inTab`.
   const tabCounts: TabCounts = {
     all: total,
     apply: applyCount,
-    evaluated: evaluatedTabCount,
-    applied: byStatus.applied ?? 0,
-    interview: byStatus.interview ?? 0,
-    skip: byStatus.skip ?? 0,
+    review: Math.max(0, (byStatus.evaluated ?? 0) - applyCount),
+    progress:
+      (byStatus.applied ?? 0) +
+      (byStatus.responded ?? 0) +
+      (byStatus.interview ?? 0) +
+      (byStatus.offer ?? 0),
+    skip: (byStatus.skip ?? 0) + (byStatus.discarded ?? 0),
+    rejected: byStatus.rejected ?? 0,
   };
 
   return { metrics, tabCounts };

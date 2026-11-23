@@ -12,7 +12,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@astryxdesign/core": "^0.7.17",
+    "@astryxdesign/theme-neutral": "^0.7.17",
     "@auth/prisma-adapter": "^2.11.2",
+    "@stylexjs/stylex": "^0.19.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "ioredis": "^5.11.1",
@@ -29,6 +32,7 @@
     "unpdf": "^1.6.2"
   },
   "devDependencies": {
+    "@astryxdesign/cli": "^0.7.17",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",

@@ -1,114 +1,102 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import { Button } from "@astryxdesign/core/Button";
+import { useToast as useAstryxToast, ToastViewport } from "@astryxdesign/core/Toast";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 
-import { cn } from "@/lib/utils";
+/**
+ * App-level toast API (`toast.success(title, description)` etc.) rendered by
+ * the Astryx toast system — positioning, stacking, auto-dismiss, swipe and
+ * screen-reader announcements all come from Astryx. Errors stay until the
+ * user dismisses them, so nobody misses a failure; other messages stay up for
+ * ten seconds, long enough to read slowly. An optional action ("Try again")
+ * sits on the toast itself.
+ */
 
-type ToastVariant = "success" | "error" | "info";
-
-interface ToastItem {
-  id: number;
-  title: string;
-  description?: string;
-  variant: ToastVariant;
+interface ToastAction {
+  label: string;
+  onClick: () => void;
 }
 
 interface ToastInput {
   title: string;
   description?: string;
-  variant?: ToastVariant;
-  /** Auto-dismiss after N ms (0 keeps it until closed). Default 4000. */
+  variant?: "success" | "error" | "info";
+  /** Auto-dismiss after N ms (0 keeps it until closed). */
   duration?: number;
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
   toast: (input: ToastInput) => void;
-  success: (title: string, description?: string) => void;
-  error: (title: string, description?: string) => void;
-  info: (title: string, description?: string) => void;
+  success: (title: string, description?: string, action?: ToastAction) => void;
+  error: (title: string, description?: string, action?: ToastAction) => void;
+  info: (title: string, description?: string, action?: ToastAction) => void;
 }
 
-const ToastContext = React.createContext<ToastContextValue | null>(null);
+function ToastBody({ title, description }: { title: string; description?: string }) {
+  return (
+    <VStack gap={0.5}>
+      <Text weight="semibold">{title}</Text>
+      {description ? <Text color="secondary">{description}</Text> : null}
+    </VStack>
+  );
+}
 
 export function useToast(): ToastContextValue {
-  const ctx = React.useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within a ToastProvider");
-  return ctx;
+  const show = useAstryxToast();
+  return React.useMemo<ToastContextValue>(() => {
+    const toast = ({ title, description, variant = "info", duration, action }: ToastInput) => {
+      const isError = variant === "error";
+      // Read only when the action is pressed, after `show` has returned.
+      const dismiss: () => void = show({
+        body: <ToastBody title={title} description={description} />,
+        type: isError ? "error" : "info",
+        // A toast with an action waits for the person, like an error does.
+        isAutoHide: duration === 0 || action ? false : !isError,
+        autoHideDuration: duration && duration > 0 ? duration : 10000,
+        endContent: action ? (
+          <Button
+            label={action.label}
+            variant="secondary"
+            onClick={() => {
+              dismiss();
+              action.onClick();
+            }}
+          />
+        ) : undefined,
+      });
+    };
+    return {
+      toast,
+      success: (title, description, action) =>
+        toast({ title, description, variant: "success", action }),
+      error: (title, description, action) => toast({ title, description, variant: "error", action }),
+      info: (title, description, action) => toast({ title, description, variant: "info", action }),
+    };
+  }, [show]);
 }
 
-const VARIANT_META: Record<ToastVariant, { icon: React.ComponentType<{ className?: string }>; color: string; ring: string }> = {
-  success: { icon: CheckCircle2, color: "text-ctp-green", ring: "border-ctp-green/30" },
-  error: { icon: AlertCircle, color: "text-ctp-red", ring: "border-ctp-red/30" },
-  info: { icon: Info, color: "text-ctp-sky", ring: "border-ctp-sky/30" },
-};
-
+/** Mounts the Astryx toast viewport once at the app root. */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<ToastItem[]>([]);
-  const idRef = React.useRef(0);
-
-  const remove = React.useCallback((id: number) => {
-    setToasts((list) => list.filter((t) => t.id !== id));
+  // On phones the bottom tab bar (64px + the home-indicator area) sits where
+  // toasts land — lift them above it so neither hides the other.
+  const [phone, setPhone] = React.useState(false);
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setPhone(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
   }, []);
 
-  const toast = React.useCallback(
-    (input: ToastInput) => {
-      const id = ++idRef.current;
-      const variant = input.variant ?? "info";
-      setToasts((list) => [...list, { id, title: input.title, description: input.description, variant }]);
-      const duration = input.duration ?? 4000;
-      if (duration > 0) window.setTimeout(() => remove(id), duration);
-    },
-    [remove],
-  );
-
-  const value = React.useMemo<ToastContextValue>(
-    () => ({
-      toast,
-      success: (title, description) => toast({ title, description, variant: "success" }),
-      error: (title, description) => toast({ title, description, variant: "error", duration: 6000 }),
-      info: (title, description) => toast({ title, description, variant: "info" }),
-    }),
-    [toast],
-  );
-
+  // Children render inside the viewport so `useToast()` resolves to it
+  // (instead of Astryx's fallback body-mounted viewport).
   return (
-    <ToastContext.Provider value={value}>
+    <ToastViewport position="bottomEnd" inset={phone ? { bottom: 88 } : undefined}>
       {children}
-      <div className="pointer-events-none fixed right-4 top-4 z-[60] flex w-full max-w-sm flex-col gap-2">
-        {toasts.map((t) => (
-          <ToastCard key={t.id} toast={t} onClose={() => remove(t.id)} />
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
-}
-
-function ToastCard({ toast, onClose }: { toast: ToastItem; onClose: () => void }) {
-  const meta = VARIANT_META[toast.variant];
-  const Icon = meta.icon;
-  return (
-    <div
-      role="status"
-      className={cn(
-        "pointer-events-auto flex animate-toast-in items-start gap-3 rounded-lg border bg-card p-3 shadow-xl",
-        meta.ring,
-      )}
-    >
-      <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", meta.color)} />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium leading-snug">{toast.title}</p>
-        {toast.description && (
-          <p className="mt-0.5 break-words text-xs text-muted-foreground">{toast.description}</p>
-        )}
-      </div>
-      <button
-        onClick={onClose}
-        className="-mr-1 -mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        aria-label="Dismiss"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
+    </ToastViewport>
   );
 }

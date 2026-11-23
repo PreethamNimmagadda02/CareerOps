@@ -1,38 +1,27 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 
-import { Providers } from "@/components/providers";
+// Order matters: the cascade-layer declaration must load before any other CSS.
+import "./layers.css";
 import "./globals.css";
 
-/** Brand body face — humanist, highly legible at data-dense sizes. */
-const dmSans = localFont({
-  src: "./fonts/dm-sans-latin.woff2",
-  weight: "100 1000",
-  display: "swap",
-  variable: "--font-sans",
-});
-
-/** Brand display face — geometric, used for the wordmark and headings. */
-const spaceGrotesk = localFont({
-  src: "./fonts/space-grotesk-latin.woff2",
-  weight: "300 700",
-  display: "swap",
-  variable: "--font-display",
-});
+import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: {
-    default: "CareerOps — The modern way to land your next role",
+    default: "CareerOps — Find jobs that fit you",
     template: "%s · CareerOps",
   },
   description:
-    "CareerOps is the modern solution for job hunting and career building — it discovers roles that fit you, scores every match against your CV with AI, and tracks your whole pipeline in one command center.",
+    "Upload your résumé once. CareerOps finds open jobs, tells you how well each one fits, and keeps track of every application in one place.",
   applicationName: "CareerOps",
-  keywords: ["job search", "career", "applications", "CV", "AI", "job tracker"],
+  keywords: ["job search", "career", "applications", "résumé", "job tracker"],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b1417",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111111" },
+  ],
 };
 
 export default function RootLayout({
@@ -41,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen font-sans antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

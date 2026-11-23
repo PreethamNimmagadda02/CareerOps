@@ -1,189 +1,65 @@
-@tailwind base;
+/*
+ * Astryx design system + Tailwind v3 coexistence.
+ * Layer order is declared in ./layers.css (imported before this file).
+ * Theme tokens + fonts come from ../astryx-themes.ts (careerops theme).
+ */
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+
+@layer tw-preflight {
+  @tailwind base; /* layered: Astryx components win over preflight */
+}
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; /* unlayered: utility classes still win when applied */
 
-@layer base {
-  :root {
-    /* CarrerOps "command center" — light.
-       Cool teal-slate neutrals (biased toward the signal-teal accent, not a
-       neutral grey) on near-white, with a single bold signal-teal primary. */
-    --background: 180 20% 99%;
-    --foreground: 200 28% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 200 28% 10%;
-    --primary: 174 84% 32%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 185 16% 94%;
-    --secondary-foreground: 200 28% 12%;
-    --muted: 185 16% 94%;
-    --muted-foreground: 197 13% 42%;
-    --accent: 185 16% 93%;
-    --accent-foreground: 200 28% 12%;
-    --destructive: 350 84% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 186 16% 89%;
-    --input: 186 16% 89%;
-    --ring: 174 84% 32%;
-    --radius: 0.75rem;
-
-    /* Brand identity gradient: signal teal → cyan. */
-    --brand-from: 174 80% 40%;
-    --brand-to: 190 82% 44%;
-
-    /* Semantic accent palette (verdicts, scores, console) — kept distinct
-       from the teal accent so state reads on its own. */
-    --ctp-green: 152 62% 40%;
-    --ctp-yellow: 40 92% 40%;
-    --ctp-red: 350 84% 50%;
-    --ctp-blue: 217 82% 52%;
-    --ctp-sky: 190 82% 40%;
-    --ctp-mauve: 265 78% 56%;
-  }
-
-  .dark {
-    /* CarrerOps "command center" — dark.
-       Deep teal-charcoal surfaces (hue-shifted toward the accent, not indigo),
-       a luminous signal-teal primary, and a teal→cyan brand gradient. */
-    --background: 200 28% 6%;
-    --foreground: 168 22% 92%;
-    --card: 200 24% 10%;
-    --card-foreground: 168 22% 92%;
-    --primary: 173 79% 47%;
-    --primary-foreground: 174 80% 7%;
-    --secondary: 200 18% 16%;
-    --secondary-foreground: 168 22% 92%;
-    --muted: 200 18% 13%;
-    --muted-foreground: 185 12% 64%;
-    --accent: 200 16% 18%;
-    --accent-foreground: 168 22% 92%;
-    --destructive: 350 84% 68%;
-    --destructive-foreground: 200 28% 7%;
-    --border: 200 16% 17%;
-    --input: 200 16% 20%;
-    --ring: 173 79% 47%;
-
-    /* Brand identity gradient: signal teal → cyan. */
-    --brand-from: 173 78% 46%;
-    --brand-to: 189 80% 46%;
-
-    /* Semantic accent palette (verdicts, scores, console). */
-    --ctp-green: 152 62% 62%;
-    --ctp-yellow: 40 92% 66%;
-    --ctp-red: 350 84% 70%;
-    --ctp-blue: 217 88% 72%;
-    --ctp-sky: 190 82% 60%;
-    --ctp-mauve: 265 84% 78%;
-  }
-}
-
-@layer components {
-  /* Brand gradient fill — logo tile, progress bars, hero accents. */
-  .brand-gradient {
-    background-image: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
-  }
-  /* Gradient text — the "Ops" in the wordmark and headline accents. */
-  .brand-text {
-    background-image: linear-gradient(120deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  /* Soft ambient glow behind brand surfaces (login card, launch pad). */
-  .brand-glow {
-    box-shadow:
-      0 0 0 1px hsl(var(--brand-to) / 0.14),
-      0 18px 60px -28px hsl(var(--brand-to) / 0.5);
-  }
-  /* Frosted surface — sticky chrome, floating panels. */
-  .glass {
-    background-color: hsl(var(--background) / 0.72);
-    backdrop-filter: blur(12px) saturate(1.4);
-    -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  }
-  /* Subtle dot grid for hero/empty areas. */
-  .bg-grid {
-    background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
-    background-size: 22px 22px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%);
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
+@layer tw-preflight {
   html {
-    scrollbar-gutter: stable;
+    /* Never let iOS/Android inflate text unpredictably — users' own zoom still works. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
+
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings:
-      "rlig" 1,
-      "calt" 1;
-    text-rendering: optimizeLegibility;
+    background-color: var(--color-background-body);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-body), system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
   ::selection {
-    background: hsl(var(--brand-to) / 0.35);
+    background: var(--color-accent-muted);
   }
-  /* Slim, theme-aware scrollbars for panels and the console. */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--accent)) transparent;
-  }
-  *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  *::-webkit-scrollbar-thumb {
-    border-radius: 9999px;
-    background: hsl(var(--accent));
-  }
-  *::-webkit-scrollbar-track {
-    background: transparent;
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }
 
-/* Markdown report rendering */
-.markdown-body h1 {
-  @apply mb-3 mt-6 font-display text-2xl font-bold text-primary;
+/*
+ * Reading-size floor (unlayered, so it beats the layered theme tokens).
+ *
+ * The generated theme shrinks every step on touch screens under 1024px
+ * (18px body → 16px, small → 14px) and uses 15px for "small" text on
+ * desktop. Many people using this read on a phone, without their glasses:
+ * body text stays 18px everywhere, and nothing drops below 16px. The larger
+ * display steps (3xl and up) keep the theme's touch scale.
+ */
+[data-astryx-theme="careerops"] {
+  --_scaled-font-size-xs: min(calc(0.875rem * var(--_dynamic-type-caption1, 1)), var(--_scaled-font-size-sm));
+  --_scaled-font-size-sm: min(calc(1rem * var(--_dynamic-type-footnote, 1)), var(--_scaled-font-size-base));
+  --_scaled-font-size-base: min(calc(1.125rem * var(--_dynamic-type-body, 1)), var(--_scaled-font-size-lg));
+  --_scaled-font-size-lg: min(calc(1.375rem * var(--_dynamic-type-title3, 1)), var(--_scaled-font-size-xl));
+  --_scaled-font-size-xl: min(calc(1.625rem * var(--_dynamic-type-title2, 1)), var(--_scaled-font-size-2xl));
+  --_scaled-font-size-2xl: min(calc(1.9375rem * var(--_dynamic-type-title1, 1)), var(--_scaled-font-size-3xl));
 }
-.markdown-body h2 {
-  @apply mb-2 mt-5 font-display text-xl font-semibold text-ctp-mauve;
-}
-.markdown-body h3 {
-  @apply mb-2 mt-4 font-display text-lg font-semibold text-ctp-sky;
-}
-.markdown-body p {
-  @apply my-2 leading-relaxed text-foreground/90;
-}
-.markdown-body ul {
-  @apply my-2 list-disc space-y-1 pl-6;
-}
-.markdown-body ol {
-  @apply my-2 list-decimal space-y-1 pl-6;
-}
-.markdown-body a {
-  @apply text-ctp-blue underline underline-offset-2 hover:text-ctp-sky;
-}
-.markdown-body strong {
-  @apply font-semibold text-foreground;
-}
-.markdown-body hr {
-  @apply my-5 border-border;
-}
-.markdown-body code {
-  @apply rounded bg-muted px-1.5 py-0.5 text-sm text-ctp-yellow;
-}
-.markdown-body table {
-  @apply my-4 w-full border-collapse overflow-hidden rounded-md text-sm;
-}
-.markdown-body th {
-  @apply border border-border bg-muted px-3 py-2 text-left font-semibold;
-}
-.markdown-body td {
-  @apply border border-border px-3 py-2 align-top;
-}
-.markdown-body blockquote {
-  @apply my-3 border-l-2 border-primary pl-4 italic text-muted-foreground;
+
+/* Menu rows are tap targets: at least 48px tall, on every screen. */
+[data-astryx-theme="careerops"] :is([role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]) {
+  min-height: 48px;
 }

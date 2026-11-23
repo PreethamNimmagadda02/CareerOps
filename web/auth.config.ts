@@ -48,7 +48,10 @@ export const authConfig = {
   // Required when running behind a proxy / on AWS (ALB, CloudFront, etc.) where
   // the Host header is set by infrastructure rather than the Vercel runtime.
   trustHost: true,
-  pages: { signIn: "/login" },
+  // Sign-in problems of both kinds come back to the login page as
+  // `/login?error=<type>`, where they're explained in plain words — never
+  // Auth.js's own unstyled error screen.
+  pages: { signIn: "/login", error: "/login" },
   session: { strategy: "jwt" },
   providers,
   callbacks: {

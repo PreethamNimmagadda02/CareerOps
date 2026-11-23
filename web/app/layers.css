@@ -1,0 +1,12 @@
+/*
+ * Cascade-layer order — imported FIRST in app/layout.tsx.
+ *
+ * Next.js hoists @import content above inline CSS, so this declaration has to
+ * live in its own file or it arrives too late. Order (lowest → highest):
+ *   reset         Astryx's :where() reset
+ *   tw-preflight  Tailwind v3 base, layered so it can't clobber components
+ *   astryx-base   Astryx component styles
+ *   astryx-theme  Theme token overrides
+ * Tailwind utilities stay unlayered, so a className on a component still wins.
+ */
+@layer reset, tw-preflight, astryx-base, astryx-theme;

@@ -1,127 +1,109 @@
-import { Banknote, Globe2, Quote, Tag } from "lucide-react";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Link } from "@astryxdesign/core/Link";
+import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
+import { ProgressBar } from "@astryxdesign/core/ProgressBar";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 
-import { RecommendationBadge } from "@/components/status-badge";
 import { GapQuest } from "@/components/gap-quest";
+import { ADVICE_TEXT } from "@/lib/labels";
 import type { Application, ScoreDimensionView } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
-function barTone(score: number): string {
-  if (score >= 4) return "bg-ctp-green";
-  if (score >= 3) return "bg-ctp-yellow";
-  return "bg-ctp-red";
+function barVariant(score: number): "success" | "warning" | "neutral" {
+  if (score >= 4) return "success";
+  if (score >= 3) return "warning";
+  return "neutral";
 }
 
-/** Horizontal 1–5 bars for the five scored dimensions behind the overall score. */
+/** The five factors behind the overall rating, each with its score in words. */
 function ScoreBreakdown({ dimensions }: { dimensions: ScoreDimensionView[] }) {
   return (
-    <div className="space-y-2">
+    <VStack gap={4}>
+      <VStack gap={0.5}>
+        <Heading level={4}>How well each part fits</Heading>
+        <Text color="secondary">Each part counts for a share of the overall fit.</Text>
+        {/* Its own line, with a full-size tap area. */}
+        <Link
+          href="/help#fit"
+          isStandalone
+          className="inline-flex min-h-11 items-center self-start"
+        >
+          What do the dots and numbers mean?
+        </Link>
+      </VStack>
       {dimensions.map((d) => (
-        <div key={d.key} title={d.reason}>
-          <div className="mb-0.5 flex items-baseline justify-between gap-2 text-xs">
-            <span className="text-muted-foreground">
-              {d.label}{" "}
-              <span className="text-muted-foreground/50">{Math.round(d.weight * 100)}%</span>
-            </span>
-            <span className="font-semibold tabular-nums">{d.score}/5</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn("h-full rounded-full transition-all", barTone(d.score))}
-              style={{ width: `${(d.score / 5) * 100}%` }}
-            />
-          </div>
-        </div>
+        <VStack key={d.key} gap={1}>
+          <ProgressBar
+            label={`${d.label} (counts for ${Math.round(d.weight * 100)}%)`}
+            value={d.score}
+            max={5}
+            hasValueLabel
+            // Non-breaking spaces: "5 out of 5" never wraps word by word.
+            formatValueLabel={(v) => `${v}\u00a0out\u00a0of\u00a05`}
+            variant={barVariant(d.score)}
+          />
+          {d.reason ? <Text color="secondary">{d.reason}</Text> : null}
+        </VStack>
       ))}
-    </div>
-  );
-}
-
-function MetaChip({
-  icon: Icon,
-  children,
-  title,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-  title?: string;
-}) {
-  return (
-    <span
-      title={title}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1 text-xs text-muted-foreground"
-    >
-      <Icon className="h-3 w-3 shrink-0 text-muted-foreground/60" />
-      <span className="truncate">{children}</span>
-    </span>
+    </VStack>
   );
 }
 
 /**
- * Row-expansion panel: everything the evaluation learned about a role —
- * verdict + rationale, TL;DR, blocking gaps, dimension scores, and meta —
- * without opening the full report.
+ * Everything the rating learned about a job — advice, a short summary,
+ * missing requirements, the factor breakdown and job facts — without opening
+ * the full report.
  */
 export function ApplicationInsights({ app }: { app: Application }) {
   const hasDims = (app.dimensions?.length ?? 0) > 0;
   const hasGaps = (app.gaps?.length ?? 0) > 0;
-  const hasAnything =
-    hasDims || hasGaps || app.tldr || app.recommendation || app.comp || app.archetype;
+  const hasFacts = Boolean(app.archetype || app.remote || app.comp);
+  const hasAnything = hasDims || hasGaps || app.tldr || app.recommendation || hasFacts;
 
   if (!hasAnything) {
     return (
-      <p className="py-1 text-sm text-muted-foreground">
-        No parsed insights for this role yet — open the report for the full evaluation, or run{" "}
-        <code className="rounded bg-muted px-1 py-0.5 text-xs">npm run db:backfill-insights</code>.
-      </p>
+      <Text color="secondary">
+        There&apos;s no summary for this job yet. Open the full report to read the whole assessment.
+      </Text>
     );
   }
 
+  const advice = app.recommendation ? ADVICE_TEXT[app.recommendation] : undefined;
+
   return (
-    <div className="grid gap-x-8 gap-y-4 py-1 md:grid-cols-[1.2fr_1fr]">
-      <div className="min-w-0 space-y-3.5">
-        {/* Verdict + rationale */}
-        {app.recommendation && (
-          <div className="flex flex-wrap items-center gap-2">
-            <RecommendationBadge recommendation={app.recommendation} />
-            {app.recommendationNote && (
-              <span className="text-sm text-muted-foreground">{app.recommendationNote}</span>
+    <div className="grid gap-8 md:grid-cols-2">
+      <VStack gap={6} className="min-w-0">
+        {/* The row already shows "Our advice: …" — here we say why. */}
+        {(app.recommendationNote || advice || app.tldr) && (
+          <VStack gap={2}>
+            <Heading level={4}>Why we suggest this</Heading>
+            {(app.recommendationNote || advice) && (
+              <Text>{app.recommendationNote || advice?.hint}</Text>
             )}
-          </div>
+            {app.tldr && <Text color="secondary">{app.tldr}</Text>}
+          </VStack>
         )}
 
-        {/* TL;DR */}
-        {app.tldr && (
-          <div className="flex gap-2">
-            <Quote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-            <p className="text-sm leading-relaxed text-foreground/90">{app.tldr}</p>
-          </div>
+        {hasFacts && (
+          <MetadataList
+            title={<Heading level={4}>About the job</Heading>}
+            label={{ position: "top" }}
+          >
+            {app.archetype ? (
+              <MetadataListItem label="Type of role">{app.archetype}</MetadataListItem>
+            ) : null}
+            {app.remote ? (
+              <MetadataListItem label="Where you'd work">{app.remote}</MetadataListItem>
+            ) : null}
+            {app.comp ? <MetadataListItem label="Pay">{app.comp}</MetadataListItem> : null}
+          </MetadataList>
         )}
 
-        {/* Blocking gaps — an interactive quest (Commitment + Zeigarnik) */}
-        {hasGaps && <GapQuest gaps={app.gaps!} currentScore={app.score} />}
+        {hasGaps && <GapQuest gaps={app.gaps!} />}
+      </VStack>
 
-        {/* Meta chips */}
-        <div className="flex flex-wrap gap-1.5">
-          {app.archetype && <MetaChip icon={Tag}>{app.archetype}</MetaChip>}
-          {app.remote && (
-            <MetaChip icon={Globe2} title={app.remote}>
-              {app.remote}
-            </MetaChip>
-          )}
-          {app.comp && (
-            <MetaChip icon={Banknote} title={app.comp}>
-              {app.comp}
-            </MetaChip>
-          )}
-        </div>
-      </div>
-
-      {/* Score breakdown */}
       {hasDims && (
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Why this score
-          </p>
           <ScoreBreakdown dimensions={app.dimensions!} />
         </div>
       )}

@@ -1,5 +1,7 @@
 import { AppStatus } from "@prisma/client";
 
+import { statusText } from "./labels";
+
 /**
  * Status normalization + presentation. Kept in sync with the Go dashboard's
  * NormalizeStatus / StatusPriority (which mirror templates/states.yml).
@@ -93,6 +95,7 @@ export function statusPriority(status: string): number {
   }
 }
 
+/** What the user sees for a normalized status ("evaluated" → "To review"). */
 export function statusLabel(norm: string): string {
-  return norm.charAt(0).toUpperCase() + norm.slice(1);
+  return statusText(norm).label;
 }

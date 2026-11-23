@@ -1,607 +1,197 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { MetadataListItem } from "@astryxdesign/core/MetadataList";
+import { RadioListItem } from "@astryxdesign/core/RadioList";
+import { Skeleton } from "@astryxdesign/core/Skeleton";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+
+import { Page, PageHeader } from "@/components/page";
 import {
-  AlertCircle,
-  ArrowLeft,
-  Briefcase,
-  Check,
-  Download,
-  ExternalLink,
-  FileText,
-  FolderGit2,
-  GraduationCap,
-  MapPin,
-  Pencil,
-  Plus,
-  Sparkles,
-  Target,
-  Trash2,
-  Upload,
-  User as UserIcon,
-  X,
-  Zap,
-} from "lucide-react";
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
+  RESUME_ANCHOR,
+  SECTION_ALIASES,
+  SECTION_NAV,
+  buildChecklist,
+  buildSectionStates,
+  isFilled,
+  isSearchReady,
+  jobTitlesNeedSaving,
+  mergedJobTitles,
+} from "@/components/profile/completeness";
+import {
+  BulletList,
+  ChoiceList,
+  CurrencyField,
+  EntryBlock,
+  EntryGroup,
+  FieldGrid,
+  InfoItem,
+  InfoList,
+  LinesField,
+  MoreDetails,
+  SectionCard,
+  TagField,
+  TagItem,
+  TextAreaField,
+  TextField,
+  TimeZoneField,
+  ValueText,
+  currencyLabel,
+  detectTimeZone,
+  timeZoneLabel,
+} from "@/components/profile/fields";
+import { ResumeCard } from "@/components/profile/resume-card";
+import { CompletenessCard, SectionList, type SectionMarker } from "@/components/profile/section-nav";
+import {
+  SECTION_LABEL,
+  type Archetype,
+  type Certification,
+  type CvData,
+  type Education,
+  type Experience,
+  type Language,
+  type ProfileData,
+  type Project,
+  type ProofPoint,
+  type SectionKey,
+  type SkillGroup,
+  type UserData,
+} from "@/components/profile/types";
 import { useToast } from "@/components/ui/toast";
+import { friendlyError } from "@/lib/errors";
 import { buildMatchingPrefs } from "@/lib/matching-defaults";
-import { cn } from "@/lib/utils";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+const PAGE_DESCRIPTION = "Keep this up to date so we can find the right jobs for you.";
 
-interface UserData {
-  id: string; name: string | null; email: string | null;
-  image: string | null; resumeKey: string | null; resumeUpdatedAt: string | null;
-}
-
-interface MatchingData {
-  role_domains?: string[];
-  role_nouns?: string[];
-  include_titles?: string[];
-  exclude_titles?: string[];
-  strong_titles?: string[];
-  seniority_exclusions?: string[];
-  preferred_locations?: string[];
-  remote_ok?: boolean;
-  eligible_locations?: string[];
-}
-
-interface ProfileData {
-  candidate?: { full_name?: string; email?: string; phone?: string; location?: string; linkedin?: string; portfolio_url?: string; github?: string; twitter?: string };
-  target_roles?: { primary?: string[]; archetypes?: Array<{ name: string; level: string; fit: string }>; avoid?: string[] };
-  narrative?: { headline?: string; exit_story?: string; superpowers?: string[]; proof_points?: Array<{ name: string; url?: string; hero_metric: string }> };
-  compensation?: { target_range?: string; currency?: string; minimum?: string; location_flexibility?: string };
-  location?: { city?: string; country?: string; timezone?: string; visa_status?: string; onsite_availability?: string };
-  matching?: MatchingData;
-}
-
-interface CvData {
-  summary?: string;
-  skills?: Array<{ category: string; items: string[] }>;
-  experience?: Array<{ company: string; role: string; location: string; period: string; highlights: string[] }>;
-  education?: Array<{ institution: string; degree: string; field: string; period: string; details: string }>;
-  certifications?: Array<{ name: string; issuer: string; year: string }>;
-  projects?: Array<{ name: string; description: string; url: string; highlights: string[] }>;
-  languages?: Array<{ language: string; proficiency: string }>;
-}
-
-// ── Profile completeness ─────────────────────────────────────────────────────
-//
-// Lightweight client-side mirror of the server-side readiness checks
-// (src/lib/profile-validation.ts). Kept intentionally simple — this only
-// drives UI hints (progress bar, "what's missing" chips); the server remains
-// the source of truth for whether a scan/evaluation is actually allowed to run.
-
-function isFilled(s: string | undefined): boolean {
-  return typeof s === "string" && s.trim().length > 0;
-}
-
-function hasRoleIndicator(m: MatchingData | undefined): boolean {
-  return Boolean(m?.role_domains?.length || m?.role_nouns?.length || m?.include_titles?.length);
-}
-
-function hasLocationIndicator(m: MatchingData | undefined): boolean {
-  return Boolean(
-    m?.preferred_locations?.length ||
-    m?.remote_ok
-  );
-}
-
-interface ChecklistItem {
-  id: string;
-  label: string;
-  done: boolean;
-}
-
-function buildChecklist(p: ProfileData, c: CvData, resumeKey: string | null): ChecklistItem[] {
-  return [
-    { id: "section-basics", label: "Upload your résumé", done: Boolean(resumeKey) },
-    {
-      id: "section-basics",
-      label: "Personal info",
-      done: isFilled(p.candidate?.full_name) && isFilled(p.candidate?.location),
-    },
-    {
-      id: "section-career",
-      label: "Career profile",
-      done: isFilled(p.narrative?.headline) && (p.target_roles?.primary?.length ?? 0) > 0,
-    },
-    {
-      id: "section-matching",
-      label: "Job matching preferences",
-      done: hasRoleIndicator(p.matching) && hasLocationIndicator(p.matching),
-    },
-    {
-      // "Professional summary" lives inside the Career Profile card (it's the
-      // same text as narrative.exit_story — see startCareer/onSave below).
-      id: "section-career",
-      label: "Professional summary",
-      done: isFilled(c.summary) || (c.experience?.length ?? 0) > 0,
-    },
-    { id: "section-skills", label: "Skills", done: (c.skills?.length ?? 0) > 0 },
-  ];
-}
-
-const SECTION_NAV: { id: string; label: string }[] = [
-  { id: "section-basics", label: "Basics" },
-  { id: "section-career", label: "Career" },
-  { id: "section-work", label: "Preferences" },
-  { id: "section-matching", label: "Job matching" },
-  { id: "section-experience", label: "Experience" },
-  { id: "section-skills", label: "Skills" },
-  { id: "section-education", label: "Education" },
-  { id: "section-projects", label: "Projects" },
+/** Role-type "fit" values (stored as-is) and what the user reads. */
+const FIT_OPTIONS = [
+  { value: "primary", label: "Top choice" },
+  { value: "secondary", label: "Also interested" },
+  { value: "adjacent", label: "Open to it" },
 ];
+function fitLabel(fit: string): string {
+  return FIT_OPTIONS.find((o) => o.value === fit)?.label ?? fit;
+}
+function fitOptions(current: string) {
+  // Keep an unexpected saved value (e.g. from résumé extraction) selectable.
+  return current && !FIT_OPTIONS.some((o) => o.value === current)
+    ? [...FIT_OPTIONS, { value: current, label: current }]
+    : FIT_OPTIONS;
+}
 
-// Icons for the quick nav – matches the Section icons used below.
-const SECTION_ICONS: Record<string, React.ReactNode> = {
-  "section-basics": <UserIcon className="h-4 w-4" />,
-  "section-career": <Briefcase className="h-4 w-4" />,
-  "section-work": <MapPin className="h-4 w-4" />,
-  "section-matching": <Target className="h-4 w-4" />,
-  "section-experience": <Briefcase className="h-4 w-4" />,
-  "section-skills": <Zap className="h-4 w-4" />,
-  "section-education": <GraduationCap className="h-4 w-4" />,
-  "section-projects": <FolderGit2 className="h-4 w-4" />,
+function joinParts(parts: Array<string | undefined>, sep = " · "): string {
+  return parts.filter((x) => x && x.trim()).join(sep);
+}
+
+/** Phones show the section list and one section as separate screens. */
+function isPhoneLayout(): boolean {
+  return window.matchMedia("(max-width: 767.98px)").matches;
+}
+
+/** The unsaved-changes dialog's "leave" button (its cancel button). */
+const LEAVE_LABEL = "Leave without saving";
+
+/** The saved parts (one PATCH each) behind each section in the list. */
+const SECTION_KEYS: Record<string, SectionKey[]> = {
+  "section-basics": ["account", "personal"],
+  "section-matching": ["matching"],
+  "section-career": ["career"],
+  "section-experience": ["experience"],
+  "section-skills": ["skills"],
+  "section-education": ["education"],
+  "section-projects": ["projects"],
 };
 
-// ── Primitives ─────────────────────────────────────────────────────────────────
-
-function fmt(d: string | null | undefined) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+/** "“About you” and “Work history”" — section names for a sentence. */
+function sectionNames(ids: string[]): string {
+  const names = ids.map((id) => `“${SECTION_NAV.find((s) => s.id === id)?.label ?? id}”`);
+  return new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(names);
 }
 
-const inputCls = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent placeholder:text-muted-foreground/50 disabled:opacity-50 disabled:cursor-not-allowed";
-
-function Field({ label, value, editing, onChange, placeholder, multiline = false, type = "text", helpText }: {
-  label: string; value: string; editing: boolean;
-  onChange: (v: string) => void; placeholder?: string; multiline?: boolean; type?: string; helpText?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-        {label}
-        {helpText && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground/70 font-normal">
-            {helpText}
-          </span>
-        )}
-      </label>
-      {editing ? (
-        <div className="relative">
-          {multiline
-            ? <textarea rows={4} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? label} className={cn(inputCls, "resize-y min-h-[100px]")} />
-            : <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? label} className={inputCls} autoComplete="off" />}
-          {value && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 text-xs">{value.length} chars</span>}
-        </div>
-      ) : (
-        <div className="p-3 rounded-md bg-muted/30 border border-border min-h-[44px]">
-          <p className="text-sm leading-relaxed text-foreground">
-            {value
-              ? value.startsWith("http")
-                ? <a href={value} target="_blank" rel="noreferrer" className="text-primary underline-offset-2 hover:underline flex items-center gap-1">
-                  {value}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-                : value
-              : <span className="text-muted-foreground italic">Not set — click Edit to add</span>}
-          </p>
-        </div>
-      )}
-    </div>
-  );
+/** Everything "What you're looking for" edits. */
+interface MatchingDraft {
+  titles: string[];
+  avoid: string[];
+  prefLocations: string[];
+  eligibleLocations: string[];
+  remoteOk: boolean;
+  compRange: string;
+  compMin: string;
+  currency: string;
+  locFlex: string;
+  timezone: string;
+  visaStatus: string;
 }
 
-/** Maps a `ChipsField` autocomplete source to its API route. */
-const AUTOCOMPLETE_ENDPOINTS = {
-  locations: "/api/locations",
-  "job-titles": "/api/job-titles",
-} as const;
-
-/**
- * ChipsField — add / remove string tags in a text input. When `autocomplete`
- * is set, the component fetches suggestions from the matching public-data
- * API route as the user types (see `AUTOCOMPLETE_ENDPOINTS`).
- */
-function ChipsField({ label, values, editing, onChange, placeholder, helpText, maxItems, autocomplete }: {
-  label: string; values: string[]; editing: boolean;
-  onChange: (v: string[]) => void; placeholder?: string; helpText?: string; maxItems?: number;
-  autocomplete?: keyof typeof AUTOCOMPLETE_ENDPOINTS;
-}) {
-  const [draft, setDraft] = React.useState("");
-  const [autoList, setAutoList] = React.useState<string[]>([]);
-  const [autoIdx, setAutoIdx] = React.useState(-1); // keyboard nav index
-  const [autocompleteOpen, setAutocompleteOpen] = React.useState(false);
-  const isAtMax = Boolean(maxItems && values.length >= maxItems);
-
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  // Fetch suggestions from the matching public API when draft has 2+ chars.
-  React.useEffect(() => {
-    if (!editing || draft.trim().length < 2 || !autocomplete) {
-      setAutoList([]);
-      setAutoIdx(-1);
-      setAutocompleteOpen(false);
-      return;
-    }
-
-    let cancelled = false;
-    const controller = new AbortController();
-    const endpoint = AUTOCOMPLETE_ENDPOINTS[autocomplete];
-
-    // Debounce slightly so we don't hammer the API on every keystroke.
-    const timer = setTimeout(() => {
-      fetch(`${endpoint}?q=${encodeURIComponent(draft.trim())}`, {
-        signal: controller.signal,
-      })
-        .then(r => (r.ok ? r.json() : null))
-        .then((data: string[] | null) => {
-          if (cancelled || !data) return;
-          setAutoList(data);
-          setAutoIdx(-1);
-          setAutocompleteOpen(data.length > 0);
-        })
-        .catch(() => { setAutoList([]); setAutocompleteOpen(false); });
-    }, 200);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [draft, editing, autocomplete]);
-
-  function selectSuggestion(v: string) {
-    if (!v || values.includes(v) || isAtMax) return;
-    onChange([...values, v]);
-    setDraft("");
-    setAutoList([]);
-    setAutocompleteOpen(false);
-    inputRef.current?.focus();
-  }
-
-  function add(e: React.FormEvent) {
-    e.preventDefault();
-    // If a suggestion is highlighted via keyboard, select it.
-    if (autoIdx >= 0 && autoIdx < autoList.length) {
-      selectSuggestion(autoList[autoIdx]);
-      return;
-    }
-    const v = draft.trim();
-    if (!v || values.includes(v) || isAtMax) { setDraft(""); return; }
-    onChange([...values, v]);
-    setDraft("");
-    setAutoList([]);
-    setAutocompleteOpen(false);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "ArrowDown" && autoList.length > 0) {
-      e.preventDefault();
-      setAutoIdx(i => Math.min(i + 1, autoList.length - 1));
-    } else if (e.key === "ArrowUp" && autoList.length > 0) {
-      e.preventDefault();
-      setAutoIdx(i => (i <= 0 ? -1 : i - 1));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      add(e as unknown as React.FormEvent);
-    } else if (e.key === "Escape") {
-      setDraft("");
-      setAutoList([]);
-      setAutocompleteOpen(false);
-      (e.target as HTMLInputElement).blur();
-    }
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-        {label}
-        {helpText && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground/70 font-normal">
-            {helpText}
-          </span>
-        )}
-        {maxItems && <span className="text-xs text-muted-foreground/60">{values.length}/{maxItems}</span>}
-      </label>
-      <div className="flex flex-wrap gap-1.5 min-h-[44px]">
-        {values.length === 0 && !editing && (
-          <span className="text-sm text-muted-foreground italic flex items-center h-full">No entries yet — click Edit to add</span>
-        )}
-        {values.map(v => (
-          <span key={v} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium transition-colors hover:bg-accent/50">
-            {v}
-            {editing && (
-              <button type="button" onClick={() => onChange(values.filter(x => x !== v))} className="hover:text-destructive hover:bg-destructive/10 rounded-full p-0.5" aria-label={`Remove ${v}`}>
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </span>
-        ))}
-      </div>
-      {editing && (
-        <div className="relative">
-          <form onSubmit={add} className="flex gap-2">
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={e => { setDraft(e.target.value); setAutoIdx(-1); }}
-              onKeyDown={handleKeyDown}
-              onFocus={() => { if (autoList.length > 0) setAutocompleteOpen(true); }}
-              onBlur={() => { setTimeout(() => setAutocompleteOpen(false), 150); }}
-              placeholder={placeholder ?? `Add ${label.toLowerCase()}…`}
-              disabled={isAtMax}
-              autoComplete="off"
-              role={autocomplete ? "combobox" : undefined}
-              aria-expanded={autocompleteOpen ? "true" : "false"}
-              aria-autocomplete={autocomplete ? "list" : undefined}
-              aria-controls={autocomplete ? `${label}-autocomplete-list` : undefined}
-              className="h-8 flex-1 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-            />
-            <button type="submit" disabled={!draft.trim() || isAtMax} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-foreground disabled:opacity-40 transition-colors">
-              <Plus className="h-4 w-4" /> Add
-            </button>
-          </form>
-
-          {autocompleteOpen && autoList.length > 0 && (
-            <ul
-              id={`${label}-autocomplete-list`}
-              role="listbox"
-              className="absolute bottom-full left-0 z-50 mb-1 max-h-[240px] w-[min(calc(100vw-3rem),420px)] overflow-y-auto rounded-lg border border-border bg-card p-1 shadow-xl ring-1 ring-black/5"
-            >
-              {autoList.map((item, idx) => (
-                <li
-                  key={item}
-                  role="option"
-                  aria-selected={autoIdx === idx}
-                  onMouseDown={() => selectSuggestion(item)}
-                  onMouseEnter={() => setAutoIdx(idx)}
-                  className={cn(
-                    "rounded-md px-3 py-2 text-sm cursor-pointer transition-colors break-words",
-                    autoIdx === idx
-                      ? "bg-accent text-foreground font-medium"
-                      : "text-foreground hover:bg-accent/70",
-                  )}
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
-  );
+/** "What you're looking for" as saved, ready to edit (or to save again as it is). */
+function matchingDraftFrom(p: ProfileData): MatchingDraft {
+  const m = p.matching ?? {};
+  const comp = p.compensation ?? {};
+  const loc = p.location ?? {};
+  return {
+    // One list for both places job titles used to be asked for — see
+    // mergedJobTitles — so saving it never drops a title either one had.
+    titles: mergedJobTitles(p),
+    // Union of exclude_titles/seniority_exclusions — buildMatchingPrefs always
+    // mirrors "avoid" into both, so they're the same list in practice. Prefill
+    // from whatever's already saved so a save that only touches, say,
+    // locations doesn't silently wipe the avoid list back to empty.
+    avoid: [...new Set([...(m.exclude_titles ?? []), ...(m.seniority_exclusions ?? [])])],
+    prefLocations: m.preferred_locations ?? [],
+    eligibleLocations: m.eligible_locations ?? [],
+    remoteOk: m.remote_ok ?? true,
+    compRange: comp.target_range ?? "",
+    compMin: comp.minimum ?? "",
+    currency: comp.currency ?? "",
+    // Flexibility and onsite-availability are now one field — merge them so
+    // anything already saved under the old, separate field isn't hidden.
+    locFlex: [comp.location_flexibility, loc.onsite_availability].filter(Boolean).join(" · "),
+    timezone: loc.timezone ?? "",
+    visaStatus: loc.visa_status ?? "",
+  };
 }
 
-function Section({ id, title, icon, badge, editing, saving, onEdit, onSave, onCancel, error, children, description }: {
-  id?: string; title: string; icon: React.ReactNode; badge?: React.ReactNode; editing: boolean; saving: boolean;
-  onEdit: () => void; onSave: () => void; onCancel: () => void; error?: string | null; children: React.ReactNode; description?: string;
-}) {
-  return (
-    <div id={id} className="scroll-mt-28 rounded-xl border border-border bg-card p-5 sm:p-6 space-y-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            {icon}
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
-            {badge && <span className="inline-block mt-1">{badge}</span>}
-          </div>
-        </div>
-        {!editing ? (
-          <button onClick={onEdit} className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors whitespace-nowrap">
-            <Pencil className="h-4 w-4" /> Edit
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={onSave} disabled={saving} className="min-w-[80px]">
-              {saving ? <Spinner className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-              {saving ? "Saving…" : "Save"}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving} className="min-w-[80px]">
-              <X className="h-4 w-4" /> Cancel
-            </Button>
-          </div>
-        )}
-      </div>
-      {error && <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>}
-      <div className="pt-1">{children}</div>
-    </div>
-  );
-}
-
-// ── Array entry card (wraps an editable row in edit mode) ──────────────────────
-
-function EntryCard({ editing, onRemove, children }: {
-  editing: boolean; onRemove: () => void; children: React.ReactNode;
-}) {
-  return (
-    <div className={cn("rounded-md border border-border p-3", editing && "bg-background/50")}>
-      {children}
-      {editing && (
-        <div className="mt-2 flex justify-end">
-          <button onClick={onRemove} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
-            <Trash2 className="h-3 w-3" /> Remove
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button onClick={onClick} className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-xs text-muted-foreground hover:border-primary/50 hover:bg-accent/30 hover:text-foreground">
-      <Plus className="h-3 w-3" /> {label}
-    </button>
-  );
-}
-
-// ── Resume card ────────────────────────────────────────────────────────────────
-
-function ResumeSection({ resumeKey, resumeUpdatedAt, onUploaded, onExtracted }: {
-  resumeKey: string | null; resumeUpdatedAt: string | null;
-  onUploaded: (key: string, updatedAt: string) => void;
-  onExtracted: (profile: ProfileData | null, cv: CvData | null) => void;
-}) {
-  const [uploading, setUploading] = React.useState(false);
-  const [deleting, setDeleting] = React.useState(false);
-  const [extracting, setExtracting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [notice, setNotice] = React.useState<string | null>(null);
-  const [dragOver, setDragOver] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  async function runExtract(auto: boolean) {
-    setExtracting(true);
-    setError(null);
-    setNotice(auto ? "Reading your résumé and filling in your details…" : null);
-    try {
-      const res = await fetch("/api/profile/resume/extract", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Extraction failed");
-      onExtracted((data.profile ?? null) as ProfileData | null, (data.cv ?? null) as CvData | null);
-      setNotice("Filled in your profile from the résumé. Review and edit any section as needed.");
-    } catch (err) {
-      setNotice(null);
-      setError((err as Error).message);
-    } finally {
-      setExtracting(false);
-    }
-  }
-
-  async function handleFile(file: File) {
-    setError(null); setNotice(null); setUploading(true);
-    try {
-      const form = new FormData(); form.append("file", file);
-      const res = await fetch("/api/profile/resume", { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-      onUploaded(data.resumeKey as string, data.resumeUpdatedAt as string);
-      // Auto-extract right after a successful upload.
-      void runExtract(true);
-    } catch (err) { setError((err as Error).message); }
-    finally { setUploading(false); }
-  }
-
-  async function handleDelete() {
-    if (!confirm("Remove your uploaded resume?")) return;
-    setDeleting(true); setError(null); setNotice(null);
-    try {
-      const res = await fetch("/api/profile/resume", { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Delete failed");
-      onUploaded("", "");
-    } catch (err) { setError((err as Error).message); }
-    finally { setDeleting(false); }
-  }
-
-  const ext = resumeKey ? (resumeKey.split(".").pop() ?? "pdf") : "pdf";
-  const busy = uploading || extracting;
-
-  return (
-    <div id="section-resume" className="scroll-mt-28 rounded-lg border border-border bg-card p-5 space-y-3">
-      <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Resume / CV File</h2>
-        {!resumeKey && (
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-            Start here
-          </span>
-        )}
-      </div>
-      {error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
-      {notice && (
-        <p className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-foreground">
-          {extracting && <Spinner className="h-3 w-3 shrink-0 text-primary" />}
-          {notice}
-        </p>
-      )}
-      <div
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) void handleFile(f); }}
-        onClick={() => inputRef.current?.click()}
-        className={cn("relative flex cursor-pointer flex-col items-center gap-2 overflow-hidden rounded-lg border-2 border-dashed p-6 text-center transition-colors",
-          dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-accent/30")}
-      >
-        {busy && (
-          <div className="pointer-events-none absolute inset-0 animate-shimmer bg-[linear-gradient(115deg,transparent_30%,hsl(var(--primary)/0.14)_50%,transparent_70%)] bg-[length:220%_100%]" />
-        )}
-        <input ref={inputRef} type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden"
-          onChange={e => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.target.value = ""; }} />
-        {uploading ? <Spinner className="h-7 w-7 text-primary" /> : <Upload className="h-7 w-7 text-muted-foreground" />}
-        <div>
-          <p className="text-sm font-medium">{uploading ? "Uploading…" : "Click or drag to upload"}</p>
-          <p className="text-xs text-muted-foreground">PDF · DOC · DOCX · Max 8 MB · auto-fills your profile</p>
-        </div>
-      </div>
-      {resumeKey && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <FileText className="h-4 w-4 shrink-0 text-ctp-blue" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">resume.{ext}</p>
-              <p className="text-xs text-muted-foreground">Uploaded {fmt(resumeUpdatedAt)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button onClick={() => void runExtract(false)} disabled={busy}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
-              title="Re-read the résumé and fill in any empty fields">
-              {extracting ? <Spinner className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
-              Auto-fill
-            </button>
-            <a href="/api/profile/resume" download={`resume.${ext}`}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" title="Download">
-              <Download className="h-4 w-4" />
-            </a>
-            <button onClick={handleDelete} disabled={deleting || extracting}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50" title="Remove">
-              {deleting ? <Spinner className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+/** The PATCH body that saves "What you're looking for" on top of the saved profile `base`. */
+function matchingPatch(base: ProfileData, d: MatchingDraft): Record<string, unknown> {
+  return {
+    profile: {
+      // "Jobs you want" is saved to both places that read it, exactly as the
+      // two old sections did: target_roles.primary (used to check how well a
+      // job fits, and on résumés) and the job-search prefs, expanded by
+      // buildMatchingPrefs. Role types stay as saved.
+      target_roles: { ...(base.target_roles ?? {}), primary: d.titles },
+      matching: buildMatchingPrefs({
+        titles: d.titles,
+        avoid: d.avoid,
+        locations: d.prefLocations,
+        remoteOk: d.remoteOk,
+        eligibleLocations: d.eligibleLocations,
+      }),
+      compensation: {
+        ...(base.compensation ?? {}),
+        target_range: d.compRange,
+        minimum: d.compMin,
+        currency: d.currency,
+        location_flexibility: d.locFlex,
+      },
+      // City/country live in About you's "Where you live" field — no need
+      // to ask for them twice. Onsite availability is now folded into
+      // the flexibility text above, so clear the old separate field.
+      location: { ...(base.location ?? {}), timezone: d.timezone, visa_status: d.visaStatus, onsite_availability: "" },
+    },
+  };
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
-
-type Archetype = { name: string; level: string; fit: string };
-type ProofPoint = { name: string; url: string; hero_metric: string };
-type Experience = { company: string; role: string; location: string; period: string; highlights: string[] };
-type SkillGroup = { category: string; items: string[] };
-type Education = { institution: string; degree: string; field: string; period: string; details: string };
-type Certification = { name: string; issuer: string; year: string };
-type Project = { name: string; description: string; url: string; highlights: string[] };
-type Language = { language: string; proficiency: string };
-
-// ── section edit states ────────────────────────────────────────────────────
-type SectionKey =
-  | "account" | "personal" | "career" | "work" | "matching"
-  | "experience" | "skills" | "education" | "projects";
-
-const SECTION_LABEL: Record<SectionKey, string> = {
-  account: "Account",
-  personal: "Personal info",
-  career: "Career profile",
-  work: "Work preferences",
-  matching: "Job matching",
-  experience: "Work experience",
-  skills: "Skills",
-  education: "Education & certifications",
-  projects: "Projects",
-};
 
 export function ProfileView() {
   const toast = useToast();
@@ -611,7 +201,32 @@ export function ProfileView() {
   const [loading, setLoading] = React.useState(true);
   const [pageError, setPageError] = React.useState<string | null>(null);
   const [activeSection, setActiveSection] = React.useState<string>(SECTION_NAV[0].id);
-  const navRef = React.useRef<HTMLDivElement>(null);
+  // Phones only: the list of sections, or one open section. Wider screens
+  // always show both side by side.
+  const [mobileView, setMobileView] = React.useState<"list" | "section">("list");
+  // "Pay and other details" inside "What you're looking for" — opened by an
+  // old `#section-work` link, otherwise closed until the person opens it.
+  const [payOpen, setPayOpen] = React.useState(false);
+  const sectionsRef = React.useRef<HTMLDivElement>(null);
+  const backRef = React.useRef<HTMLDivElement>(null);
+  const revealSectionRef = React.useRef(false);
+  const pendingFocusRef = React.useRef<"back" | "row" | null>(null);
+  const router = useRouter();
+  // "Search again with these changes?" at the top of "What you're looking
+  // for": after a first search found no good matches (`?from=nomatch`), and
+  // right after that section is saved (then it can be closed).
+  const [findAgain, setFindAgain] = React.useState<"nomatch" | "saved" | null>(null);
+  // Where the person was going when we stopped to ask about unsaved changes.
+  const [leaveHref, setLeaveHref] = React.useState<string | null>(null);
+  const [leaveSaving, setLeaveSaving] = React.useState(false);
+  const leaveChosenRef = React.useRef(false);
+  // Set once the person has chosen to go, so the browser doesn't ask again.
+  const leavingRef = React.useRef(false);
+  // The profile as last saved. Saves build their body on it, so saves run one
+  // after another (see "Save them" below) never undo the one just before.
+  const profileRef = React.useRef<ProfileData | null>(null);
+  // Each section's draft as it was when editing started (see "unsaved changes").
+  const baselineRef = React.useRef<Record<string, string>>({});
 
   const [editing, setEditing] = React.useState<Partial<Record<SectionKey, boolean>>>({});
   const [saving, setSaving] = React.useState<Partial<Record<SectionKey, boolean>>>({});
@@ -627,26 +242,26 @@ export function ProfileView() {
   const [draftPortfolio, setDraftPortfolio] = React.useState("");
   const [draftTwitter, setDraftTwitter] = React.useState("");
   const [draftContactEmail, setDraftContactEmail] = React.useState("");
-  // career
+  // career ("Your story")
   const [draftHeadline, setDraftHeadline] = React.useState("");
   const [draftExitStory, setDraftExitStory] = React.useState("");
-  const [draftRoles, setDraftRoles] = React.useState<string[]>([]);
   const [draftSuperpowers, setDraftSuperpowers] = React.useState<string[]>([]);
   const [draftArchetypes, setDraftArchetypes] = React.useState<Archetype[]>([]);
   const [draftProofPoints, setDraftProofPoints] = React.useState<ProofPoint[]>([]);
-  // work
+  // matching ("What you're looking for") — drives the job-scan matchers
+  // (expanded via buildMatchingPrefs); the titles also feed target_roles.primary.
+  const [draftTitles, setDraftTitles] = React.useState<string[]>([]);
+  const [draftAvoid, setDraftAvoid] = React.useState<string[]>([]);
+  const [draftPrefLocations, setDraftPrefLocations] = React.useState<string[]>([]);
+  const [draftEligibleLocations, setDraftEligibleLocations] = React.useState<string[]>([]);
+  const [draftRemoteOk, setDraftRemoteOk] = React.useState(true);
+  // …and its "Pay and other details"
   const [draftCompRange, setDraftCompRange] = React.useState("");
   const [draftCompMin, setDraftCompMin] = React.useState("");
   const [draftCurrency, setDraftCurrency] = React.useState("");
   const [draftLocFlex, setDraftLocFlex] = React.useState("");
   const [draftTimezone, setDraftTimezone] = React.useState("");
   const [draftVisaStatus, setDraftVisaStatus] = React.useState("");
-  // matching (drives the job-scan matchers — expanded via buildMatchingPrefs)
-  const [draftTitles, setDraftTitles] = React.useState<string[]>([]);
-  const [draftAvoid, setDraftAvoid] = React.useState<string[]>([]);
-  const [draftPrefLocations, setDraftPrefLocations] = React.useState<string[]>([]);
-  const [draftEligibleLocations, setDraftEligibleLocations] = React.useState<string[]>([]);
-  const [draftRemoteOk, setDraftRemoteOk] = React.useState(true);
   // cv
   const [draftExperience, setDraftExperience] = React.useState<Experience[]>([]);
   const [draftSkills, setDraftSkills] = React.useState<SkillGroup[]>([]);
@@ -658,7 +273,8 @@ export function ProfileView() {
   // ── load ───────────────────────────────────────────────────────────────────
 
   const load = React.useCallback(async () => {
-    setLoading(true); setPageError(null);
+    setLoading(true);
+    setPageError(null);
     try {
       const res = await fetch("/api/profile", { cache: "no-store" });
       const data = await res.json();
@@ -666,35 +282,101 @@ export function ProfileView() {
       setUser(data.user as UserData);
       setProfile((data.profile as ProfileData | null) ?? null);
       setCv((data.cv as CvData | null) ?? null);
-    } catch (err) { setPageError((err as Error).message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setPageError(friendlyError(err));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  React.useEffect(() => { void load(); }, [load]);
+  React.useEffect(() => {
+    void load();
+  }, [load]);
+
+  React.useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
 
   // Deep-link support (e.g. `/profile#section-matching` from the dashboard's
   // "Adjust keywords" link) — open directly on the linked section instead of
-  // always defaulting to the first one.
+  // always defaulting to the first one (on phones: instead of the section
+  // list), and bring it into view once loaded. Old ids of sections that were
+  // merged into another one open the section that now holds their fields.
+  // `?from=nomatch` (a first search found no good matches) opens "What you're
+  // looking for" with a way to search again.
   React.useEffect(() => {
-    const id = window.location.hash.slice(1);
-    if (SECTION_NAV.some((s) => s.id === id)) setActiveSection(id);
+    const fromNoMatch = new URLSearchParams(window.location.search).get("from") === "nomatch";
+    const hash = window.location.hash.slice(1);
+    const id = fromNoMatch ? "section-matching" : (SECTION_ALIASES[hash] ?? hash);
+    if (SECTION_NAV.some((s) => s.id === id)) {
+      setActiveSection(id);
+      setMobileView("section");
+      if (hash === "section-work") setPayOpen(true);
+      revealSectionRef.current = true;
+    }
+    if (fromNoMatch) setFindAgain("nomatch");
   }, []);
 
-  // Only one section is rendered at a time (tab-style navigation). Whenever
-  // the active tab changes: reset scroll to the top of the page, and make
-  // sure the corresponding nav button is fully visible in the (horizontally
-  // scrollable) quick-nav bar.
+  // Only one section is rendered at a time (tab-style navigation). When the
+  // user picks another one (or arrives via a deep link), make sure the start
+  // of the newly shown section is on screen — the résumé and progress cards
+  // sit above it, so it can be scrolled out of view. On phones an opened
+  // section is a screen of its own, so it always starts at the top. Switching
+  // between the list and a section there also moves keyboard / screen-reader
+  // focus along, since the control that was used disappears.
   React.useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    const activeBtn = navRef.current?.querySelector('[aria-current="true"]') as HTMLElement | null;
-    activeBtn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [activeSection]);
+    if (loading) return;
+    if (revealSectionRef.current) {
+      revealSectionRef.current = false;
+      const el = sectionsRef.current;
+      if (el) {
+        const newScreen = mobileView === "section" && isPhoneLayout();
+        const top = el.getBoundingClientRect().top;
+        if (newScreen || top < 0 || top > window.innerHeight * 0.7) {
+          el.scrollIntoView({ behavior: newScreen ? "auto" : "smooth", block: "start" });
+        }
+      }
+    }
+    const focus = pendingFocusRef.current;
+    pendingFocusRef.current = null;
+    if (focus === "back") backRef.current?.querySelector("button")?.focus({ preventScroll: true });
+    if (focus === "row")
+      document.querySelector<HTMLElement>(`[data-section-row="${activeSection}"]`)?.focus({ preventScroll: true });
+  }, [activeSection, mobileView, loading]);
+
+  function goToSection(id: string) {
+    if (id === RESUME_ANCHOR) {
+      // On phones the résumé card sits on the list screen (it's hidden while
+      // a section is open), so go back there first.
+      setMobileView("list");
+      requestAnimationFrame(() =>
+        document.getElementById(RESUME_ANCHOR)?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+      return;
+    }
+    revealSectionRef.current = true;
+    if (isPhoneLayout()) pendingFocusRef.current = "back";
+    setActiveSection(id);
+    setMobileView("section");
+  }
+
+  function showAllSections() {
+    revealSectionRef.current = true;
+    pendingFocusRef.current = "row";
+    setMobileView("list");
+  }
 
   // ── save helper ────────────────────────────────────────────────────────────
+  //
+  // PATCH /api/profile replaces each top-level profile key it's sent
+  // (candidate, narrative, target_roles, …) as a whole — it does not merge
+  // inside them. So every save spreads the saved object for the keys it
+  // writes, and only changes the fields its section shows.
 
-  async function save(section: SectionKey, body: Record<string, unknown>) {
-    setSaving(s => ({ ...s, [section]: true }));
-    setErrors(e => ({ ...e, [section]: null }));
+  /** Saves one part; true when it worked (a failure shows its error and keeps editing open). */
+  async function save(section: SectionKey, body: Record<string, unknown>, opts?: { silent?: boolean }): Promise<boolean> {
+    setSaving((s) => ({ ...s, [section]: true }));
+    setErrors((e) => ({ ...e, [section]: null }));
     try {
       const res = await fetch("/api/profile", {
         method: "PATCH",
@@ -703,26 +385,31 @@ export function ProfileView() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Save failed");
+      const saved = (data.profile as ProfileData | null) ?? null;
+      profileRef.current = saved;
       setUser(data.user as UserData);
-      setProfile((data.profile as ProfileData | null) ?? null);
+      setProfile(saved);
       setCv((data.cv as CvData | null) ?? null);
-      setEditing(e => ({ ...e, [section]: false }));
-      toast.success("Saved", `${SECTION_LABEL[section]} updated.`);
+      setEditing((e) => ({ ...e, [section]: false }));
+      if (!opts?.silent) toast.success("Saved", `We saved ${SECTION_LABEL[section]}.`);
+      return true;
     } catch (err) {
-      setErrors(e => ({ ...e, [section]: (err as Error).message }));
-      toast.error("Couldn't save", (err as Error).message);
+      const message = friendlyError(err);
+      setErrors((e) => ({ ...e, [section]: message }));
+      toast.error("Couldn't save", message);
+      return false;
     } finally {
-      setSaving(s => ({ ...s, [section]: false }));
+      setSaving((s) => ({ ...s, [section]: false }));
     }
   }
 
   function startEdit(section: SectionKey) {
-    setErrors(e => ({ ...e, [section]: null }));
-    setEditing(e => ({ ...e, [section]: true }));
+    setErrors((e) => ({ ...e, [section]: null }));
+    setEditing((e) => ({ ...e, [section]: true }));
   }
   function cancelEdit(section: SectionKey) {
-    setErrors(e => ({ ...e, [section]: null }));
-    setEditing(e => ({ ...e, [section]: false }));
+    setErrors((e) => ({ ...e, [section]: null }));
+    setEditing((e) => ({ ...e, [section]: false }));
   }
 
   // ── section start helpers (populate drafts) ────────────────────────────────
@@ -732,65 +419,261 @@ export function ProfileView() {
   }
   function startPersonal() {
     const c = profile?.candidate ?? {};
-    setDraftFullName(c.full_name ?? ""); setDraftPhone(c.phone ?? "");
-    setDraftLocation(c.location ?? ""); setDraftLinkedin(c.linkedin ?? "");
-    setDraftGithub(c.github ?? ""); setDraftPortfolio(c.portfolio_url ?? "");
+    setDraftFullName(c.full_name ?? "");
+    setDraftPhone(c.phone ?? "");
+    setDraftLocation(c.location ?? "");
+    setDraftLinkedin(c.linkedin ?? "");
+    setDraftGithub(c.github ?? "");
+    setDraftPortfolio(c.portfolio_url ?? "");
     setDraftTwitter(c.twitter ?? "");
     setDraftContactEmail(c.email ?? "");
     startEdit("personal");
   }
   function startCareer() {
-    const n = profile?.narrative ?? {}; const tr = profile?.target_roles ?? {};
+    const n = profile?.narrative ?? {};
+    const tr = profile?.target_roles ?? {};
     setDraftHeadline(n.headline ?? "");
     // "Professional summary" is shared with cv.summary (see onSave below) —
     // fall back to it so a summary written before this merge isn't hidden.
     setDraftExitStory(n.exit_story || cv?.summary || "");
-    setDraftRoles(tr.primary ?? []); setDraftSuperpowers(n.superpowers ?? []);
-    setDraftArchetypes((tr.archetypes ?? []).map(a => ({ name: a.name ?? "", level: a.level ?? "", fit: a.fit ?? "primary" })));
-    setDraftProofPoints((n.proof_points ?? []).map(p => ({ name: p.name ?? "", url: p.url ?? "", hero_metric: p.hero_metric ?? "" })));
+    setDraftSuperpowers(n.superpowers ?? []);
+    setDraftArchetypes((tr.archetypes ?? []).map((a) => ({ name: a.name ?? "", level: a.level ?? "", fit: a.fit ?? "primary" })));
+    setDraftProofPoints((n.proof_points ?? []).map((p) => ({ name: p.name ?? "", url: p.url ?? "", hero_metric: p.hero_metric ?? "" })));
     startEdit("career");
   }
-  function startWork() {
-    const c = profile?.compensation ?? {}; const l = profile?.location ?? {};
-    setDraftCompRange(c.target_range ?? ""); setDraftCompMin(c.minimum ?? "");
-    setDraftCurrency(c.currency ?? "");
-    // Flexibility and onsite-availability are now one field — merge them so
-    // anything already saved under the old, separate field isn't hidden.
-    setDraftLocFlex([c.location_flexibility, l.onsite_availability].filter(Boolean).join(" · "));
-    setDraftTimezone(l.timezone ?? ""); setDraftVisaStatus(l.visa_status ?? "");
-    startEdit("work");
-  }
   function startMatching() {
-    const m = profile?.matching ?? {};
-    setDraftTitles(m.include_titles ?? []);
-    // Union of exclude_titles/seniority_exclusions — buildMatchingPrefs always
-    // mirrors "avoid" into both, so they're the same list in practice. Prefill
-    // from whatever's already saved so a save that only touches, say,
-    // locations doesn't silently wipe the avoid list back to empty.
-    setDraftAvoid([...new Set([...(m.exclude_titles ?? []), ...(m.seniority_exclusions ?? [])])]);
-    // Load eligible locations if present (new field).
-    setDraftEligibleLocations(m.eligible_locations ?? []);
-    setDraftPrefLocations(m.preferred_locations ?? []);
-    setDraftRemoteOk(m.remote_ok ?? true);
+    const d = matchingDraftFrom(profile ?? {});
+    setDraftTitles(d.titles);
+    setDraftAvoid(d.avoid);
+    setDraftEligibleLocations(d.eligibleLocations);
+    setDraftPrefLocations(d.prefLocations);
+    setDraftRemoteOk(d.remoteOk);
+    setDraftCompRange(d.compRange);
+    setDraftCompMin(d.compMin);
+    setDraftCurrency(d.currency);
+    setDraftLocFlex(d.locFlex);
+    // No time zone saved yet? Start from the one this device is set to.
+    setDraftTimezone(d.timezone || detectTimeZone());
+    setDraftVisaStatus(d.visaStatus);
     startEdit("matching");
   }
   function startExperience() {
-    setDraftExperience((cv?.experience ?? []).map(e => ({ ...e, highlights: [...e.highlights] })));
+    setDraftExperience((cv?.experience ?? []).map((e) => ({ ...e, highlights: [...e.highlights] })));
     startEdit("experience");
   }
   function startSkills() {
-    setDraftSkills((cv?.skills ?? []).map(s => ({ category: s.category, items: [...s.items] })));
-    setDraftLanguages((cv?.languages ?? []).map(l => ({ ...l })));
+    setDraftSkills((cv?.skills ?? []).map((s) => ({ category: s.category, items: [...s.items] })));
+    setDraftLanguages((cv?.languages ?? []).map((l) => ({ ...l })));
     startEdit("skills");
   }
   function startEducation() {
-    setDraftEducation((cv?.education ?? []).map(e => ({ ...e })));
-    setDraftCertifications((cv?.certifications ?? []).map(x => ({ ...x })));
+    setDraftEducation((cv?.education ?? []).map((e) => ({ ...e })));
+    setDraftCertifications((cv?.certifications ?? []).map((x) => ({ ...x })));
     startEdit("education");
   }
   function startProjects() {
-    setDraftProjects((cv?.projects ?? []).map(x => ({ ...x, highlights: [...x.highlights] })));
+    setDraftProjects((cv?.projects ?? []).map((x) => ({ ...x, highlights: [...x.highlights] })));
     startEdit("projects");
+  }
+
+  // ── saving a section ───────────────────────────────────────────────────────
+
+  function currentMatchingDraft(): MatchingDraft {
+    return {
+      titles: draftTitles,
+      avoid: draftAvoid,
+      prefLocations: draftPrefLocations,
+      eligibleLocations: draftEligibleLocations,
+      remoteOk: draftRemoteOk,
+      compRange: draftCompRange,
+      compMin: draftCompMin,
+      currency: draftCurrency,
+      locFlex: draftLocFlex,
+      timezone: draftTimezone,
+      visaStatus: draftVisaStatus,
+    };
+  }
+
+  async function saveMatching(d: MatchingDraft, opts?: { silent?: boolean }): Promise<boolean> {
+    const ok = await save("matching", matchingPatch(profileRef.current ?? {}, d), opts);
+    // Offer to search again with what was just saved.
+    if (ok) setFindAgain((f) => f ?? "saved");
+    return ok;
+  }
+
+  /** Saves one section of the list from its draft; true when every part of it saved. */
+  async function saveSection(id: string, opts?: { silent?: boolean }): Promise<boolean> {
+    const base = () => profileRef.current ?? {};
+    switch (id) {
+      case "section-basics":
+        // The account name and the profile's contact details are saved
+        // separately, one after the other so neither answer overwrites the
+        // other; only the second one announces "Saved".
+        if (!(await save("account", { name: draftFullName }, { silent: true }))) return false;
+        return save(
+          "personal",
+          {
+            profile: {
+              candidate: {
+                ...(base().candidate ?? {}),
+                full_name: draftFullName,
+                phone: draftPhone,
+                location: draftLocation,
+                linkedin: draftLinkedin,
+                github: draftGithub,
+                portfolio_url: draftPortfolio,
+                twitter: draftTwitter,
+                email: draftContactEmail,
+              },
+            },
+          },
+          opts,
+        );
+      case "section-matching":
+        return saveMatching(currentMatchingDraft(), opts);
+      case "section-career":
+        return save(
+          "career",
+          {
+            profile: {
+              narrative: {
+                ...(base().narrative ?? {}),
+                headline: draftHeadline,
+                exit_story: draftExitStory,
+                superpowers: draftSuperpowers,
+                proof_points: draftProofPoints.map((pp) => ({ name: pp.name, url: pp.url || undefined, hero_metric: pp.hero_metric })),
+              },
+              // The job titles (target_roles.primary) are saved by "What you're
+              // looking for" — keep them exactly as saved here.
+              target_roles: { ...(base().target_roles ?? {}), archetypes: draftArchetypes },
+            },
+            // Same text as the profile's "Professional summary" — kept in sync
+            // with cv.summary so it also satisfies the CV-readiness check.
+            cv: { summary: draftExitStory },
+          },
+          opts,
+        );
+      case "section-experience":
+        return save("experience", { cv: { experience: draftExperience } }, opts);
+      case "section-skills":
+        return save("skills", { cv: { skills: draftSkills, languages: draftLanguages } }, opts);
+      case "section-education":
+        return save("education", { cv: { education: draftEducation, certifications: draftCertifications } }, opts);
+      case "section-projects":
+        return save("projects", { cv: { projects: draftProjects } }, opts);
+      default:
+        return true;
+    }
+  }
+
+  // ── unsaved changes ────────────────────────────────────────────────────────
+  //
+  // A section has unsaved changes when it's open for editing and its draft
+  // differs from how it was when editing started. That starting point is
+  // taken right after the section opens for editing (its first render in edit
+  // mode), so filling in defaults like the time zone doesn't count as a change.
+
+  const editingSection: Record<string, boolean> = {};
+  for (const s of SECTION_NAV) editingSection[s.id] = SECTION_KEYS[s.id].some((k) => editing[k] ?? false);
+
+  function draftSnapshot(id: string): string {
+    switch (id) {
+      case "section-basics":
+        return JSON.stringify([draftFullName, draftPhone, draftLocation, draftLinkedin, draftGithub, draftPortfolio, draftTwitter, draftContactEmail]);
+      case "section-matching":
+        return JSON.stringify(currentMatchingDraft());
+      case "section-career":
+        return JSON.stringify([draftHeadline, draftExitStory, draftSuperpowers, draftArchetypes, draftProofPoints]);
+      case "section-experience":
+        return JSON.stringify(draftExperience);
+      case "section-skills":
+        return JSON.stringify([draftSkills, draftLanguages]);
+      case "section-education":
+        return JSON.stringify([draftEducation, draftCertifications]);
+      case "section-projects":
+        return JSON.stringify(draftProjects);
+      default:
+        return "";
+    }
+  }
+
+  React.useLayoutEffect(() => {
+    for (const s of SECTION_NAV) {
+      if (!editingSection[s.id]) delete baselineRef.current[s.id];
+      else if (baselineRef.current[s.id] === undefined) baselineRef.current[s.id] = draftSnapshot(s.id);
+    }
+  });
+
+  const unsavedIds = SECTION_NAV.map((s) => s.id).filter((id) => {
+    const start = baselineRef.current[id];
+    return editingSection[id] && start !== undefined && start !== draftSnapshot(id);
+  });
+  const hasUnsaved = unsavedIds.length > 0;
+
+  // While anything is unsaved, leaving asks first.
+  React.useEffect(() => {
+    if (!hasUnsaved) return;
+    // Closing the tab, reloading, or going to another site: the browser asks.
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      if (leavingRef.current) return;
+      e.preventDefault();
+      e.returnValue = ""; // older browsers need this to ask
+    }
+    // A link to another page of the app (header, tab bar, user menu): we ask,
+    // in our own words. This runs before Next's <Link> click handler, which
+    // then leaves the click alone because it was already defaultPrevented.
+    function onClick(e: MouseEvent) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = e.target instanceof Element ? e.target.closest("a[href]") : null;
+      if (!(link instanceof HTMLAnchorElement)) return;
+      if ((link.target && link.target !== "_self") || link.hasAttribute("download")) return;
+      const url = new URL(link.href, window.location.href);
+      // Other sites are covered by beforeunload; "#…" links stay on this page.
+      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+      e.preventDefault();
+      leaveChosenRef.current = false;
+      setLeaveHref(`${url.pathname}${url.search}${url.hash}`);
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, [hasUnsaved]);
+
+  /** Goes to another page of the app — after asking, if anything isn't saved. */
+  function leaveTo(href: string) {
+    if (hasUnsaved) {
+      leaveChosenRef.current = false;
+      setLeaveHref(href);
+    } else {
+      router.push(href);
+    }
+  }
+
+  /** "Save them": saves every section with unsaved changes, then goes on. */
+  async function saveUnsavedAndLeave() {
+    const href = leaveHref;
+    if (!href) return;
+    setLeaveSaving(true);
+    // One at a time, so each save builds on the one before.
+    for (const id of unsavedIds) {
+      if (!(await saveSection(id, { silent: true }))) {
+        // Stay, and open the section that didn't save; it shows the error.
+        setLeaveSaving(false);
+        setLeaveHref(null);
+        revealSectionRef.current = true;
+        setActiveSection(id);
+        setMobileView("section");
+        return;
+      }
+    }
+    toast.success("Saved", "We saved your changes.");
+    setLeaveSaving(false);
+    setLeaveHref(null);
+    leavingRef.current = true;
+    router.push(href);
   }
 
   // ── renders ────────────────────────────────────────────────────────────────
@@ -799,46 +682,39 @@ export function ProfileView() {
     () => buildChecklist(profile ?? {}, cv ?? {}, user?.resumeKey ?? null),
     [profile, cv, user?.resumeKey],
   );
-  const completedCount = checklist.filter(i => i.done).length;
+  const sectionStates = React.useMemo(() => buildSectionStates(checklist, cv ?? {}), [checklist, cv]);
+  const completedCount = checklist.filter((i) => i.done).length;
   const completionPct = Math.round((completedCount / checklist.length) * 100);
-  const matchingComplete = checklist.find(i => i.id === "section-matching")?.done ?? false;
 
-  if (loading) return (
-    <div className="mx-auto max-w-3xl animate-fade-in space-y-5 p-4 sm:p-6">
-      <Skeleton className="h-4 w-36" />
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-4 w-72 max-w-full" />
-      </div>
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-        <Skeleton className="h-1.5 w-full" />
-      </div>
-      <div className="flex gap-1.5">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-7 flex-1 rounded-full" />
-        ))}
-      </div>
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <Skeleton className="h-4 w-40" />
-          </div>
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-        </div>
-      ))}
-    </div>
+  const firstName = user?.name?.trim().split(" ")[0];
+  const header = (
+    <PageHeader title="My profile" description={firstName ? `Hi ${firstName}. ${PAGE_DESCRIPTION}` : PAGE_DESCRIPTION} />
   );
-  if (pageError) return (
-    <div className="mx-auto max-w-3xl p-6">
-      <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{pageError}</div>
-    </div>
-  );
+
+  if (loading)
+    return (
+      <Page width="wide">
+        {header}
+        <VStack gap={4} role="status">
+          <span className="sr-only">Loading your profile…</span>
+          <Skeleton height={140} />
+          <Skeleton height={96} index={1} />
+          <Skeleton height={360} index={2} />
+        </VStack>
+      </Page>
+    );
+  if (pageError)
+    return (
+      <Page width="wide">
+        {header}
+        <Banner
+          status="error"
+          title="We couldn't load your profile"
+          description={pageError}
+          endContent={<Button label="Try again" onClick={() => void load()} />}
+        />
+      </Page>
+    );
 
   const p = profile ?? {};
   const c = cv ?? {};
@@ -846,513 +722,748 @@ export function ProfileView() {
   const isSaving = (s: SectionKey) => saving[s] ?? false;
   const sectionError = (s: SectionKey) => errors[s] ?? null;
 
-  return (
-    <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+  /** Sets one field of one entry in a draft list. */
+  function patchAt<T>(set: React.Dispatch<React.SetStateAction<T[]>>, i: number, patch: Partial<T>) {
+    set((d) => d.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  }
+  function removeAt<T>(set: React.Dispatch<React.SetStateAction<T[]>>, i: number) {
+    set((d) => d.filter((_, j) => j !== i));
+  }
+
+  // ── About you ──────────────────────────────────────────────────────────────
+  const basicsEditing = isEditing("account") || isEditing("personal");
+  const hasMoreLinks = isFilled(p.candidate?.github) || isFilled(p.candidate?.twitter);
+  const basics = (
+    <SectionCard
+      id="section-basics"
+      title="About you"
+      description="Your name and how employers can reach you."
+      editing={basicsEditing}
+      saving={isSaving("account") || isSaving("personal")}
+      error={sectionError("account") || sectionError("personal")}
+      onEdit={() => {
+        startAccount();
+        startPersonal();
+      }}
+      onSave={() => void saveSection("section-basics")}
+      onCancel={() => {
+        cancelEdit("account");
+        cancelEdit("personal");
+      }}
+    >
+      <VStack gap={5}>
+        <HStack gap={4} vAlign="center" className="min-w-0">
+          <Avatar
+            name={user?.name || user?.email || "You"}
+            src={user?.image ?? undefined}
+            size="lg"
+            tooltip={false}
+          />
+          <VStack gap={0.5} className="min-w-0">
+            <Text color="secondary">Email you sign in with</Text>
+            <span className="[overflow-wrap:anywhere]">
+              <Text weight="semibold">{user?.email ?? "Not added yet"}</Text>
+            </span>
+          </VStack>
+        </HStack>
+
+        {isEditing("personal") ? (
+          <VStack gap={4}>
+            <FieldGrid>
+              <TextField label="Full name" value={draftFullName} onChange={setDraftFullName} placeholder="Your full name" autoComplete="name" />
+              <TextField label="Phone number" type="tel" value={draftPhone} onChange={setDraftPhone} placeholder="Your phone number" autoComplete="tel" />
+              <TextField
+                label="Where you live"
+                hint="City and country. We put it on résumés we make for you — it doesn't limit your job search."
+                value={draftLocation}
+                onChange={setDraftLocation}
+                placeholder="Lagos, Nigeria"
+              />
+              {/* Distinct from the read-only sign-in email above: this is the
+                  address pulled off the résumé and printed on generated CVs
+                  (src/lib/candidate-loader.ts). */}
+              <TextField
+                label="Email on your résumé"
+                hint="Shown on résumés we make for you. It can be different from the email you sign in with."
+                type="email"
+                value={draftContactEmail}
+                onChange={setDraftContactEmail}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+              <TextField label="LinkedIn (optional)" type="url" value={draftLinkedin} onChange={setDraftLinkedin} placeholder="https://linkedin.com/in/your-name" />
+              <TextField label="Website or portfolio (optional)" type="url" value={draftPortfolio} onChange={setDraftPortfolio} placeholder="https://your-website.com" />
+            </FieldGrid>
+            <MoreDetails label="Other links (optional)">
+              <FieldGrid>
+                <TextField label="GitHub (for software developers)" type="url" value={draftGithub} onChange={setDraftGithub} placeholder="https://github.com/your-name" />
+                <TextField label="X (formerly Twitter)" type="url" value={draftTwitter} onChange={setDraftTwitter} placeholder="https://x.com/your-name" />
+              </FieldGrid>
+            </MoreDetails>
+          </VStack>
+        ) : (
+          <VStack gap={4}>
+            <InfoList>
+              <InfoItem label="Full name" value={p.candidate?.full_name} />
+              <InfoItem label="Phone number" value={p.candidate?.phone} />
+              <InfoItem label="Where you live" value={p.candidate?.location} />
+              <InfoItem label="Email on your résumé" value={p.candidate?.email} />
+              <InfoItem label="LinkedIn" value={p.candidate?.linkedin} />
+              <InfoItem label="Website or portfolio" value={p.candidate?.portfolio_url} />
+            </InfoList>
+            {/* Nothing behind the door yet? Then no door — Edit shows where to add them. */}
+            {hasMoreLinks ? (
+              <MoreDetails label="Other links (optional)">
+                <InfoList>
+                  <InfoItem label="GitHub (for software developers)" value={p.candidate?.github} />
+                  <InfoItem label="X (formerly Twitter)" value={p.candidate?.twitter} />
+                </InfoList>
+              </MoreDetails>
+            ) : null}
+          </VStack>
+        )}
+      </VStack>
+    </SectionCard>
+  );
+
+  // ── What you're looking for ────────────────────────────────────────────────
+  // The one place that controls job searches. Job titles used to be asked for
+  // twice ("Career goals" and "Job search settings"), remote twice, and pay
+  // had its own section; they're all here now, saved together in one PATCH.
+  const matchingEditing = isEditing("matching");
+  const savedTitles = mergedJobTitles(p);
+  const savedAvoid = [...new Set([...(p.matching?.exclude_titles ?? []), ...(p.matching?.seniority_exclusions ?? [])])];
+  const titlesNeedSaving = jobTitlesNeedSaving(p);
+  const searchReady = isSearchReady(p.matching);
+  // The dashboard starts a new search itself when it sees `?find=1`.
+  const findAgainBanner = findAgain ? (
+    <Banner
+      status="info"
+      title="Search again with these changes?"
+      description="Add more cities, or allow remote jobs, then search again."
+      endContent={<Button variant="primary" size="lg" label="Find new jobs" onClick={() => leaveTo("/?find=1")} />}
+      isDismissable={findAgain === "saved"}
+      onDismiss={() => setFindAgain(null)}
+    />
+  ) : null;
+  const matching = (
+    <SectionCard
+      id="section-matching"
+      title="What you're looking for"
+      description="This is what we use to search for jobs for you."
+      editing={matchingEditing}
+      saving={isSaving("matching")}
+      error={sectionError("matching")}
+      onEdit={startMatching}
+      onSave={() => void saveMatching(currentMatchingDraft())}
+      onCancel={() => cancelEdit("matching")}
+    >
+      {matchingEditing ? (
+        <VStack gap={5}>
+          <TagField
+            label="Jobs you want"
+            hint="Start typing, then pick from the list or press Add. Add as many as you like."
+            values={draftTitles}
+            onChange={setDraftTitles}
+            placeholder="Operations Manager"
+            autocomplete="job-titles"
+          />
+          <TagField
+            label="Leave out jobs with these words (optional)"
+            hint="We'll skip jobs with any of these words in the title, for example Senior or Sales. Type a word, then press Add."
+            values={draftAvoid}
+            onChange={setDraftAvoid}
+            placeholder="Sales"
+            autocomplete="job-titles"
+          />
+          <TagField
+            label="Places you'd like to work"
+            hint="Cities, regions or countries. Start typing, then pick from the list or press Add."
+            values={draftPrefLocations}
+            onChange={setDraftPrefLocations}
+            placeholder="Lagos, Nigeria"
+            autocomplete="locations"
+          />
+          <ChoiceList
+            label="Include remote jobs?"
+            value={draftRemoteOk ? "yes" : "no"}
+            onChange={(v) => setDraftRemoteOk(v === "yes")}
+          >
+            <RadioListItem value="yes" label="Yes" />
+            <RadioListItem value="no" label="No, only jobs in the places above" />
+          </ChoiceList>
+          <MoreDetails label="Pay and other details (optional)" isOpen={payOpen} onOpenChange={setPayOpen}>
+            <VStack gap={4}>
+              <FieldGrid>
+                <TextField label="Pay you're aiming for" hint="A yearly range is fine." value={draftCompRange} onChange={setDraftCompRange} placeholder="$80,000 – $95,000" />
+                <TextField label="Lowest pay you'd accept" value={draftCompMin} onChange={setDraftCompMin} placeholder="$75,000" />
+                <CurrencyField label="Currency" value={draftCurrency} onChange={setDraftCurrency} />
+                <TextField
+                  label="Work permit or visa"
+                  hint="For example: citizen, permanent resident, or needs sponsorship."
+                  value={draftVisaStatus}
+                  onChange={setDraftVisaStatus}
+                  placeholder="Permanent resident"
+                />
+                <TimeZoneField label="Time zone" value={draftTimezone} onChange={setDraftTimezone} />
+              </FieldGrid>
+              <TagField
+                label="Countries you're allowed to work in"
+                hint="Helps with remote jobs that are only open to certain countries. Start typing, then pick from the list or press Add. Leave it empty if you're not sure."
+                values={draftEligibleLocations}
+                onChange={setDraftEligibleLocations}
+                placeholder="Canada"
+                autocomplete="locations"
+              />
+              <TextAreaField
+                label="Anything else about how you can work"
+                hint="For example: hybrid only, or happy to travel now and then."
+                rows={3}
+                value={draftLocFlex}
+                onChange={setDraftLocFlex}
+                placeholder="Hybrid suits me best; I can travel now and then"
+              />
+            </VStack>
+          </MoreDetails>
+        </VStack>
+      ) : (
+        <VStack gap={5}>
+          {findAgainBanner}
+          {titlesNeedSaving ? (
+            <Banner
+              status="warning"
+              title="Save this list so we can use it"
+              description="We use these jobs to search for you and to check how well each one fits you."
+              endContent={
+                <Button
+                  // The "Find new jobs" button above is the main action when it's showing.
+                  variant={findAgain ? "secondary" : "primary"}
+                  size="lg"
+                  label="Save this list"
+                  isLoading={isSaving("matching")}
+                  onClick={() => void saveMatching(matchingDraftFrom(profileRef.current ?? p))}
+                />
+              }
+            />
+          ) : !searchReady ? (
+            <Banner
+              status="warning"
+              title="We can't search for jobs yet"
+              description="Add at least one job you want, and a place to work or choose to include remote jobs."
+            />
+          ) : null}
+          <InfoList columns="single">
+            <TagItem label="Jobs you want" values={savedTitles} />
+            <TagItem label="Leave out jobs with these words" values={savedAvoid} />
+            <TagItem label="Places you'd like to work" values={p.matching?.preferred_locations ?? []} />
+            <MetadataListItem label="Include remote jobs?">
+              <Text>{(p.matching?.remote_ok ?? true) ? "Yes" : "No, only jobs in the places above"}</Text>
+            </MetadataListItem>
+          </InfoList>
+          {savedTitles.length > 0 && !titlesNeedSaving ? (
+            <Text color="secondary" textWrap="pretty">
+              We may have filled these in from your résumé. Check them and add anything we missed.
+            </Text>
+          ) : null}
+          <MoreDetails label="Pay and other details (optional)" isOpen={payOpen} onOpenChange={setPayOpen}>
+            <InfoList>
+              <InfoItem label="Pay you're aiming for" value={p.compensation?.target_range} />
+              <InfoItem label="Lowest pay you'd accept" value={p.compensation?.minimum} />
+              <InfoItem label="Currency" value={currencyLabel(p.compensation?.currency)} />
+              <InfoItem label="Work permit or visa" value={p.location?.visa_status} />
+              <InfoItem label="Time zone" value={timeZoneLabel(p.location?.timezone)} />
+              <TagItem label="Countries you're allowed to work in" values={p.matching?.eligible_locations ?? []} />
+              <InfoItem
+                label="Anything else about how you can work"
+                value={[p.compensation?.location_flexibility, p.location?.onsite_availability].filter(Boolean).join(" · ")}
+              />
+            </InfoList>
+          </MoreDetails>
+        </VStack>
+      )}
+    </SectionCard>
+  );
+
+  // ── Your story ─────────────────────────────────────────────────────────────
+  const careerEditing = isEditing("career");
+  const archetypes = careerEditing ? draftArchetypes : (p.target_roles?.archetypes ?? []);
+  const proofPoints: ProofPoint[] = careerEditing
+    ? draftProofPoints
+    : (p.narrative?.proof_points ?? []).map((pp) => ({ name: pp.name, url: pp.url ?? "", hero_metric: pp.hero_metric }));
+  const career = (
+    <SectionCard
+      id="section-career"
+      title="Your story"
+      description="How you'd describe yourself to an employer, in your own words."
+      editing={careerEditing}
+      saving={isSaving("career")}
+      error={sectionError("career")}
+      onEdit={startCareer}
+      onSave={() => void saveSection("section-career")}
+      onCancel={() => cancelEdit("career")}
+    >
+      <VStack gap={6}>
+        {careerEditing ? (
+          <VStack gap={4}>
+            <TextField
+              label="One line about you"
+              hint="Sums up who you are at work, like a headline."
+              value={draftHeadline}
+              onChange={setDraftHeadline}
+              placeholder="Operations Manager with 10 years in logistics"
+            />
+            <TextAreaField
+              label="Summary"
+              hint="A few sentences about your background and what you want next."
+              rows={5}
+              value={draftExitStory}
+              onChange={setDraftExitStory}
+              placeholder="I've run warehouse teams for a decade and now want to move into supply-chain planning."
+            />
+            <TagField
+              label="Your strengths"
+              hint="Type a strength, then press Add."
+              values={draftSuperpowers}
+              onChange={setDraftSuperpowers}
+              placeholder="Team leadership"
+            />
+          </VStack>
+        ) : (
+          <InfoList columns="single">
+            <InfoItem label="One line about you" value={p.narrative?.headline} />
+            <InfoItem label="Summary" value={p.narrative?.exit_story || c.summary} multiline />
+            <TagItem label="Your strengths" values={p.narrative?.superpowers ?? []} />
+          </InfoList>
+        )}
+
+        <EntryGroup
+          title="Types of roles"
+          description="The broad kinds of work you'd do, how senior, and how much you want each. We use these when we check how well a job fits you."
+          editing={careerEditing}
+          isEmpty={archetypes.length === 0}
+          addLabel="Add a type of role"
+          onAdd={() => setDraftArchetypes((d) => [...d, { name: "", level: "", fit: "primary" }])}
+        >
+          {archetypes.map((a, i) => (
+            <EntryBlock key={i} editing={careerEditing} removeLabel="Remove this type of role" onRemove={() => removeAt(setDraftArchetypes, i)}>
+              {careerEditing ? (
+                <VStack gap={4}>
+                  <FieldGrid>
+                    <TextField label="Kind of role" value={a.name} onChange={(v) => patchAt(setDraftArchetypes, i, { name: v })} placeholder="Operations" />
+                    <TextField
+                      label="Seniority"
+                      hint="How senior a role you're after."
+                      value={a.level}
+                      onChange={(v) => patchAt(setDraftArchetypes, i, { level: v })}
+                      placeholder="Senior"
+                    />
+                  </FieldGrid>
+                  <ChoiceList
+                    label="How much you want it"
+                    value={a.fit}
+                    onChange={(v) => patchAt(setDraftArchetypes, i, { fit: v })}
+                  >
+                    {fitOptions(a.fit).map((o) => (
+                      <RadioListItem key={o.value} value={o.value} label={o.label} />
+                    ))}
+                  </ChoiceList>
+                </VStack>
+              ) : (
+                <VStack gap={0.5}>
+                  <Text weight="semibold">{a.name || "Name not added yet"}</Text>
+                  <Text color="secondary">{joinParts([a.level ? `Seniority: ${a.level}` : undefined, fitLabel(a.fit)])}</Text>
+                </VStack>
+              )}
+            </EntryBlock>
+          ))}
+        </EntryGroup>
+
+        <EntryGroup
+          title="Achievements"
+          description="Results you're proud of, with numbers if you have them."
+          editing={careerEditing}
+          isEmpty={proofPoints.length === 0}
+          addLabel="Add an achievement"
+          onAdd={() => setDraftProofPoints((d) => [...d, { name: "", url: "", hero_metric: "" }])}
+        >
+          {proofPoints.map((pp, i) => (
+            <EntryBlock key={i} editing={careerEditing} removeLabel="Remove achievement" onRemove={() => removeAt(setDraftProofPoints, i)}>
+              {careerEditing ? (
+                <FieldGrid>
+                  <TextField label="What you did" value={pp.name} onChange={(v) => patchAt(setDraftProofPoints, i, { name: v })} placeholder="Opened a second warehouse" />
+                  <TextField label="Result" value={pp.hero_metric} onChange={(v) => patchAt(setDraftProofPoints, i, { hero_metric: v })} placeholder="Cut delivery times by 30%" />
+                  <TextField label="Link (optional)" type="url" value={pp.url} onChange={(v) => patchAt(setDraftProofPoints, i, { url: v })} placeholder="https://…" />
+                </FieldGrid>
+              ) : (
+                <VStack gap={0.5}>
+                  <Text weight="semibold">{pp.name || "Not added yet"}</Text>
+                  {pp.hero_metric ? <Text color="secondary">{pp.hero_metric}</Text> : null}
+                  {pp.url ? <ValueText value={pp.url} /> : null}
+                </VStack>
+              )}
+            </EntryBlock>
+          ))}
+        </EntryGroup>
+      </VStack>
+    </SectionCard>
+  );
+
+  // ── Work history ───────────────────────────────────────────────────────────
+  const experienceEditing = isEditing("experience");
+  const experience = experienceEditing ? draftExperience : (c.experience ?? []);
+  const workHistory = (
+    <SectionCard
+      id="section-experience"
+      title="Work history"
+      description="The jobs you've had, most recent first."
+      editing={experienceEditing}
+      saving={isSaving("experience")}
+      error={sectionError("experience")}
+      onEdit={startExperience}
+      onSave={() => void saveSection("section-experience")}
+      onCancel={() => cancelEdit("experience")}
+    >
+      <EntryGroup
+        editing={experienceEditing}
+        isEmpty={experience.length === 0}
+        addLabel="Add a job"
+        onAdd={() => setDraftExperience((d) => [...d, { company: "", role: "", location: "", period: "", highlights: [] }])}
       >
-        <ArrowLeft className="h-4 w-4" /> Back to dashboard
-      </Link>
-      <div className="space-y-1">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Your profile</h1>
-        <p className="text-sm text-muted-foreground">
-          {user?.name ? `Hi ${user.name.split(" ")[0]} — keep this current so we can match and score roles for you.` : "Keep this current so we can match and score roles for you."}
-        </p>
+        {experience.map((exp, i) => (
+          <EntryBlock key={i} editing={experienceEditing} removeLabel="Remove job" onRemove={() => removeAt(setDraftExperience, i)}>
+            {experienceEditing ? (
+              <VStack gap={4}>
+                <FieldGrid>
+                  <TextField label="Job title" value={exp.role} onChange={(v) => patchAt(setDraftExperience, i, { role: v })} placeholder="Operations Manager" />
+                  <TextField label="Employer" value={exp.company} onChange={(v) => patchAt(setDraftExperience, i, { company: v })} placeholder="Northwind Logistics" />
+                  <TextField label="Where" value={exp.location} onChange={(v) => patchAt(setDraftExperience, i, { location: v })} placeholder="Manchester, UK" />
+                  <TextField label="When" value={exp.period} onChange={(v) => patchAt(setDraftExperience, i, { period: v })} placeholder="Jan 2022 – now" />
+                </FieldGrid>
+                <LinesField
+                  label="What you did"
+                  values={exp.highlights}
+                  onChange={(v) => patchAt(setDraftExperience, i, { highlights: v })}
+                  placeholder={"Led a team of 12\nCut shipping costs by 15%"}
+                />
+              </VStack>
+            ) : (
+              <VStack gap={2}>
+                <VStack gap={0.5}>
+                  <HStack gap={2} hAlign="between" wrap="wrap">
+                    <Text weight="semibold">{exp.role || "Job title not added yet"}</Text>
+                    {exp.period ? <Text color="secondary">{exp.period}</Text> : null}
+                  </HStack>
+                  {exp.company || exp.location ? <Text color="secondary">{joinParts([exp.company, exp.location])}</Text> : null}
+                </VStack>
+                <BulletList items={exp.highlights} />
+              </VStack>
+            )}
+          </EntryBlock>
+        ))}
+      </EntryGroup>
+    </SectionCard>
+  );
+
+  // ── Skills & languages ─────────────────────────────────────────────────────
+  const skillsEditing = isEditing("skills");
+  const skillGroups = skillsEditing ? draftSkills : (c.skills ?? []);
+  const languages = skillsEditing ? draftLanguages : (c.languages ?? []);
+  const skills = (
+    <SectionCard
+      id="section-skills"
+      title="Skills & languages"
+      description="What you're good at and the languages you speak."
+      editing={skillsEditing}
+      saving={isSaving("skills")}
+      error={sectionError("skills")}
+      onEdit={startSkills}
+      onSave={() => void saveSection("section-skills")}
+      onCancel={() => cancelEdit("skills")}
+    >
+      <VStack gap={6}>
+        <EntryGroup
+          title="Skills"
+          description="Group them however makes sense to you."
+          editing={skillsEditing}
+          isEmpty={skillGroups.length === 0}
+          addLabel="Add a group of skills"
+          onAdd={() => setDraftSkills((d) => [...d, { category: "", items: [] }])}
+        >
+          {skillGroups.map((sg, i) => (
+            <EntryBlock key={i} editing={skillsEditing} removeLabel="Remove group" onRemove={() => removeAt(setDraftSkills, i)}>
+              {skillsEditing ? (
+                <VStack gap={4}>
+                  <TextField label="Name of this group" value={sg.category} onChange={(v) => patchAt(setDraftSkills, i, { category: v })} placeholder="Software" />
+                  <TagField
+                    label="Skills"
+                    hint="Type a skill, then press Add."
+                    values={sg.items}
+                    onChange={(v) => patchAt(setDraftSkills, i, { items: v })}
+                    placeholder="Excel"
+                  />
+                </VStack>
+              ) : (
+                <VStack gap={2}>
+                  <Text weight="semibold">{sg.category || "Skills"}</Text>
+                  {sg.items.length > 0 ? <Text color="secondary">{sg.items.join(", ")}</Text> : <Text color="secondary">Not added yet</Text>}
+                </VStack>
+              )}
+            </EntryBlock>
+          ))}
+        </EntryGroup>
+
+        {/* Languages — grouped here rather than given their own section. */}
+        <EntryGroup
+          title="Languages"
+          editing={skillsEditing}
+          isEmpty={languages.length === 0}
+          addLabel="Add a language"
+          onAdd={() => setDraftLanguages((d) => [...d, { language: "", proficiency: "" }])}
+        >
+          {languages.map((lg, i) => (
+            <EntryBlock key={i} editing={skillsEditing} removeLabel="Remove language" onRemove={() => removeAt(setDraftLanguages, i)}>
+              {skillsEditing ? (
+                <FieldGrid>
+                  <TextField label="Language" value={lg.language} onChange={(v) => patchAt(setDraftLanguages, i, { language: v })} placeholder="Spanish" />
+                  <TextField label="How well you speak it" value={lg.proficiency} onChange={(v) => patchAt(setDraftLanguages, i, { proficiency: v })} placeholder="Fluent" />
+                </FieldGrid>
+              ) : (
+                <Text>
+                  <Text weight="semibold">{lg.language || "Language not added yet"}</Text>
+                  {lg.proficiency ? <Text color="secondary">{` · ${lg.proficiency}`}</Text> : null}
+                </Text>
+              )}
+            </EntryBlock>
+          ))}
+        </EntryGroup>
+      </VStack>
+    </SectionCard>
+  );
+
+  // ── Education ──────────────────────────────────────────────────────────────
+  const educationEditing = isEditing("education");
+  const educationList = educationEditing ? draftEducation : (c.education ?? []);
+  const certifications = educationEditing ? draftCertifications : (c.certifications ?? []);
+  const education = (
+    <SectionCard
+      id="section-education"
+      title="Education"
+      description="Schools, degrees and certificates."
+      editing={educationEditing}
+      saving={isSaving("education")}
+      error={sectionError("education")}
+      onEdit={startEducation}
+      onSave={() => void saveSection("section-education")}
+      onCancel={() => cancelEdit("education")}
+    >
+      <VStack gap={6}>
+        <EntryGroup
+          title="Schools and degrees"
+          editing={educationEditing}
+          isEmpty={educationList.length === 0}
+          addLabel="Add a school"
+          onAdd={() => setDraftEducation((d) => [...d, { institution: "", degree: "", field: "", period: "", details: "" }])}
+        >
+          {educationList.map((ed, i) => (
+            <EntryBlock key={i} editing={educationEditing} removeLabel="Remove school" onRemove={() => removeAt(setDraftEducation, i)}>
+              {educationEditing ? (
+                <VStack gap={4}>
+                  <FieldGrid>
+                    <TextField label="School" value={ed.institution} onChange={(v) => patchAt(setDraftEducation, i, { institution: v })} placeholder="University of Nairobi" />
+                    <TextField label="Degree or qualification" value={ed.degree} onChange={(v) => patchAt(setDraftEducation, i, { degree: v })} placeholder="Bachelor of Commerce" />
+                    <TextField label="Subject" value={ed.field} onChange={(v) => patchAt(setDraftEducation, i, { field: v })} placeholder="Accounting" />
+                    <TextField label="When" value={ed.period} onChange={(v) => patchAt(setDraftEducation, i, { period: v })} placeholder="2014 – 2018" />
+                  </FieldGrid>
+                  <TextAreaField
+                    label="Details (optional)"
+                    hint="Grades, honours or courses worth mentioning."
+                    rows={2}
+                    value={ed.details}
+                    onChange={(v) => patchAt(setDraftEducation, i, { details: v })}
+                  />
+                </VStack>
+              ) : (
+                <VStack gap={0.5}>
+                  <HStack gap={2} hAlign="between" wrap="wrap">
+                    <Text weight="semibold">{ed.institution || "School not added yet"}</Text>
+                    {ed.period ? <Text color="secondary">{ed.period}</Text> : null}
+                  </HStack>
+                  {ed.degree || ed.field ? <Text color="secondary">{joinParts([ed.degree, ed.field], ", ")}</Text> : null}
+                  {ed.details ? <Text color="secondary">{ed.details}</Text> : null}
+                </VStack>
+              )}
+            </EntryBlock>
+          ))}
+        </EntryGroup>
+
+        <EntryGroup
+          title="Certificates"
+          editing={educationEditing}
+          isEmpty={certifications.length === 0}
+          addLabel="Add a certificate"
+          onAdd={() => setDraftCertifications((d) => [...d, { name: "", issuer: "", year: "" }])}
+        >
+          {certifications.map((ct, i) => (
+            <EntryBlock key={i} editing={educationEditing} removeLabel="Remove certificate" onRemove={() => removeAt(setDraftCertifications, i)}>
+              {educationEditing ? (
+                <FieldGrid>
+                  <TextField label="Certificate" value={ct.name} onChange={(v) => patchAt(setDraftCertifications, i, { name: v })} placeholder="Project Management Professional" />
+                  <TextField label="Given by" value={ct.issuer} onChange={(v) => patchAt(setDraftCertifications, i, { issuer: v })} placeholder="PMI" />
+                  <TextField label="Year" value={ct.year} onChange={(v) => patchAt(setDraftCertifications, i, { year: v })} placeholder="2021" inputMode="numeric" />
+                </FieldGrid>
+              ) : (
+                <VStack gap={0.5}>
+                  <Text weight="semibold">{ct.name || "Certificate name not added yet"}</Text>
+                  {ct.issuer || ct.year ? <Text color="secondary">{joinParts([ct.issuer, ct.year])}</Text> : null}
+                </VStack>
+              )}
+            </EntryBlock>
+          ))}
+        </EntryGroup>
+      </VStack>
+    </SectionCard>
+  );
+
+  // ── Projects ───────────────────────────────────────────────────────────────
+  const projectsEditing = isEditing("projects");
+  const projectList = projectsEditing ? draftProjects : (c.projects ?? []);
+  const projects = (
+    <SectionCard
+      id="section-projects"
+      title="Projects"
+      description="Things you've built, run or led that you're proud of."
+      editing={projectsEditing}
+      saving={isSaving("projects")}
+      error={sectionError("projects")}
+      onEdit={startProjects}
+      onSave={() => void saveSection("section-projects")}
+      onCancel={() => cancelEdit("projects")}
+    >
+      <EntryGroup
+        editing={projectsEditing}
+        isEmpty={projectList.length === 0}
+        addLabel="Add a project"
+        onAdd={() => setDraftProjects((d) => [...d, { name: "", description: "", url: "", highlights: [] }])}
+      >
+        {projectList.map((pr, i) => (
+          <EntryBlock key={i} editing={projectsEditing} removeLabel="Remove project" onRemove={() => removeAt(setDraftProjects, i)}>
+            {projectsEditing ? (
+              <VStack gap={4}>
+                <FieldGrid>
+                  <TextField label="Project name" value={pr.name} onChange={(v) => patchAt(setDraftProjects, i, { name: v })} placeholder="Community food bank app" />
+                  <TextField label="Link (optional)" type="url" value={pr.url} onChange={(v) => patchAt(setDraftProjects, i, { url: v })} placeholder="https://…" />
+                </FieldGrid>
+                <TextAreaField
+                  label="Short description"
+                  rows={2}
+                  value={pr.description}
+                  onChange={(v) => patchAt(setDraftProjects, i, { description: v })}
+                  placeholder="An app that helps volunteers plan weekly food deliveries."
+                />
+                <LinesField
+                  label="What stands out"
+                  values={pr.highlights}
+                  onChange={(v) => patchAt(setDraftProjects, i, { highlights: v })}
+                  placeholder={"Used by 40 volunteers every week\nBuilt with a team of three"}
+                />
+              </VStack>
+            ) : (
+              <VStack gap={2}>
+                <VStack gap={0.5}>
+                  <Text weight="semibold">{pr.name || "Project name not added yet"}</Text>
+                  {pr.description ? <Text color="secondary">{pr.description}</Text> : null}
+                  {pr.url ? <ValueText value={pr.url} /> : null}
+                </VStack>
+                <BulletList items={pr.highlights} />
+              </VStack>
+            )}
+          </EntryBlock>
+        ))}
+      </EntryGroup>
+    </SectionCard>
+  );
+
+  const sectionContent: Record<string, React.ReactNode> = {
+    "section-basics": basics,
+    "section-matching": matching,
+    "section-career": career,
+    "section-experience": workHistory,
+    "section-skills": skills,
+    "section-education": education,
+    "section-projects": projects,
+  };
+
+  // A section with unsaved changes says so in the list, instead of its status.
+  const navStates: Record<string, SectionMarker> = { ...sectionStates };
+  for (const id of unsavedIds) navStates[id] = "unsaved";
+
+  return (
+    <Page width="wide">
+      {header}
+
+      <ResumeCard
+        // Phones: hidden while a section is open, so the section starts at the top.
+        className={mobileView === "section" ? "max-md:hidden" : undefined}
+        resumeKey={user?.resumeKey ?? null}
+        resumeUpdatedAt={user?.resumeUpdatedAt ?? null}
+        onUploaded={(key, updatedAt) => setUser((u) => (u ? { ...u, resumeKey: key || null, resumeUpdatedAt: updatedAt || null } : u))}
+        onExtracted={(newProfile, newCv) => {
+          setProfile(newProfile);
+          setCv(newCv);
+        }}
+      />
+
+      {completionPct < 100 ? <CompletenessCard checklist={checklist} onGo={goToSection} /> : null}
+
+      <div ref={sectionsRef} className="grid scroll-mt-24 gap-6 md:grid-cols-[17rem_minmax(0,1fr)]">
+        <SectionList
+          active={activeSection}
+          states={navStates}
+          onSelect={goToSection}
+          className={mobileView === "section" ? "hidden md:block" : undefined}
+        />
+        <div className={mobileView === "list" ? "hidden min-w-0 md:block" : "min-w-0"}>
+          <VStack gap={4}>
+            <div ref={backRef} className="md:hidden">
+              <Button label="All sections" icon={<Icon icon={ArrowLeft} />} onClick={showAllSections} />
+            </div>
+            {sectionContent[activeSection]}
+          </VStack>
+        </div>
       </div>
 
-      {/* ── Profile completeness ── */}
-      {completionPct < 100 && (
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium">Profile completeness</p>
-            <p className="text-sm text-muted-foreground">{completedCount}/{checklist.length} · {completionPct}%</p>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${completionPct}%` }}
-            />
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {checklist.filter(i => !i.done).map(i => (
-              <button key={i.id} type="button" onClick={() => setActiveSection(i.id)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-accent">
-                <AlertCircle className="h-3 w-3 text-muted-foreground" /> {i.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Quick section nav ── */}
-      <nav
-        aria-label="Profile sections"
-        ref={navRef}
-        className="sticky top-14 z-20 -mx-4 flex gap-1 overflow-x-auto border-b border-border bg-card/95 shadow-sm px-4 py-2 backdrop-blur-sm sm:-mx-0 sm:rounded-lg sm:border sm:px-2"
-      >
-        {SECTION_NAV.map(s => (
-          <button key={s.id} type="button" onClick={() => setActiveSection(s.id)}
-            aria-current={activeSection === s.id ? "true" : undefined}
-            className={cn(
-              "flex-1 flex justify-center shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              activeSection === s.id
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}>
-            <span className="flex items-center gap-1">{SECTION_ICONS[s.id]}{s.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      {/* ── Basics: account, personal info, then résumé ── */}
-      {activeSection === "section-basics" && (
-        <div className="space-y-5">
-          <Section id="section-account" title="Personal Info" icon={<UserIcon className="h-4 w-4" />}
-            editing={isEditing("account") || isEditing("personal")} saving={isSaving("account") || isSaving("personal")} error={sectionError("account") || sectionError("personal")}
-            onEdit={() => { startAccount(); startPersonal(); }}
-            onSave={() => { save("account", { name: draftFullName }); save("personal", { profile: { candidate: { ...(p.candidate ?? {}), full_name: draftFullName, phone: draftPhone, location: draftLocation, linkedin: draftLinkedin, github: draftGithub, portfolio_url: draftPortfolio, twitter: draftTwitter, email: draftContactEmail } } }); }}
-            onCancel={() => { cancelEdit("account"); cancelEdit("personal"); }}>
-            <div className="space-y-5">
-              <div className="flex items-start gap-4">
-                {user?.image
-                  ? <img src={user.image} alt={user.name ? `${user.name}'s avatar` : "Profile avatar"} className="h-16 w-16 shrink-0 rounded-full border border-border" />
-                  : <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-muted"><UserIcon className="h-8 w-8 text-muted-foreground" /></span>}
-                <dl className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="Email" value={user?.email ?? "—"} editing={false} onChange={() => { }} />
-                </dl>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Full name" value={isEditing("personal") ? draftFullName : (p.candidate?.full_name ?? "")} editing={isEditing("personal")} onChange={setDraftFullName} placeholder="Jane Smith" />
-                <Field label="Phone" value={isEditing("personal") ? draftPhone : (p.candidate?.phone ?? "")} editing={isEditing("personal")} onChange={setDraftPhone} placeholder="+1 (555) 000-0000" type="tel" />
-                <Field label="Location" value={isEditing("personal") ? draftLocation : (p.candidate?.location ?? "")} editing={isEditing("personal")} onChange={setDraftLocation} placeholder="San Francisco, CA" />
-                <Field label="LinkedIn" value={isEditing("personal") ? draftLinkedin : (p.candidate?.linkedin ?? "")} editing={isEditing("personal")} onChange={setDraftLinkedin} placeholder="https://linkedin.com/in/..." type="url" />
-                <Field label="GitHub" value={isEditing("personal") ? draftGithub : (p.candidate?.github ?? "")} editing={isEditing("personal")} onChange={setDraftGithub} placeholder="https://github.com/..." type="url" />
-                <Field label="Portfolio / website" value={isEditing("personal") ? draftPortfolio : (p.candidate?.portfolio_url ?? "")} editing={isEditing("personal")} onChange={setDraftPortfolio} placeholder="https://..." type="url" />
-                <Field label="X / Twitter" value={isEditing("personal") ? draftTwitter : (p.candidate?.twitter ?? "")} editing={isEditing("personal")} onChange={setDraftTwitter} placeholder="https://x.com/..." type="url" />
-                {/* Distinct from the read-only account email above: this is the
-                    address pulled off the résumé and printed on generated CVs
-                    (src/lib/candidate-loader.ts). */}
-                <Field label="Contact email (on your CV)" value={isEditing("personal") ? draftContactEmail : (p.candidate?.email ?? "")} editing={isEditing("personal")} onChange={setDraftContactEmail} placeholder="jane@example.com" type="email" />
-              </div>
-            </div>
-          </Section>
-
-          <ResumeSection
-            resumeKey={user?.resumeKey ?? null} resumeUpdatedAt={user?.resumeUpdatedAt ?? null}
-            onUploaded={(key, updatedAt) => setUser(u => u ? { ...u, resumeKey: key || null, resumeUpdatedAt: updatedAt || null } : u)}
-            onExtracted={(newProfile, newCv) => { setProfile(newProfile); setCv(newCv); }}
-          />
-        </div>
-      )}
-
-      {/* ── Career Profile ── */}
-      {activeSection === "section-career" && (
-        <Section id="section-career" title="Career Profile" icon={<Briefcase className="h-4 w-4" />}
-          editing={isEditing("career")} saving={isSaving("career")} error={sectionError("career")}
-          onEdit={startCareer}
-          onSave={() => save("career", {
-            profile: {
-              narrative: { ...(p.narrative ?? {}), headline: draftHeadline, exit_story: draftExitStory, superpowers: draftSuperpowers, proof_points: draftProofPoints.map(pp => ({ name: pp.name, url: pp.url || undefined, hero_metric: pp.hero_metric })) },
-              target_roles: { ...(p.target_roles ?? {}), primary: draftRoles, archetypes: draftArchetypes },
-            },
-            // Same text as the profile's "Professional summary" — kept in sync
-            // with cv.summary so it also satisfies the CV-readiness check.
-            cv: { summary: draftExitStory },
-          })}
-          onCancel={() => cancelEdit("career")}>
-          <div className="space-y-4">
-            <Field label="Headline" value={isEditing("career") ? draftHeadline : (p.narrative?.headline ?? "")} editing={isEditing("career")} onChange={setDraftHeadline} placeholder="e.g. Senior Software Engineer · AI/ML" />
-            <Field label="Professional summary" value={isEditing("career") ? draftExitStory : (p.narrative?.exit_story ?? "")} editing={isEditing("career")} onChange={setDraftExitStory} placeholder="Your background, motivations, and what you're looking for…" multiline />
-            <ChipsField label="Target roles" values={isEditing("career") ? draftRoles : (p.target_roles?.primary ?? [])} editing={isEditing("career")} onChange={setDraftRoles} placeholder="e.g. Software Engineer" />
-            <ChipsField label="Superpowers" values={isEditing("career") ? draftSuperpowers : (p.narrative?.superpowers ?? [])} editing={isEditing("career")} onChange={setDraftSuperpowers} placeholder="e.g. distributed systems" />
-
-            {/* Archetypes */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Role archetypes</label>
-              {(isEditing("career") ? draftArchetypes : (p.target_roles?.archetypes ?? [])).map((a, i) => (
-                <EntryCard key={i} editing={isEditing("career")} onRemove={() => setDraftArchetypes(d => d.filter((_, j) => j !== i))}>
-                  {isEditing("career") ? (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                      <input value={(a as Archetype).name} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name (e.g. Backend Engineer)" className={inputCls} />
-                      <input value={(a as Archetype).level} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, level: e.target.value } : x))} placeholder="Level (e.g. Senior)" className={inputCls} />
-                      <select value={(a as Archetype).fit} onChange={e => setDraftArchetypes(d => d.map((x, j) => j === i ? { ...x, fit: e.target.value } : x))} className={inputCls}>
-                        <option value="primary">Primary</option>
-                        <option value="secondary">Secondary</option>
-                        <option value="adjacent">Adjacent</option>
-                      </select>
-                    </div>
-                  ) : (
-                    <p className="text-sm">
-                      <span className="font-medium">{(a as Archetype).name}</span>
-                      {(a as Archetype).level ? <span className="text-muted-foreground">{" · "}{(a as Archetype).level}</span> : null}
-                      <span className="text-muted-foreground">{" · "}<span className="capitalize">{(a as Archetype).fit}</span></span>
-                    </p>
-                  )}
-                </EntryCard>
-              ))}
-              {isEditing("career") && (
-                <AddButton onClick={() => setDraftArchetypes(d => [...d, { name: "", level: "", fit: "primary" }])} label="Add archetype" />
-              )}
-              {!isEditing("career") && (p.target_roles?.archetypes ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-            </div>
-
-            {/* Proof points */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Proof points</label>
-              {(isEditing("career") ? draftProofPoints : (p.narrative?.proof_points ?? [])).map((pp, i) => (
-                <EntryCard key={i} editing={isEditing("career")} onRemove={() => setDraftProofPoints(d => d.filter((_, j) => j !== i))}>
-                  {isEditing("career") ? (
-                    <div className="grid grid-cols-1 gap-2">
-                      <input value={(pp as ProofPoint).name} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name (e.g. Launched payment system)" className={inputCls} />
-                      <input value={(pp as ProofPoint).hero_metric} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, hero_metric: e.target.value } : x))} placeholder="Hero metric (e.g. reduced latency by 40%)" className={inputCls} />
-                      <input value={(pp as ProofPoint).url} onChange={e => setDraftProofPoints(d => d.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} placeholder="URL (optional)" type="url" className={inputCls} />
-                    </div>
-                  ) : (
-                    <div className="text-sm space-y-0.5">
-                      <p className="font-medium">{(pp as { name: string }).name}</p>
-                      <p className="text-muted-foreground">{(pp as { hero_metric: string }).hero_metric}</p>
-                      {(pp as { url?: string }).url && <a href={(pp as { url: string }).url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">{(pp as { url: string }).url}</a>}
-                    </div>
-                  )}
-                </EntryCard>
-              ))}
-              {isEditing("career") && <AddButton onClick={() => setDraftProofPoints(d => [...d, { name: "", url: "", hero_metric: "" }])} label="Add proof point" />}
-              {!isEditing("career") && (p.narrative?.proof_points ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-            </div>
-          </div>
-        </Section>
-      )}
-
-      {/* ── Work Preferences ── */}
-      {activeSection === "section-work" && (
-        <Section id="section-work" title="Work Preferences" icon={<MapPin className="h-4 w-4" />}
-          editing={isEditing("work")} saving={isSaving("work")} error={sectionError("work")}
-          onEdit={startWork}
-          onSave={() => save("work", {
-            profile: {
-              compensation: { ...(p.compensation ?? {}), target_range: draftCompRange, minimum: draftCompMin, currency: draftCurrency, location_flexibility: draftLocFlex },
-              // City/country live in Personal Info's "Location" field — no need
-              // to ask for them twice. Onsite availability is now folded into
-              // the flexibility text above, so clear the old separate field.
-              location: { ...(p.location ?? {}), timezone: draftTimezone, visa_status: draftVisaStatus, onsite_availability: "" },
-            },
-          })}
-          onCancel={() => cancelEdit("work")}>
-          <div className="space-y-5">
-            <div>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">Compensation</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Target range" value={isEditing("work") ? draftCompRange : (p.compensation?.target_range ?? "")} editing={isEditing("work")} onChange={setDraftCompRange} placeholder="$180k–$220k" />
-                <Field label="Minimum" value={isEditing("work") ? draftCompMin : (p.compensation?.minimum ?? "")} editing={isEditing("work")} onChange={setDraftCompMin} placeholder="$160k" />
-                <Field label="Currency" value={isEditing("work") ? draftCurrency : (p.compensation?.currency ?? "")} editing={isEditing("work")} onChange={setDraftCurrency} placeholder="USD" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Timezone" value={isEditing("work") ? draftTimezone : (p.location?.timezone ?? "")} editing={isEditing("work")} onChange={setDraftTimezone} placeholder="America/Los_Angeles" />
-              <Field label="Visa status" value={isEditing("work") ? draftVisaStatus : (p.location?.visa_status ?? "")} editing={isEditing("work")} onChange={setDraftVisaStatus} placeholder="US Citizen / H-1B…" />
-            </div>
-            <Field label="Remote / location flexibility" value={isEditing("work") ? draftLocFlex : ([p.compensation?.location_flexibility, p.location?.onsite_availability].filter(Boolean).join(" · "))} editing={isEditing("work")} onChange={setDraftLocFlex} placeholder="Remote-first, open to hybrid; can travel occasionally if needed" />
-          </div>
-        </Section>
-      )}
-
-      {/* ── Job Matching ── */}
-      {activeSection === "section-matching" && (
-        <Section id="section-matching" title="Job Matching" icon={<Target className="h-4 w-4" />}
-          badge={!matchingComplete && (
-            <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-              Required for scans
-            </span>
-          )}
-          editing={isEditing("matching")} saving={isSaving("matching")} error={sectionError("matching")}
-          onEdit={startMatching}
-          onSave={() => save("matching", {
-            profile: {
-              matching: buildMatchingPrefs({
-                titles: draftTitles,
-                avoid: draftAvoid,
-                locations: draftPrefLocations,
-                remoteOk: draftRemoteOk,
-                eligibleLocations: draftEligibleLocations,
-              }),
-            },
-          })}
-          onCancel={() => cancelEdit("matching")}>
-          <div className="space-y-6">
-            {!matchingComplete && !isEditing("matching") && (
-              <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs text-foreground">
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>Scans are blocked until you&apos;ve added at least one job title and one location — or allowed remote roles.</span>
-              </div>
-            )}
-
-            {/* ── Roles ── */}
-            <div>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">Roles</p>
-              <div className="space-y-3">
-                <ChipsField label="Job titles you want" values={isEditing("matching") ? draftTitles : (p.matching?.include_titles ?? [])} editing={isEditing("matching")} onChange={setDraftTitles} placeholder="Start typing a title…" autocomplete="job-titles" />
-                <ChipsField label="Avoid these roles" values={isEditing("matching") ? draftAvoid : [...new Set([...(p.matching?.exclude_titles ?? []), ...(p.matching?.seniority_exclusions ?? [])])]} editing={isEditing("matching")} onChange={setDraftAvoid} placeholder="e.g. senior, staff, sales, recruiter…" autocomplete="job-titles" />
-                {!isEditing("matching") && (p.matching?.include_titles?.length ?? 0) > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Both lists are inferred from your résumé — edit them to add anything we missed.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* ── Location ── */}
-            <div>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">Location</p>
-              <div className="space-y-3">
-                <ChipsField label="Preferred locations" values={isEditing("matching") ? draftPrefLocations : (p.matching?.preferred_locations ?? [])} editing={isEditing("matching")} onChange={setDraftPrefLocations} placeholder="Start typing a city…" autocomplete="locations" />
-                <ChipsField label="Eligible work locations (optional)" values={isEditing("matching") ? draftEligibleLocations : (p.matching?.eligible_locations ?? [])} editing={isEditing("matching")} onChange={setDraftEligibleLocations} placeholder="Start typing a country…" autocomplete="locations" />
-
-                {/* Remote toggle — styled as a toggle chip */}
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground mb-1.5 block">Remote work</span>
-                  {isEditing("matching") ? (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setDraftRemoteOk(true)}
-                        className={cn(
-                          "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
-                          draftRemoteOk
-                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
-                            : "border-border text-muted-foreground hover:bg-accent/50",
-                        )}
-                      >
-                        Yes — include remote roles
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDraftRemoteOk(false)}
-                        className={cn(
-                          "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
-                          !draftRemoteOk
-                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
-                            : "border-border text-muted-foreground hover:bg-accent/50",
-                        )}
-                      >
-                        No — only my locations
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2 text-sm">
-                      <span className={cn(
-                        "rounded-full px-3 py-1 text-xs font-medium",
-                        (p.matching?.remote_ok ?? true) ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-                      )}>
-                        {(p.matching?.remote_ok ?? true) ? "Remote OK" : "Locations only"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </Section>
-      )}
-
-      {/* ── CV: Experience ── */}
-      {activeSection === "section-experience" && (
-        <Section id="section-experience" title="Work Experience" icon={<Briefcase className="h-4 w-4" />}
-          editing={isEditing("experience")} saving={isSaving("experience")} error={sectionError("experience")}
-          onEdit={startExperience}
-          onSave={() => save("experience", { cv: { experience: draftExperience } })}
-          onCancel={() => cancelEdit("experience")}>
-          <div className="space-y-3">
-            {(isEditing("experience") ? draftExperience : (c.experience ?? [])).map((exp, i) => (
-              <EntryCard key={i} editing={isEditing("experience")} onRemove={() => setDraftExperience(d => d.filter((_, j) => j !== i))}>
-                {isEditing("experience") ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <input value={exp.company} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, company: e.target.value } : x))} placeholder="Company" className={inputCls} />
-                      <input value={exp.role} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} placeholder="Role / Title" className={inputCls} />
-                      <input value={exp.location} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, location: e.target.value } : x))} placeholder="Location" className={inputCls} />
-                      <input value={exp.period} onChange={e => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, period: e.target.value } : x))} placeholder="Period (e.g. Jan 2022 – Present)" className={inputCls} />
-                    </div>
-                    <ChipsField label="Highlights" values={exp.highlights} editing onChange={v => setDraftExperience(d => d.map((x, j) => j === i ? { ...x, highlights: v } : x))} placeholder="Add a bullet point…" />
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <p className="font-medium">{exp.company}</p>
-                      <p className="text-xs text-muted-foreground">{exp.period}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{exp.role}{exp.location ? ` · ${exp.location}` : ""}</p>
-                    {exp.highlights.length > 0 && (
-                      <ul className="mt-1 space-y-0.5 pl-4">
-                        {exp.highlights.map((h, hi) => <li key={hi} className="list-disc text-sm">{h}</li>)}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </EntryCard>
-            ))}
-            {isEditing("experience") && <AddButton onClick={() => setDraftExperience(d => [...d, { company: "", role: "", location: "", period: "", highlights: [] }])} label="Add experience" />}
-            {!isEditing("experience") && (c.experience ?? []).length === 0 && <p className="text-sm text-muted-foreground">No experience added yet.</p>}
-          </div>
-        </Section>
-      )}
-
-      {/* ── CV: Skills ── */}
-      {activeSection === "section-skills" && (
-        <Section id="section-skills" title="Skills" icon={<Zap className="h-4 w-4" />}
-          editing={isEditing("skills")} saving={isSaving("skills")} error={sectionError("skills")}
-          onEdit={startSkills}
-          onSave={() => save("skills", { cv: { skills: draftSkills, languages: draftLanguages } })}
-          onCancel={() => cancelEdit("skills")}>
-          <div className="space-y-3">
-            {(isEditing("skills") ? draftSkills : (c.skills ?? [])).map((sg, i) => (
-              <EntryCard key={i} editing={isEditing("skills")} onRemove={() => setDraftSkills(d => d.filter((_, j) => j !== i))}>
-                {isEditing("skills") ? (
-                  <div className="space-y-2">
-                    <input value={sg.category} onChange={e => setDraftSkills(d => d.map((x, j) => j === i ? { ...x, category: e.target.value } : x))} placeholder="Category (e.g. Languages, Frameworks)" className={inputCls} />
-                    <ChipsField label="Items" values={sg.items} editing onChange={v => setDraftSkills(d => d.map((x, j) => j === i ? { ...x, items: v } : x))} placeholder="Add a skill…" />
-                  </div>
-                ) : (
-                  <div className="text-sm">
-                    <span className="font-medium">{sg.category}:</span>{" "}
-                    <span className="text-muted-foreground">{sg.items.join(", ")}</span>
-                  </div>
-                )}
-              </EntryCard>
-            ))}
-            {isEditing("skills") && <AddButton onClick={() => setDraftSkills(d => [...d, { category: "", items: [] }])} label="Add skill group" />}
-            {!isEditing("skills") && (c.skills ?? []).length === 0 && <p className="text-sm text-muted-foreground">No skills added yet.</p>}
-
-            {/* Languages — grouped here rather than given their own nav entry. */}
-            <div className="space-y-2 pt-2">
-              <label className="text-xs font-medium text-muted-foreground">Languages</label>
-              {(isEditing("skills") ? draftLanguages : (c.languages ?? [])).map((lg, i) => (
-                <EntryCard key={i} editing={isEditing("skills")} onRemove={() => setDraftLanguages(d => d.filter((_, j) => j !== i))}>
-                  {isEditing("skills") ? (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <input value={lg.language} onChange={e => setDraftLanguages(d => d.map((x, j) => j === i ? { ...x, language: e.target.value } : x))} placeholder="Language (e.g. Spanish)" className={inputCls} />
-                      <input value={lg.proficiency} onChange={e => setDraftLanguages(d => d.map((x, j) => j === i ? { ...x, proficiency: e.target.value } : x))} placeholder="Proficiency (e.g. Fluent)" className={inputCls} />
-                    </div>
-                  ) : (
-                    <p className="text-sm">
-                      <span className="font-medium">{lg.language}</span>
-                      {lg.proficiency ? <span className="text-muted-foreground">{" · "}{lg.proficiency}</span> : null}
-                    </p>
-                  )}
-                </EntryCard>
-              ))}
-              {isEditing("skills") && <AddButton onClick={() => setDraftLanguages(d => [...d, { language: "", proficiency: "" }])} label="Add language" />}
-              {!isEditing("skills") && (c.languages ?? []).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-            </div>
-          </div>
-        </Section>
-      )}
-
-      {/* ── CV: Education & certifications ── */}
-      {activeSection === "section-education" && (
-        <Section id="section-education" title="Education & Certifications" icon={<GraduationCap className="h-4 w-4" />}
-          editing={isEditing("education")} saving={isSaving("education")} error={sectionError("education")}
-          onEdit={startEducation}
-          onSave={() => save("education", { cv: { education: draftEducation, certifications: draftCertifications } })}
-          onCancel={() => cancelEdit("education")}>
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground">Education</p>
-              {(isEditing("education") ? draftEducation : (c.education ?? [])).map((ed, i) => (
-                <EntryCard key={i} editing={isEditing("education")} onRemove={() => setDraftEducation(d => d.filter((_, j) => j !== i))}>
-                  {isEditing("education") ? (
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        <input value={ed.institution} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, institution: e.target.value } : x))} placeholder="Institution" className={inputCls} />
-                        <input value={ed.degree} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, degree: e.target.value } : x))} placeholder="Degree (e.g. B.Tech)" className={inputCls} />
-                        <input value={ed.field} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, field: e.target.value } : x))} placeholder="Field of study" className={inputCls} />
-                        <input value={ed.period} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, period: e.target.value } : x))} placeholder="Period (e.g. 2018 – 2022)" className={inputCls} />
-                      </div>
-                      <textarea value={ed.details} onChange={e => setDraftEducation(d => d.map((x, j) => j === i ? { ...x, details: e.target.value } : x))} placeholder="Details (GPA, honours, coursework…)" rows={2} className={cn(inputCls, "h-auto py-1.5")} />
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <p className="font-medium">{ed.institution}</p>
-                        <p className="text-xs text-muted-foreground">{ed.period}</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{[ed.degree, ed.field].filter(Boolean).join(", ")}</p>
-                      {ed.details ? <p className="text-sm text-muted-foreground">{ed.details}</p> : null}
-                    </div>
-                  )}
-                </EntryCard>
-              ))}
-              {isEditing("education") && <AddButton onClick={() => setDraftEducation(d => [...d, { institution: "", degree: "", field: "", period: "", details: "" }])} label="Add education" />}
-              {!isEditing("education") && (c.education ?? []).length === 0 && <p className="text-sm text-muted-foreground">No education added yet.</p>}
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground">Certifications</p>
-              {(isEditing("education") ? draftCertifications : (c.certifications ?? [])).map((ct, i) => (
-                <EntryCard key={i} editing={isEditing("education")} onRemove={() => setDraftCertifications(d => d.filter((_, j) => j !== i))}>
-                  {isEditing("education") ? (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                      <input value={ct.name} onChange={e => setDraftCertifications(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Name" className={inputCls} />
-                      <input value={ct.issuer} onChange={e => setDraftCertifications(d => d.map((x, j) => j === i ? { ...x, issuer: e.target.value } : x))} placeholder="Issuer" className={inputCls} />
-                      <input value={ct.year} onChange={e => setDraftCertifications(d => d.map((x, j) => j === i ? { ...x, year: e.target.value } : x))} placeholder="Year" className={inputCls} />
-                    </div>
-                  ) : (
-                    <p className="text-sm">
-                      <span className="font-medium">{ct.name}</span>
-                      <span className="text-muted-foreground">{[ct.issuer, ct.year].filter(Boolean).map(v => ` · ${v}`).join("")}</span>
-                    </p>
-                  )}
-                </EntryCard>
-              ))}
-              {isEditing("education") && <AddButton onClick={() => setDraftCertifications(d => [...d, { name: "", issuer: "", year: "" }])} label="Add certification" />}
-              {!isEditing("education") && (c.certifications ?? []).length === 0 && <p className="text-sm text-muted-foreground">No certifications added yet.</p>}
-            </div>
-          </div>
-        </Section>
-      )}
-
-      {/* ── CV: Projects ── */}
-      {activeSection === "section-projects" && (
-        <Section id="section-projects" title="Projects" icon={<FolderGit2 className="h-4 w-4" />}
-          editing={isEditing("projects")} saving={isSaving("projects")} error={sectionError("projects")}
-          onEdit={startProjects}
-          onSave={() => save("projects", { cv: { projects: draftProjects } })}
-          onCancel={() => cancelEdit("projects")}>
-          <div className="space-y-3">
-            {(isEditing("projects") ? draftProjects : (c.projects ?? [])).map((pr, i) => (
-              <EntryCard key={i} editing={isEditing("projects")} onRemove={() => setDraftProjects(d => d.filter((_, j) => j !== i))}>
-                {isEditing("projects") ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <input value={pr.name} onChange={e => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Project name" className={inputCls} />
-                      <input value={pr.url} onChange={e => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} placeholder="URL (optional)" type="url" className={inputCls} />
-                    </div>
-                    <textarea value={pr.description} onChange={e => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} placeholder="Short description" rows={2} className={cn(inputCls, "h-auto py-1.5")} />
-                    <ChipsField label="Highlights" values={pr.highlights} editing onChange={v => setDraftProjects(d => d.map((x, j) => j === i ? { ...x, highlights: v } : x))} placeholder="Add a bullet point…" />
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <p className="font-medium">{pr.name}</p>
-                      {pr.url ? <a href={pr.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">Link <ExternalLink className="h-3 w-3" /></a> : null}
-                    </div>
-                    {pr.description ? <p className="text-sm text-muted-foreground">{pr.description}</p> : null}
-                    {pr.highlights.length > 0 && (
-                      <ul className="mt-1 space-y-0.5 pl-4">
-                        {pr.highlights.map((h, hi) => <li key={hi} className="list-disc text-sm">{h}</li>)}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </EntryCard>
-            ))}
-            {isEditing("projects") && <AddButton onClick={() => setDraftProjects(d => [...d, { name: "", description: "", url: "", highlights: [] }])} label="Add project" />}
-            {!isEditing("projects") && (c.projects ?? []).length === 0 && <p className="text-sm text-muted-foreground">No projects added yet.</p>}
-          </div>
-        </Section>
-      )}
-
-    </div>
+      <AlertDialog
+        isOpen={leaveHref !== null}
+        onOpenChange={(open) => {
+          if (open || leaveSaving) return;
+          const href = leaveHref;
+          const leave = leaveChosenRef.current;
+          leaveChosenRef.current = false;
+          setLeaveHref(null);
+          if (leave && href) {
+            leavingRef.current = true;
+            router.push(href);
+          }
+        }}
+        // "Leave without saving" (the dialog's cancel button) and Escape close
+        // it the same way. Only a press on that button means leave; Escape
+        // keeps the person here with their changes.
+        onClickCapture={(e) => {
+          const button = e.target instanceof Element ? e.target.closest("button") : null;
+          leaveChosenRef.current = button?.textContent?.trim() === LEAVE_LABEL;
+        }}
+        title="You have changes you haven't saved"
+        description={
+          unsavedIds.length > 0
+            ? `Your changes to ${sectionNames(unsavedIds)} aren't saved yet. If you leave now, you'll lose them.`
+            : "Some of your changes aren't saved yet. If you leave now, you'll lose them."
+        }
+        cancelLabel={LEAVE_LABEL}
+        actionLabel="Save them"
+        actionVariant="primary"
+        isActionLoading={leaveSaving}
+        onAction={() => void saveUnsavedAndLeave()}
+      />
+    </Page>
   );
 }

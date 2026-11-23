@@ -21,3 +21,6 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Astryx theme editor preview pictures — regenerate with `npx astryx experimental theme editor show careerops --png`
+themes/*/*.png
+themes/*/*.html

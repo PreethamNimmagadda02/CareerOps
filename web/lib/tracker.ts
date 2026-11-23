@@ -69,7 +69,8 @@ export async function readApplications(
   // second count query.
   const dbApps = await db.application.findMany({
     where: { userId },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    // Newest first: the jobs a returning user hasn't seen yet lead the list.
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit + 1,
     ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
   });

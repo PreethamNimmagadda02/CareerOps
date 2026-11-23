@@ -1,24 +1,45 @@
 "use client";
 
 import * as React from "react";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { ExternalLink, FileText } from "lucide-react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Link } from "@astryxdesign/core/Link";
+import { Markdown } from "@astryxdesign/core/Markdown";
+import { Skeleton } from "@astryxdesign/core/Skeleton";
+import { VStack } from "@astryxdesign/core/VStack";
 
-import { Modal } from "@/components/ui/modal";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AdviceBadge, FitMeter } from "@/components/status-badge";
+import { friendlyError } from "@/lib/errors";
 import type { ReportPayload } from "@/lib/types";
 
+/** The job whose write-up is open, with what the header shows about it. */
+export interface ReportTarget {
+  reportNumber: string;
+  title: string;
+  score: number | null;
+  recommendation: string | null;
+  jobUrl: string | null;
+}
+
 interface ReportModalProps {
-  reportNumber: string | null;
-  title?: string;
+  target: ReportTarget | null;
   onClose: () => void;
 }
 
-export function ReportModal({ reportNumber, title, onClose }: ReportModalProps) {
+/** The dialog header already names the job, so drop a leading "# Title" line. */
+function withoutLeadingTitle(markdown: string): string {
+  return markdown.replace(/^\s*#\s[^\n]*\n+/, "");
+}
+
+/** The full written assessment of one job, in a readable dialog. */
+export function ReportModal({ target, onClose }: ReportModalProps) {
+  const reportNumber = target?.reportNumber ?? null;
   const [report, setReport] = React.useState<ReportPayload | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [attempt, setAttempt] = React.useState(0);
 
   React.useEffect(() => {
     if (!reportNumber) {
@@ -31,71 +52,73 @@ export function ReportModal({ reportNumber, title, onClose }: ReportModalProps) 
     fetch(`/api/reports/${reportNumber}`)
       .then(async (res) => {
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load report");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         if (!cancelled) setReport(data.report);
       })
-      .catch((err) => !cancelled && setError(err.message))
+      .catch((err) => !cancelled && setError(friendlyError(err)))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [reportNumber]);
+  }, [reportNumber, attempt]);
 
-  const subtitle = (
-    <div className="flex flex-wrap items-center gap-3">
-      {report?.url && (
-        <a
-          href={report.url}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-ctp-blue hover:text-ctp-sky"
-        >
-          View job posting <ExternalLink className="h-3 w-3" />
-        </a>
-      )}
-      {report?.absolutePath && (
-        <a
-          href={`file://${report.absolutePath}`}
-          className="inline-flex items-center gap-1 text-ctp-green hover:text-ctp-sky"
-          title={report.absolutePath}
-        >
-          <FileText className="h-3 w-3" /> Open report file
-        </a>
-      )}
-      {!report?.url && !report?.absolutePath && report?.provider && (
-        <span className="text-muted-foreground">{report.provider}</span>
-      )}
-    </div>
-  );
+  const heading = target?.title ?? (report ? `${report.role} at ${report.company}` : "Full write-up");
+  const jobUrl = report?.url ?? target?.jobUrl ?? null;
 
   return (
-    <Modal
-      open={reportNumber !== null}
-      onClose={onClose}
-      title={title ?? (report ? `${report.company} — ${report.role}` : "Report")}
-      subtitle={subtitle}
-      className="max-w-4xl"
+    <Dialog
+      isOpen={reportNumber !== null}
+      onOpenChange={(open) => !open && onClose()}
+      width="min(880px, calc(100vw - 2rem))"
+      maxHeight="88dvh"
     >
-      {loading && (
-        <div className="space-y-3 py-2">
-          <Skeleton className="h-5 w-2/3" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-1/2" />
-          <div className="pt-2">
-            <Skeleton className="h-4 w-1/3" />
-          </div>
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-4/5" />
-        </div>
-      )}
-      {error && <div className="py-6 text-ctp-red">Error: {error}</div>}
-      {report && !loading && (
-        <article className="markdown-body">
-          <Markdown remarkPlugins={[remarkGfm]}>{report.markdown}</Markdown>
-        </article>
-      )}
-    </Modal>
+      <DialogHeader
+        title={heading}
+        // How well it fits and our advice, in the same words as the job list —
+        // so the person doesn't have to find a score inside the report text.
+        subtitle={
+          <VStack gap={2} className="pt-1">
+            {target && (
+              <HStack gap={3} wrap="wrap" vAlign="center">
+                <FitMeter score={target.score} />
+                <AdviceBadge recommendation={target.recommendation} />
+              </HStack>
+            )}
+            {jobUrl && (
+              <Link href={jobUrl} isExternalLink>
+                Open the job post
+              </Link>
+            )}
+          </VStack>
+        }
+        onOpenChange={(open) => !open && onClose()}
+      />
+      <VStack gap={4} padding={6}>
+        {loading && (
+          <VStack gap={3}>
+            <Skeleton height={24} width="60%" />
+            <Skeleton height={16} />
+            <Skeleton height={16} />
+            <Skeleton height={16} width="80%" />
+          </VStack>
+        )}
+        {error && (
+          <Banner
+            status="error"
+            title="We couldn't open this write-up"
+            description={error}
+            collapsible={false}
+            endContent={
+              <Button label="Try again" variant="secondary" onClick={() => setAttempt((n) => n + 1)} />
+            }
+          />
+        )}
+        {report && !loading && (
+          <Markdown headingLevelStart={2} contentWidth="100%">
+            {withoutLeadingTitle(report.markdown)}
+          </Markdown>
+        )}
+      </VStack>
+    </Dialog>
   );
 }
