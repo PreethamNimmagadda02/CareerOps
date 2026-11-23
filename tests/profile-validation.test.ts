@@ -165,9 +165,7 @@ describe("validateMatchingReadiness", () => {
   it("reports when matching is missing", () => {
     const r = validateMatchingReadiness(makeProfile({ matching: undefined }));
     expect(r.ok).toBe(false);
-    expect(r.missing).toContain(
-      "Job matching preferences (Job Matching section of your profile)",
-    );
+    expect(r.missing).toContain("Job matching preferences (Job Matching section of your profile)");
   });
 
   it("reports when no role indicator is configured", () => {
@@ -190,7 +188,12 @@ describe("validateMatchingReadiness", () => {
   it("accepts include_titles alone as a role indicator", () => {
     const r = validateMatchingReadiness(
       makeProfile({
-        matching: { ...MATCHING_OK, role_domains: [], role_nouns: [], include_titles: ["ai engineer"] },
+        matching: {
+          ...MATCHING_OK,
+          role_domains: [],
+          role_nouns: [],
+          include_titles: ["ai engineer"],
+        },
       }),
     );
     expect(r.ok).toBe(true);

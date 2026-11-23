@@ -5,7 +5,18 @@ import globals from "globals";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**", "dashboard/**", "coverage/**", "web/**"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "dashboard/**",
+      "coverage/**",
+      "web/**",
+      // Local, gitignored tooling (installed agent skills, notes, review history).
+      ".agents/**",
+      ".claude/**",
+      ".remember/**",
+      ".impeccable/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

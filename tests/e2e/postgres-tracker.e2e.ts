@@ -105,9 +105,7 @@ describe("Postgres application tracker (live)", () => {
       try {
         // 25 allocations fired concurrently: the atomic UPDATE … RETURNING must
         // give every caller a distinct value with no gaps and no duplicates.
-        const nums = await Promise.all(
-          Array.from({ length: 25 }, () => nextReportNumber(u.id)),
-        );
+        const nums = await Promise.all(Array.from({ length: 25 }, () => nextReportNumber(u.id)));
         const sorted = [...nums].sort((a, b) => a - b);
         expect(new Set(nums).size).toBe(25); // all unique
         expect(sorted).toEqual(Array.from({ length: 25 }, (_, i) => i + 1)); // 1..25

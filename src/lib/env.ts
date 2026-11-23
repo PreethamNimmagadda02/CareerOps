@@ -22,4 +22,3 @@ export function loadEnv(envPath: string = paths.env): void {
     }
   }
 }
-

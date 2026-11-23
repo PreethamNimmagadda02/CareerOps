@@ -6,11 +6,17 @@ import { getProfile, putProfile, patchProfile, type Profile } from "../src/lib/p
 // Single mocked DynamoDB document client shared by both stores.
 const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
 
-vi.mock("../src/lib/dynamo.js", () => ({
-  ddb: { send: sendMock },
-  TABLE_CV: "CVs",
-  TABLE_PROFILE: "Profiles",
-}));
+// Only the client is faked: the stores also use the real (pure)
+// `buildUpdateExpression` helper from the same module.
+vi.mock("../src/lib/dynamo.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/lib/dynamo.js")>();
+  return {
+    buildUpdateExpression: actual.buildUpdateExpression,
+    ddb: { send: sendMock },
+    TABLE_CV: "CVs",
+    TABLE_PROFILE: "Profiles",
+  };
+});
 
 const sampleCV: CV = {
   summary: "Engineer",

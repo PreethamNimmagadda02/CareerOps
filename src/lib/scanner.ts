@@ -29,9 +29,9 @@ export function slugFromGreenhouse(url: string | undefined): string | null {
 export function hasStructuredApi(company: Company): boolean {
   return Boolean(
     company.api ||
-      slugFromAshby(company.careers_url) ||
-      slugFromLever(company.careers_url) ||
-      slugFromGreenhouse(company.careers_url),
+    slugFromAshby(company.careers_url) ||
+    slugFromLever(company.careers_url) ||
+    slugFromGreenhouse(company.careers_url),
   );
 }
 
@@ -146,7 +146,8 @@ async function discoverAtsBoard(
   for (const { method, regex } of ATS_DISCOVERY) {
     for (const href of hrefs) {
       const match = href.match(regex);
-      if (match) return { source: apiUrlFor(method, decodeURIComponent(match[1] as string)), method };
+      if (match)
+        return { source: apiUrlFor(method, decodeURIComponent(match[1] as string)), method };
     }
   }
   return null;
@@ -211,7 +212,11 @@ export async function scanCompanyBrowser(browser: Browser, company: Company): Pr
       for (const anchor of document.querySelectorAll("a[href]")) {
         const ownClass = (anchor.getAttribute("class") || "").trim();
         const parentClass = anchor.parentElement?.getAttribute("class")?.trim();
-        const sig = ownClass ? `class:${ownClass}` : parentClass ? `pclass:${parentClass}` : `tag:${anchor.tagName}`;
+        const sig = ownClass
+          ? `class:${ownClass}`
+          : parentClass
+            ? `pclass:${parentClass}`
+            : `tag:${anchor.tagName}`;
         signatureCounts.set(sig, (signatureCounts.get(sig) || 0) + 1);
       }
 
@@ -258,13 +263,19 @@ export async function scanCompanyBrowser(browser: Browser, company: Company): Pr
 
         const ownClass = (anchor.getAttribute("class") || "").trim();
         const parentClass = anchor.parentElement?.getAttribute("class")?.trim();
-        const sig = ownClass ? `class:${ownClass}` : parentClass ? `pclass:${parentClass}` : `tag:${anchor.tagName}`;
+        const sig = ownClass
+          ? `class:${ownClass}`
+          : parentClass
+            ? `pclass:${parentClass}`
+            : `tag:${anchor.tagName}`;
         const repeated = (signatureCounts.get(sig) || 0) >= 3;
         if (!repeated && !strongJobHref.test(href)) continue;
 
         const rawStripped = rawText.replace(/^[↳→▸›»\-•*\s]+/, "").trim();
         const anchorIsGeneric =
-          rawStripped.length < 8 || genericCta.test(rawStripped) || localeSwitcher.test(rawStripped);
+          rawStripped.length < 8 ||
+          genericCta.test(rawStripped) ||
+          localeSwitcher.test(rawStripped);
         const title = anchorIsGeneric ? parentText.slice(0, 140) : rawText;
         if (!title || title.length < 8 || title.length > 180) continue;
         if (anchorIsGeneric) {
@@ -286,7 +297,11 @@ export async function scanCompanyBrowser(browser: Browser, company: Company): Pr
         // Look near the anchor for a tag/pill list (locations, departments) —
         // generic "text minus title" slicing can't reliably isolate these.
         let listLocation = "";
-        for (let el: Element | null = anchor, depth = 0; el && depth < 5; el = el.parentElement, depth++) {
+        for (
+          let el: Element | null = anchor, depth = 0;
+          el && depth < 5;
+          el = el.parentElement, depth++
+        ) {
           if (((el as HTMLElement).innerText || el.textContent || "").length > 2000) break;
           const items = [...el.querySelectorAll("li")]
             .map((li) => (li.innerText || li.textContent || "").replace(/\s+/g, " ").trim())
@@ -319,7 +334,9 @@ export async function scanCompanyBrowser(browser: Browser, company: Company): Pr
         if (candidateIsBetter) byHref.set(href, candidate);
       }
 
-      return [...byHref.values()].slice(0, 80).map(({ fromAnchorText: _fromAnchorText, ...row }) => row);
+      return [...byHref.values()]
+        .slice(0, 80)
+        .map(({ fromAnchorText: _fromAnchorText, ...row }) => row);
     }, company.name);
 
     // A linked-out ATS board (e.g. a custom domain embedding a Greenhouse

@@ -94,9 +94,7 @@ export async function runGlobalScan(opts: GlobalScanOptions = {}): Promise<Globa
   // scanned this run (skip entirely on a capped/test scan, which is partial).
   let deactivated = 0;
   if (!opts.limitPortals) {
-    const scannedOkCompanies = [
-      ...new Set(all.filter((r) => !r.error).map((r) => r.company.name)),
-    ];
+    const scannedOkCompanies = [...new Set(all.filter((r) => !r.error).map((r) => r.company.name))];
     deactivated = await deactivatePostingsNotSeenSince(scanStartedAt, scannedOkCompanies);
   }
 

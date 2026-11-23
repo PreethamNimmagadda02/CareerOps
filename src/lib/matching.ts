@@ -29,7 +29,10 @@ function escapeRegex(s: string): string {
  * so callers can distinguish "not configured" from "no match".
  */
 function keywordRegex(words: string[] | undefined): RegExp | null {
-  const cleaned = (words ?? []).map((w) => w.trim()).filter(Boolean).slice(0, MAX_KEYWORDS);
+  const cleaned = (words ?? [])
+    .map((w) => w.trim())
+    .filter(Boolean)
+    .slice(0, MAX_KEYWORDS);
   if (cleaned.length === 0) return null;
   return new RegExp(`\\b(${cleaned.map(escapeRegex).join("|")})\\b`, "i");
 }
@@ -148,10 +151,7 @@ export function engineeringMatch(title: string, prefs: MatchingPrefs): Engineeri
  *     user's preferred or eligible-to-work-in locations, since otherwise the
  *     user would need a work visa for that country.
  */
-export function locationMatch(
-  location: string | undefined,
-  prefs: MatchingPrefs,
-): LocationMatch {
+export function locationMatch(location: string | undefined, prefs: MatchingPrefs): LocationMatch {
   const text = String(location || "");
   const preferred = keywordRegex(prefs.preferred_locations)?.test(text) ?? false;
   const remote = REMOTE_RE.test(text);

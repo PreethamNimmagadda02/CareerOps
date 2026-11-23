@@ -51,8 +51,13 @@ export interface EvaluationInsights {
  */
 const DIMENSIONS: ReadonlyArray<{ key: string; label: string; pattern: string; weight: number }> = [
   { key: "technical", label: "Technical Fit", pattern: "Technical\\s+Fit", weight: 0.35 },
-  { key: "level", label: "Level Match", pattern: "Level\\s+Match", weight: 0.30 },
-  { key: "location", label: "Location/Remote", pattern: "Location\\s*/?\\s*Remote|Location", weight: 0.15 },
+  { key: "level", label: "Level Match", pattern: "Level\\s+Match", weight: 0.3 },
+  {
+    key: "location",
+    label: "Location/Remote",
+    pattern: "Location\\s*/?\\s*Remote|Location",
+    weight: 0.15,
+  },
   { key: "growth", label: "Growth Potential", pattern: "Growth\\s+Potential", weight: 0.1 },
   { key: "domain", label: "Domain Fit", pattern: "Domain\\s+Fit", weight: 0.1 },
 ];
@@ -126,7 +131,7 @@ export function parseDimensions(text: string): ScoreDimension[] {
     // ("- Technical Fit: 4/5 — reason", "**Technical Fit** 4 / 5 …").
     const inlineRe = new RegExp(
       `(?:${dim.pattern})\\s*\\*{0,2}[:|\\s]*\\*{0,2}\\s*(\\d(?:\\.\\d+)?)\\s*/\\s*5` +
-      `(?:\\s*\\*{0,2}\\s*[—–:|-]\\s*(.+?)(?:\\||$))?`,
+        `(?:\\s*\\*{0,2}\\s*[—–:|-]\\s*(.+?)(?:\\||$))?`,
       "im",
     );
 
@@ -135,7 +140,13 @@ export function parseDimensions(text: string): ScoreDimension[] {
     const score = parseFloat(m[1] as string);
     if (Number.isNaN(score) || score < 0 || score > 5) continue;
     const reason = m[2] ? clean(m[2]) : undefined;
-    out.push({ key: dim.key, label: dim.label, weight: dim.weight, score, ...(reason ? { reason } : {}) });
+    out.push({
+      key: dim.key,
+      label: dim.label,
+      weight: dim.weight,
+      score,
+      ...(reason ? { reason } : {}),
+    });
   }
 
   return out;
@@ -151,7 +162,9 @@ export function parseRecommendation(text: string): {
   // Drop any echo of the choice list itself ("APPLY NOW | APPLY WITH TWEAKS | …").
   const lines = scope
     .split("\n")
-    .filter((l) => !/APPLY\s+NOW\s*\|\s*APPLY\s+WITH\s+TWEAKS\s*\|/i.test(l) || countVerdicts(l) < 3);
+    .filter(
+      (l) => !/APPLY\s+NOW\s*\|\s*APPLY\s+WITH\s+TWEAKS\s*\|/i.test(l) || countVerdicts(l) < 3,
+    );
 
   for (const line of lines) {
     // Longest token first so "APPLY WITH TWEAKS" isn't shadowed.

@@ -2,12 +2,7 @@
   "mcpServers": {
     "repowise": {
       "command": "repowise",
-      "args": [
-        "mcp",
-        "/Users/preethamnimmagadda/Desktop/CarrerOps",
-        "--transport",
-        "stdio"
-      ],
+      "args": ["mcp", "/Users/preethamnimmagadda/Desktop/CarrerOps", "--transport", "stdio"],
       "description": "repowise: codebase intelligence \u2014 docs, graph, git signals, dead code, decisions"
     }
   }

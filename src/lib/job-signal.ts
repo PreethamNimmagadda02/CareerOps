@@ -31,7 +31,9 @@ function publisherClient(): Redis | null {
     connectTimeout: 3000,
     commandTimeout: 1500,
   });
-  publisher.on("error", (err) => log.warn(`[job-signal] publish client error: ${(err as Error).message}`));
+  publisher.on("error", (err) =>
+    log.warn(`[job-signal] publish client error: ${(err as Error).message}`),
+  );
   return publisher;
 }
 
@@ -68,7 +70,7 @@ export function subscribeJobQueued(onSignal: () => void): void {
   subscriber.on("message", (channel) => {
     if (channel === CHANNEL) onSignal();
   });
-  subscriber.subscribe(CHANNEL).catch((err: unknown) =>
-    log.warn(`[job-signal] subscribe failed: ${(err as Error).message}`),
-  );
+  subscriber
+    .subscribe(CHANNEL)
+    .catch((err: unknown) => log.warn(`[job-signal] subscribe failed: ${(err as Error).message}`));
 }

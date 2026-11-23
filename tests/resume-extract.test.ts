@@ -97,8 +97,14 @@ function makeInput(over: Partial<MatchingInput> = {}): MatchingInput {
   return {
     target_roles: { primary: [], archetypes: [] },
     candidate: {
-      full_name: "", email: "", phone: "", location: "",
-      linkedin: "", portfolio_url: "", github: "", twitter: "",
+      full_name: "",
+      email: "",
+      phone: "",
+      location: "",
+      linkedin: "",
+      portfolio_url: "",
+      github: "",
+      twitter: "",
     },
     location: { country: "", city: "", timezone: "", visa_status: "", onsite_availability: "" },
     ...over,
@@ -107,7 +113,9 @@ function makeInput(over: Partial<MatchingInput> = {}): MatchingInput {
 
 describe("deriveMatchingDefaults", () => {
   it("splits a simple title into a single-word domain + noun", () => {
-    const m = deriveMatchingDefaults(makeInput({ target_roles: { primary: ["Backend Engineer"], archetypes: [] } }));
+    const m = deriveMatchingDefaults(
+      makeInput({ target_roles: { primary: ["Backend Engineer"], archetypes: [] } }),
+    );
     expect(m.role_domains).toEqual(["backend"]);
     expect(m.role_nouns).toEqual(["engineer"]);
     expect(m.include_titles).toEqual(["backend engineer"]);
@@ -136,7 +144,9 @@ describe("deriveMatchingDefaults", () => {
   });
 
   it("falls back to include_titles only when the title has no recognized trailing noun", () => {
-    const m = deriveMatchingDefaults(makeInput({ target_roles: { primary: ["Founder"], archetypes: [] } }));
+    const m = deriveMatchingDefaults(
+      makeInput({ target_roles: { primary: ["Founder"], archetypes: [] } }),
+    );
     expect(m.role_domains).toEqual([]);
     expect(m.role_nouns).toEqual([]);
     expect(m.include_titles).toEqual(["founder"]);
@@ -145,7 +155,11 @@ describe("deriveMatchingDefaults", () => {
   it("mirrors target_roles.avoid into exclude_titles and seniority_exclusions", () => {
     const m = deriveMatchingDefaults(
       makeInput({
-        target_roles: { primary: ["Backend Engineer"], archetypes: [], avoid: ["Director", "Sales"] },
+        target_roles: {
+          primary: ["Backend Engineer"],
+          archetypes: [],
+          avoid: ["Director", "Sales"],
+        },
       }),
     );
     expect(m.exclude_titles).toEqual(["director", "sales"]);
@@ -192,10 +206,22 @@ describe("deriveMatchingDefaults", () => {
     const m = deriveMatchingDefaults(
       makeInput({
         candidate: {
-          full_name: "", email: "", phone: "", location: "Bengaluru, Karnataka, India",
-          linkedin: "", portfolio_url: "", github: "", twitter: "",
+          full_name: "",
+          email: "",
+          phone: "",
+          location: "Bengaluru, Karnataka, India",
+          linkedin: "",
+          portfolio_url: "",
+          github: "",
+          twitter: "",
         },
-        location: { country: "India", city: "Bengaluru", timezone: "", visa_status: "", onsite_availability: "" },
+        location: {
+          country: "India",
+          city: "Bengaluru",
+          timezone: "",
+          visa_status: "",
+          onsite_availability: "",
+        },
       }),
     );
     expect(m.preferred_locations).toEqual(["bengaluru", "karnataka", "india"]);
@@ -250,7 +276,9 @@ describe("normalizeProfile — consistency & coercion", () => {
   });
 
   it("keeps only valid emails and lowercases them", () => {
-    expect(normalizeProfile({ candidate: { email: "ADA@X.COM" } }).candidate.email).toBe("ada@x.com");
+    expect(normalizeProfile({ candidate: { email: "ADA@X.COM" } }).candidate.email).toBe(
+      "ada@x.com",
+    );
     expect(normalizeProfile({ candidate: { email: "not-an-email" } }).candidate.email).toBe("");
   });
 

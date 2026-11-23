@@ -191,7 +191,11 @@ async function runJob(job: Job, slot: number): Promise<void> {
     await finishJob(id, attempts, "Succeeded", { exitCode, log: buffer });
   } else {
     append(`\n[done] exited with code ${exitCode}`);
-    await finishJob(id, attempts, "Failed", { exitCode, error: `Exited with code ${exitCode}`, log: buffer });
+    await finishJob(id, attempts, "Failed", {
+      exitCode,
+      error: `Exited with code ${exitCode}`,
+      log: buffer,
+    });
   }
 }
 
@@ -242,7 +246,9 @@ async function stopIfIdle(): Promise<void> {
   if (Date.now() - lastActivityAt < IDLE_SHUTDOWN_MS) return;
   try {
     if (await scaleToZeroIfDrained(countPendingJobs)) {
-      log.info(`💤 idle for ${Math.round(IDLE_SHUTDOWN_MS / 1000)}s — asked ECS to stop this worker`);
+      log.info(
+        `💤 idle for ${Math.round(IDLE_SHUTDOWN_MS / 1000)}s — asked ECS to stop this worker`,
+      );
     }
   } catch (err) {
     log.warn(`[idle] scale-down failed, will retry: ${(err as Error).message}`);

@@ -17,7 +17,11 @@ describe("buildMatchingPrefs", () => {
   it("strips a seniority prefix from the domain so the level doesn't narrow the funnel", () => {
     // Left in, the domain would be "senior backend" and a plain "Backend
     // Engineer" posting would no longer match at all.
-    const m = buildMatchingPrefs({ titles: ["Senior Backend Engineer"], locations: [], remoteOk: true });
+    const m = buildMatchingPrefs({
+      titles: ["Senior Backend Engineer"],
+      locations: [],
+      remoteOk: true,
+    });
     expect(m.role_domains).toEqual(["backend"]);
     expect(m.role_nouns).toEqual(["engineer"]);
     // The full phrase is still kept verbatim for exact-title matching.
@@ -143,13 +147,19 @@ describe("buildMatchingPrefs", () => {
   });
 
   it("drops empty/whitespace-only entries", () => {
-    const m = buildMatchingPrefs({ titles: ["", "  ", "Engineer"], locations: ["", "India"], remoteOk: true });
+    const m = buildMatchingPrefs({
+      titles: ["", "  ", "Engineer"],
+      locations: ["", "India"],
+      remoteOk: true,
+    });
     expect(m.include_titles).toEqual(["engineer"]);
     expect(m.preferred_locations).toEqual(["india"]);
   });
 
   it("passes remoteOk straight through", () => {
-    expect(buildMatchingPrefs({ titles: [], locations: [], remoteOk: false }).remote_ok).toBe(false);
+    expect(buildMatchingPrefs({ titles: [], locations: [], remoteOk: false }).remote_ok).toBe(
+      false,
+    );
     expect(buildMatchingPrefs({ titles: [], locations: [], remoteOk: true }).remote_ok).toBe(true);
   });
 

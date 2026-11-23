@@ -156,7 +156,9 @@ export async function writeReport(opts: {
  * Exposed for the backfill script, which updates rows without touching the
  * report filename/score cells.
  */
-export function insightColumns(insights: EvaluationInsights): Prisma.ApplicationUpdateManyMutationInput {
+export function insightColumns(
+  insights: EvaluationInsights,
+): Prisma.ApplicationUpdateManyMutationInput {
   return {
     scoreNumeric: insights.scoreNumeric,
     recommendation: insights.recommendation,

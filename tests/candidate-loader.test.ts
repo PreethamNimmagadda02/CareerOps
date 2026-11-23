@@ -75,7 +75,6 @@ describe("cvToMarkdown", () => {
     expect(md).toContain("### Acme");
     expect(md).toContain("**Senior Engineer** | Remote");
     expect(md).toContain("* Shipped X");
-
   });
 
   it("omits empty sections and the name heading when not provided", () => {

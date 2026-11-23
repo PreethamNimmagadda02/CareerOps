@@ -41,13 +41,13 @@ export function reportObjectUrl(userId: string, filename: string): string {
     /\/$/,
     "",
   );
-  
+
   if (!endpoint) {
     // If no endpoint is configured, assume native AWS S3
     const region = process.env.AWS_REGION || "us-east-1";
     return `https://${BUCKET}.s3.${region}.amazonaws.com/${reportObjectKey(userId, filename)}`;
   }
-  
+
   return `${endpoint}/${BUCKET}/${reportObjectKey(userId, filename)}`;
 }
 

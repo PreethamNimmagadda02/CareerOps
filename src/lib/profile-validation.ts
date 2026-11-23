@@ -79,7 +79,9 @@ export function validateMatchingReadiness(profile: Profile | null): ReadinessRes
     (m.role_nouns?.length ?? 0) > 0 ||
     (m.include_titles?.length ?? 0) > 0;
   if (!hasRoleConfig) {
-    missing.push("At least one role indicator (Job Matching section — discipline keywords, role nouns, or include titles)");
+    missing.push(
+      "At least one role indicator (Job Matching section — discipline keywords, role nouns, or include titles)",
+    );
   }
 
   const hasLocationConfig = (m.preferred_locations?.length ?? 0) > 0 || m.remote_ok !== false;

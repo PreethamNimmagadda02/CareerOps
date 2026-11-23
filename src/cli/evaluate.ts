@@ -157,7 +157,9 @@ async function main(): Promise<void> {
               // `needsBrowser` guarantees a live browser exists whenever some
               // target has a cache miss (this branch only runs on a miss).
               jdText = await fetchJD(browser as Browser, url);
-              log.info(`${tag} 📄 ${isJdOk(jdText) ? "✓" : "⚠️  partial"} (${jdText.length} chars)`);
+              log.info(
+                `${tag} 📄 ${isJdOk(jdText) ? "✓" : "⚠️  partial"} (${jdText.length} chars)`,
+              );
               if (isJdOk(jdText)) {
                 await setPostingJD(url, jdText).catch(() => {});
               }
