@@ -87,3 +87,13 @@ deploy/terraform/*.tfplan
 # A saved plan embeds every variable in plaintext, secrets included.
 deploy/terraform/tfplan
 deploy/terraform/.terraform.tfstate.lock.info
+
+# Local agent tooling — installed design skills and review history, not part of
+# the app. The project's own career-ops skill stays tracked.
+.agents/
+.claude/skills/*
+!.claude/skills/career-ops/
+.impeccable/
+
+# Generated diagrams and screenshots (kept locally, not referenced by the docs)
+docs/media/
